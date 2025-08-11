@@ -83,6 +83,7 @@ struct MusicTreeNode {
     expanded: bool,
     #[allow(dead_code)]
     file_path: Option<PathBuf>,
+    track_info: Option<TrackInfo>,
 }
 
 #[derive(Debug, Clone, PartialEq)]
@@ -97,6 +98,8 @@ struct TrackInfo {
     title: String,
     artist: String,
     album: String,
+    track_number: Option<u32>,
+    disc_number: Option<u32>,
     path: PathBuf,
 }
 
@@ -198,17 +201,51 @@ impl MyApp {
             let mut album_nodes = Vec::new();
             
             for (album_name, mut album_tracks) in albums {
-                // 曲をタイトル順でソート
-                album_tracks.sort_by(|a, b| a.title.cmp(&b.title));
+                // 曲をディスク番号、トラック番号順でソート
+                album_tracks.sort_by(|a, b| {
+                    // ディスク番号でソート（Noneは0として扱う）
+                    let disc_cmp = a.disc_number.unwrap_or(0).cmp(&b.disc_number.unwrap_or(0));
+                    if disc_cmp != std::cmp::Ordering::Equal {
+                        return disc_cmp;
+                    }
+                    
+                    // ディスク番号が同じ場合はトラック番号でソート
+                    let track_cmp = a.track_number.unwrap_or(0).cmp(&b.track_number.unwrap_or(0));
+                    if track_cmp != std::cmp::Ordering::Equal {
+                        return track_cmp;
+                    }
+                    
+                    // トラック番号も同じ場合はタイトルでソート
+                    a.title.cmp(&b.title)
+                });
                 
                 let mut track_nodes = Vec::new();
                 for track in album_tracks {
+                    // 表示名を生成（ディスク番号、トラック番号、タイトル）
+                    let display_name = {
+                        let mut parts = Vec::new();
+                        
+                        if let Some(disc) = track.disc_number {
+                            if let Some(track_num) = track.track_number {
+                                parts.push(format!("{}-{:02}", disc, track_num));
+                            } else {
+                                parts.push(format!("{}-", disc));
+                            }
+                        } else if let Some(track_num) = track.track_number {
+                            parts.push(format!("{:02}", track_num));
+                        }
+                        
+                        parts.push(track.title.clone());
+                        parts.join(" ")
+                    };
+                    
                     track_nodes.push(MusicTreeNode {
-                        name: track.title.clone(),
+                        name: display_name,
                         node_type: MusicNodeType::Track,
                         children: Vec::new(),
                         expanded: false,
-                        file_path: Some(track.path),
+                        file_path: Some(track.path.clone()),
+                        track_info: Some(track),
                     });
                 }
                 
@@ -218,6 +255,7 @@ impl MyApp {
                     children: track_nodes,
                     expanded: false,
                     file_path: None,
+                    track_info: None,
                 });
             }
             
@@ -230,6 +268,7 @@ impl MyApp {
                 children: album_nodes,
                 expanded: false,
                 file_path: None,
+                track_info: None,
             });
         }
         
@@ -260,9 +299,14 @@ impl MyApp {
                             .to_string()
                     });
                 
-                let artist = tag.get_vorbis("ARTIST")
+                let artist = tag.get_vorbis("ALBUMARTIST")
                     .and_then(|mut iter| iter.next())
                     .map(|s| s.to_string())
+                    .or_else(|| {
+                        tag.get_vorbis("ARTIST")
+                            .and_then(|mut iter| iter.next())
+                            .map(|s| s.to_string())
+                    })
                     .unwrap_or_else(|| "Unknown Artist".to_string());
                 
                 let album = tag.get_vorbis("ALBUM")
@@ -270,10 +314,23 @@ impl MyApp {
                     .map(|s| s.to_string())
                     .unwrap_or_else(|| "Unknown Album".to_string());
                 
+                // トラック番号とディスク番号を取得
+                let track_number = tag.get_vorbis("TRACKNUMBER")
+                    .and_then(|mut iter| iter.next())
+                    .and_then(|s| s.split('/').next()) // "3/12" のような形式に対応
+                    .and_then(|s| s.parse::<u32>().ok());
+                
+                let disc_number = tag.get_vorbis("DISCNUMBER")
+                    .and_then(|mut iter| iter.next())
+                    .and_then(|s| s.split('/').next()) // "1/2" のような形式に対応
+                    .and_then(|s| s.parse::<u32>().ok());
+                
                 Some(TrackInfo {
                     title,
                     artist,
                     album,
+                    track_number,
+                    disc_number,
                     path: path.to_path_buf(),
                 })
             },
