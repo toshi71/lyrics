@@ -3,6 +3,7 @@ use font_kit::family_name::FamilyName;
 use font_kit::properties::Properties;
 use font_kit::source::SystemSource;
 use serde::{Deserialize, Serialize};
+use std::collections::HashMap;
 use std::fs;
 use std::path::{Path, PathBuf};
 
@@ -75,22 +76,35 @@ impl Default for Settings {
 }
 
 #[derive(Debug, Clone)]
-struct FileTreeNode {
-    #[allow(dead_code)]
+struct MusicTreeNode {
     name: String,
-    display_name: String,
-    #[allow(dead_code)]
-    path: PathBuf,
-    is_directory: bool,
-    children: Vec<FileTreeNode>,
+    node_type: MusicNodeType,
+    children: Vec<MusicTreeNode>,
     expanded: bool,
+    #[allow(dead_code)]
+    file_path: Option<PathBuf>,
+}
+
+#[derive(Debug, Clone, PartialEq)]
+enum MusicNodeType {
+    Artist,
+    Album,
+    Track,
+}
+
+#[derive(Debug, Clone)]
+struct TrackInfo {
+    title: String,
+    artist: String,
+    album: String,
+    path: PathBuf,
 }
 
 struct MyApp {
     show_dialog: bool,
     current_tab: Tab,
     settings: Settings,
-    file_tree: Vec<FileTreeNode>,
+    music_tree: Vec<MusicTreeNode>,
 }
 
 impl MyApp {
@@ -100,9 +114,9 @@ impl MyApp {
             show_dialog: false,
             current_tab: Tab::Main,
             settings,
-            file_tree: Vec::new(),
+            music_tree: Vec::new(),
         };
-        app.refresh_file_tree();
+        app.refresh_music_tree();
         app
     }
     
@@ -128,74 +142,101 @@ impl MyApp {
         }
     }
     
-    fn refresh_file_tree(&mut self) {
+    fn refresh_music_tree(&mut self) {
         if self.settings.target_directory.is_empty() {
-            self.file_tree.clear();
+            self.music_tree.clear();
             return;
         }
         
         let target_path = PathBuf::from(&self.settings.target_directory);
         if target_path.exists() && target_path.is_dir() {
-            self.file_tree = self.build_file_tree(&target_path);
+            let tracks = self.collect_all_tracks(&target_path);
+            self.music_tree = self.build_music_tree(tracks);
         } else {
-            self.file_tree.clear();
+            self.music_tree.clear();
         }
     }
     
-    fn build_file_tree(&self, path: &Path) -> Vec<FileTreeNode> {
-        let mut nodes = Vec::new();
-        
+    fn collect_all_tracks(&self, path: &Path) -> Vec<TrackInfo> {
+        let mut tracks = Vec::new();
+        self.collect_tracks_recursive(path, &mut tracks);
+        tracks
+    }
+    
+    fn collect_tracks_recursive(&self, path: &Path, tracks: &mut Vec<TrackInfo>) {
         if let Ok(entries) = fs::read_dir(path) {
-            let mut entries: Vec<_> = entries.filter_map(|e| e.ok()).collect();
-            entries.sort_by(|a, b| {
-                let a_is_dir = a.path().is_dir();
-                let b_is_dir = b.path().is_dir();
-                match (a_is_dir, b_is_dir) {
-                    (true, false) => std::cmp::Ordering::Less,
-                    (false, true) => std::cmp::Ordering::Greater,
-                    _ => a.file_name().cmp(&b.file_name()),
-                }
-            });
-            
-            for entry in entries {
+            for entry in entries.filter_map(|e| e.ok()) {
                 let entry_path = entry.path();
-                let is_directory = entry_path.is_dir();
-                let name = entry.file_name().to_string_lossy().to_string();
                 
-                // lrcファイルをフィルタリング（ディレクトリは除外しない）
-                if !is_directory {
-                    if let Some(extension) = entry_path.extension() {
-                        if extension.to_string_lossy().to_lowercase() == "lrc" {
-                            continue; // lrcファイルはスキップ
-                        }
+                if entry_path.is_dir() {
+                    self.collect_tracks_recursive(&entry_path, tracks);
+                } else if self.is_flac_file(&entry_path) {
+                    if let Some(track_info) = self.get_flac_metadata(&entry_path) {
+                        tracks.push(track_info);
                     }
                 }
-                
-                let children = if is_directory {
-                    self.build_file_tree(&entry_path)
-                } else {
-                    Vec::new()
-                };
-                
-                // 表示名を決定（FLACファイルの場合はタイトルを取得）
-                let display_name = if !is_directory && self.is_flac_file(&entry_path) {
-                    self.get_flac_title(&entry_path).unwrap_or_else(|| name.clone())
-                } else {
-                    name.clone()
-                };
-                
-                nodes.push(FileTreeNode {
-                    name,
-                    display_name,
-                    path: entry_path,
-                    is_directory,
-                    children,
-                    expanded: false,
-                });
             }
         }
+    }
+    
+    fn build_music_tree(&self, tracks: Vec<TrackInfo>) -> Vec<MusicTreeNode> {
+        let mut artist_map: HashMap<String, HashMap<String, Vec<TrackInfo>>> = HashMap::new();
         
-        nodes
+        // トラックをアーティスト > アルバム > 曲 でグループ化
+        for track in tracks {
+            artist_map
+                .entry(track.artist.clone())
+                .or_default()
+                .entry(track.album.clone())
+                .or_default()
+                .push(track);
+        }
+        
+        let mut artist_nodes = Vec::new();
+        
+        for (artist_name, albums) in artist_map {
+            let mut album_nodes = Vec::new();
+            
+            for (album_name, mut album_tracks) in albums {
+                // 曲をタイトル順でソート
+                album_tracks.sort_by(|a, b| a.title.cmp(&b.title));
+                
+                let mut track_nodes = Vec::new();
+                for track in album_tracks {
+                    track_nodes.push(MusicTreeNode {
+                        name: track.title.clone(),
+                        node_type: MusicNodeType::Track,
+                        children: Vec::new(),
+                        expanded: false,
+                        file_path: Some(track.path),
+                    });
+                }
+                
+                album_nodes.push(MusicTreeNode {
+                    name: album_name,
+                    node_type: MusicNodeType::Album,
+                    children: track_nodes,
+                    expanded: false,
+                    file_path: None,
+                });
+            }
+            
+            // アルバムをアルファベット順でソート
+            album_nodes.sort_by(|a, b| a.name.cmp(&b.name));
+            
+            artist_nodes.push(MusicTreeNode {
+                name: artist_name,
+                node_type: MusicNodeType::Artist,
+                children: album_nodes,
+                expanded: false,
+                file_path: None,
+            });
+        }
+        
+        // アーティストをアルファベット順でソート
+        artist_nodes.sort_by(|a, b| a.name.cmp(&b.name));
+        
+        artist_nodes
     }
     
     fn is_flac_file(&self, path: &Path) -> bool {
@@ -206,76 +247,115 @@ impl MyApp {
         }
     }
     
-    fn get_flac_title(&self, path: &Path) -> Option<String> {
+    fn get_flac_metadata(&self, path: &Path) -> Option<TrackInfo> {
         match metaflac::Tag::read_from_path(path) {
             Ok(tag) => {
-                if let Some(title) = tag.get_vorbis("TITLE").and_then(|mut iter| iter.next()) {
-                    Some(title.to_string())
-                } else {
-                    None
-                }
+                let title = tag.get_vorbis("TITLE")
+                    .and_then(|mut iter| iter.next())
+                    .map(|s| s.to_string())
+                    .unwrap_or_else(|| {
+                        path.file_stem()
+                            .unwrap_or_default()
+                            .to_string_lossy()
+                            .to_string()
+                    });
+                
+                let artist = tag.get_vorbis("ARTIST")
+                    .and_then(|mut iter| iter.next())
+                    .map(|s| s.to_string())
+                    .unwrap_or_else(|| "Unknown Artist".to_string());
+                
+                let album = tag.get_vorbis("ALBUM")
+                    .and_then(|mut iter| iter.next())
+                    .map(|s| s.to_string())
+                    .unwrap_or_else(|| "Unknown Album".to_string());
+                
+                Some(TrackInfo {
+                    title,
+                    artist,
+                    album,
+                    path: path.to_path_buf(),
+                })
             },
             Err(_) => None,
         }
     }
     
-    fn show_file_tree(&mut self, ui: &mut egui::Ui) {
-        let nodes = self.file_tree.clone();
+    fn show_music_tree(&mut self, ui: &mut egui::Ui) {
+        let nodes = self.music_tree.clone();
         for (i, node) in nodes.iter().enumerate() {
-            self.show_file_tree_node(ui, i, node);
+            self.show_music_tree_node(ui, i, node);
         }
     }
     
-    fn show_file_tree_node(&mut self, ui: &mut egui::Ui, index: usize, node: &FileTreeNode) {
+    fn show_music_tree_node(&mut self, ui: &mut egui::Ui, index: usize, node: &MusicTreeNode) {
         ui.horizontal(|ui| {
-            if node.is_directory {
-                let icon = if node.expanded { "📂" } else { "📁" };
-                if ui.selectable_label(false, format!("{} {}", icon, node.display_name)).clicked() {
-                    self.file_tree[index].expanded = !self.file_tree[index].expanded;
+            let (icon, label) = match node.node_type {
+                MusicNodeType::Artist => {
+                    let icon = if node.expanded { "👤" } else { "👤" };
+                    (icon, format!("{} {}", icon, node.name))
+                },
+                MusicNodeType::Album => {
+                    let icon = if node.expanded { "💿" } else { "💿" };
+                    (icon, format!("{} {}", icon, node.name))
+                },
+                MusicNodeType::Track => {
+                    ("🎵", format!("🎵 {}", node.name))
+                },
+            };
+            
+            if node.node_type != MusicNodeType::Track && !node.children.is_empty() {
+                if ui.selectable_label(false, label).clicked() {
+                    self.music_tree[index].expanded = !self.music_tree[index].expanded;
                 }
             } else {
-                ui.label(format!("🎵 {}", node.display_name));
+                ui.label(label);
             }
         });
         
-        if node.is_directory && node.expanded {
-            ui.indent(format!("folder_indent_{}", index), |ui| {
+        if node.expanded && !node.children.is_empty() {
+            ui.indent(format!("music_indent_{}", index), |ui| {
                 for (child_index, child) in node.children.iter().enumerate() {
-                    self.show_file_tree_child(ui, index, child_index, child);
+                    self.show_music_tree_child(ui, index, child_index, child);
                 }
             });
         }
     }
     
-    fn show_file_tree_child(&mut self, ui: &mut egui::Ui, parent_index: usize, child_index: usize, node: &FileTreeNode) {
+    fn show_music_tree_child(&mut self, ui: &mut egui::Ui, parent_index: usize, child_index: usize, node: &MusicTreeNode) {
         ui.horizontal(|ui| {
-            if node.is_directory {
-                let icon = if node.expanded { "📂" } else { "📁" };
-                if ui.selectable_label(false, format!("{} {}", icon, node.display_name)).clicked() {
-                    self.file_tree[parent_index].children[child_index].expanded = !self.file_tree[parent_index].children[child_index].expanded;
+            let (icon, label) = match node.node_type {
+                MusicNodeType::Artist => {
+                    let icon = if node.expanded { "👤" } else { "👤" };
+                    (icon, format!("{} {}", icon, node.name))
+                },
+                MusicNodeType::Album => {
+                    let icon = if node.expanded { "💿" } else { "💿" };
+                    (icon, format!("{} {}", icon, node.name))
+                },
+                MusicNodeType::Track => {
+                    ("🎵", format!("🎵 {}", node.name))
+                },
+            };
+            
+            if node.node_type != MusicNodeType::Track && !node.children.is_empty() {
+                if ui.selectable_label(false, label).clicked() {
+                    self.music_tree[parent_index].children[child_index].expanded = !self.music_tree[parent_index].children[child_index].expanded;
                 }
             } else {
-                ui.label(format!("🎵 {}", node.display_name));
+                ui.label(label);
             }
         });
         
-        if node.is_directory && node.expanded {
-            ui.indent(format!("folder_indent_{}_{}", parent_index, child_index), |ui| {
+        if node.expanded && !node.children.is_empty() {
+            ui.indent(format!("music_indent_{}_{}", parent_index, child_index), |ui| {
                 for (_grandchild_index, grandchild) in node.children.iter().enumerate() {
-                    self.show_simple_file_tree_node(ui, grandchild);
+                    ui.horizontal(|ui| {
+                        ui.label(format!("🎵 {}", grandchild.name));
+                    });
                 }
             });
         }
-    }
-    
-    fn show_simple_file_tree_node(&self, ui: &mut egui::Ui, node: &FileTreeNode) {
-        ui.horizontal(|ui| {
-            if node.is_directory {
-                ui.label(format!("📁 {}", node.display_name));
-            } else {
-                ui.label(format!("🎵 {}", node.display_name));
-            }
-        });
     }
 }
 
@@ -319,7 +399,7 @@ impl eframe::App for MyApp {
                         egui::ScrollArea::vertical().show(ui, |ui| {
                             ui.label(format!("対象ディレクトリ: {}", self.settings.target_directory));
                             ui.separator();
-                            self.show_file_tree(ui);
+                            self.show_music_tree(ui);
                         });
                     }
                 },
@@ -339,7 +419,7 @@ impl eframe::App for MyApp {
                             if let Some(path) = rfd::FileDialog::new().pick_folder() {
                                 self.settings.target_directory = path.display().to_string();
                                 self.save_settings();
-                                self.refresh_file_tree();
+                                self.refresh_music_tree();
                             }
                         }
                     });
