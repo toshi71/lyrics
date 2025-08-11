@@ -83,6 +83,7 @@ struct MusicTreeNode {
     expanded: bool,
     #[allow(dead_code)]
     file_path: Option<PathBuf>,
+    #[allow(dead_code)]
     track_info: Option<TrackInfo>,
 }
 
@@ -347,7 +348,7 @@ impl MyApp {
     
     fn show_music_tree_node(&mut self, ui: &mut egui::Ui, index: usize, node: &MusicTreeNode) {
         ui.horizontal(|ui| {
-            let (icon, label) = match node.node_type {
+            let (_icon, label) = match node.node_type {
                 MusicNodeType::Artist => {
                     let icon = if node.expanded { "👤" } else { "👤" };
                     (icon, format!("{} {}", icon, node.name))
@@ -381,7 +382,7 @@ impl MyApp {
     
     fn show_music_tree_child(&mut self, ui: &mut egui::Ui, parent_index: usize, child_index: usize, node: &MusicTreeNode) {
         ui.horizontal(|ui| {
-            let (icon, label) = match node.node_type {
+            let (_icon, label) = match node.node_type {
                 MusicNodeType::Artist => {
                     let icon = if node.expanded { "👤" } else { "👤" };
                     (icon, format!("{} {}", icon, node.name))
