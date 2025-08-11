@@ -76,7 +76,9 @@ impl Default for Settings {
 
 #[derive(Debug, Clone)]
 struct FileTreeNode {
+    #[allow(dead_code)]
     name: String,
+    display_name: String,
     #[allow(dead_code)]
     path: PathBuf,
     is_directory: bool,
@@ -160,14 +162,31 @@ impl MyApp {
                 let is_directory = entry_path.is_dir();
                 let name = entry.file_name().to_string_lossy().to_string();
                 
+                // lrcファイルをフィルタリング（ディレクトリは除外しない）
+                if !is_directory {
+                    if let Some(extension) = entry_path.extension() {
+                        if extension.to_string_lossy().to_lowercase() == "lrc" {
+                            continue; // lrcファイルはスキップ
+                        }
+                    }
+                }
+                
                 let children = if is_directory {
                     self.build_file_tree(&entry_path)
                 } else {
                     Vec::new()
                 };
                 
+                // 表示名を決定（FLACファイルの場合はタイトルを取得）
+                let display_name = if !is_directory && self.is_flac_file(&entry_path) {
+                    self.get_flac_title(&entry_path).unwrap_or_else(|| name.clone())
+                } else {
+                    name.clone()
+                };
+                
                 nodes.push(FileTreeNode {
                     name,
+                    display_name,
                     path: entry_path,
                     is_directory,
                     children,
@@ -177,6 +196,27 @@ impl MyApp {
         }
         
         nodes
+    }
+    
+    fn is_flac_file(&self, path: &Path) -> bool {
+        if let Some(extension) = path.extension() {
+            extension.to_string_lossy().to_lowercase() == "flac"
+        } else {
+            false
+        }
+    }
+    
+    fn get_flac_title(&self, path: &Path) -> Option<String> {
+        match metaflac::Tag::read_from_path(path) {
+            Ok(tag) => {
+                if let Some(title) = tag.get_vorbis("TITLE").and_then(|mut iter| iter.next()) {
+                    Some(title.to_string())
+                } else {
+                    None
+                }
+            },
+            Err(_) => None,
+        }
     }
     
     fn show_file_tree(&mut self, ui: &mut egui::Ui) {
@@ -190,11 +230,11 @@ impl MyApp {
         ui.horizontal(|ui| {
             if node.is_directory {
                 let icon = if node.expanded { "📂" } else { "📁" };
-                if ui.selectable_label(false, format!("{} {}", icon, node.name)).clicked() {
+                if ui.selectable_label(false, format!("{} {}", icon, node.display_name)).clicked() {
                     self.file_tree[index].expanded = !self.file_tree[index].expanded;
                 }
             } else {
-                ui.label(format!("📄 {}", node.name));
+                ui.label(format!("🎵 {}", node.display_name));
             }
         });
         
@@ -211,11 +251,11 @@ impl MyApp {
         ui.horizontal(|ui| {
             if node.is_directory {
                 let icon = if node.expanded { "📂" } else { "📁" };
-                if ui.selectable_label(false, format!("{} {}", icon, node.name)).clicked() {
+                if ui.selectable_label(false, format!("{} {}", icon, node.display_name)).clicked() {
                     self.file_tree[parent_index].children[child_index].expanded = !self.file_tree[parent_index].children[child_index].expanded;
                 }
             } else {
-                ui.label(format!("📄 {}", node.name));
+                ui.label(format!("🎵 {}", node.display_name));
             }
         });
         
@@ -231,9 +271,9 @@ impl MyApp {
     fn show_simple_file_tree_node(&self, ui: &mut egui::Ui, node: &FileTreeNode) {
         ui.horizontal(|ui| {
             if node.is_directory {
-                ui.label(format!("📁 {}", node.name));
+                ui.label(format!("📁 {}", node.display_name));
             } else {
-                ui.label(format!("📄 {}", node.name));
+                ui.label(format!("🎵 {}", node.display_name));
             }
         });
     }
