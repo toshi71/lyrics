@@ -6,6 +6,8 @@ use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::fs;
 use std::path::{Path, PathBuf};
+use std::sync::Arc;
+use rodio::{Decoder, OutputStream, Sink};
 
 fn main() -> Result<(), eframe::Error> {
     let options = eframe::NativeOptions {
@@ -69,6 +71,13 @@ enum RightTab {
     Lrc,
 }
 
+#[derive(PartialEq)]
+enum PlaybackState {
+    Playing,
+    Paused,
+    Stopped,
+}
+
 #[derive(Serialize, Deserialize, Clone)]
 struct Settings {
     target_directory: String,
@@ -127,6 +136,12 @@ struct MyApp {
     focus_search: bool,
     splitter_position: f32,
     right_pane_tab: RightTab,
+    selected_track: Option<TrackInfo>,
+    playback_state: PlaybackState,
+    // 音声再生関連
+    _stream: Option<OutputStream>,
+    sink: Option<Arc<Sink>>,
+    current_playing_track: Option<TrackInfo>,
 }
 
 impl MyApp {
@@ -142,6 +157,11 @@ impl MyApp {
             focus_search: false,
             splitter_position: 0.33, // 左:右 = 1:2
             right_pane_tab: RightTab::Playback,
+            selected_track: None,
+            playback_state: PlaybackState::Stopped,
+            _stream: None,
+            sink: None,
+            current_playing_track: None,
         };
         app.refresh_music_tree();
         app
@@ -567,8 +587,16 @@ impl MyApp {
                 }
             } else {
                 ui.horizontal(|ui| {
-                    ui.label(format!("{} ", icon));
-                    self.show_highlighted_text(ui, &node.name, &self.search_query);
+                    if node.node_type == MusicNodeType::Track {
+                        if self.show_clickable_highlighted_text(ui, icon, &node.name, &self.search_query) {
+                            if let Some(track_info) = &node.track_info {
+                                self.selected_track = Some(track_info.clone());
+                            }
+                        }
+                    } else {
+                        ui.label(format!("{} ", icon));
+                        self.show_highlighted_text(ui, &node.name, &self.search_query);
+                    }
                 });
             }
         });
@@ -612,8 +640,16 @@ impl MyApp {
                 }
             } else {
                 ui.horizontal(|ui| {
-                    ui.label(format!("{} ", icon));
-                    self.show_highlighted_text(ui, &node.name, &self.search_query);
+                    if node.node_type == MusicNodeType::Track {
+                        if self.show_clickable_highlighted_text(ui, icon, &node.name, &self.search_query) {
+                            if let Some(track_info) = &node.track_info {
+                                self.selected_track = Some(track_info.clone());
+                            }
+                        }
+                    } else {
+                        ui.label(format!("{} ", icon));
+                        self.show_highlighted_text(ui, &node.name, &self.search_query);
+                    }
                 });
             }
         });
@@ -658,8 +694,16 @@ impl MyApp {
                 }
             } else {
                 ui.horizontal(|ui| {
-                    ui.label(format!("{} ", icon));
-                    self.show_highlighted_text(ui, &node.name, &self.search_query);
+                    if node.node_type == MusicNodeType::Track {
+                        if self.show_clickable_highlighted_text(ui, icon, &node.name, &self.search_query) {
+                            if let Some(track_info) = &node.track_info {
+                                self.selected_track = Some(track_info.clone());
+                            }
+                        }
+                    } else {
+                        ui.label(format!("{} ", icon));
+                        self.show_highlighted_text(ui, &node.name, &self.search_query);
+                    }
                 });
             }
         });
@@ -704,8 +748,16 @@ impl MyApp {
                 }
             } else {
                 ui.horizontal(|ui| {
-                    ui.label(format!("{} ", icon));
-                    self.show_highlighted_text(ui, &node.name, &self.search_query);
+                    if node.node_type == MusicNodeType::Track {
+                        if self.show_clickable_highlighted_text(ui, icon, &node.name, &self.search_query) {
+                            if let Some(track_info) = &node.track_info {
+                                self.selected_track = Some(track_info.clone());
+                            }
+                        }
+                    } else {
+                        ui.label(format!("{} ", icon));
+                        self.show_highlighted_text(ui, &node.name, &self.search_query);
+                    }
                 });
             }
         });
@@ -714,8 +766,11 @@ impl MyApp {
             ui.indent(format!("music_indent_{}_{}_{}_{}", parent_index, child_index, grandchild_index, greatgrandchild_index), |ui| {
                 for child in &node.children {
                     ui.horizontal(|ui| {
-                        ui.label("🎵 ");
-                        self.show_highlighted_text(ui, &child.name, &self.search_query);
+                        if self.show_clickable_highlighted_text(ui, "🎵", &child.name, &self.search_query) {
+                            if let Some(track_info) = &child.track_info {
+                                self.selected_track = Some(track_info.clone());
+                            }
+                        }
                     });
                 }
             });
@@ -814,6 +869,84 @@ impl MyApp {
                 ui.label(text);
             }
         }
+    }
+    
+    fn get_first_track_from_node(&self, node: &MusicTreeNode) -> Option<TrackInfo> {
+        // 直接楽曲の場合
+        if node.node_type == MusicNodeType::Track {
+            return node.track_info.clone();
+        }
+        
+        // 子ノードから最初の楽曲を探す（再帰的）
+        for child in &node.children {
+            if let Some(track) = self.get_first_track_from_node(child) {
+                return Some(track);
+            }
+        }
+        
+        None
+    }
+    
+    fn get_playable_track(&self) -> Option<TrackInfo> {
+        // selected_trackが既に楽曲の場合はそれを返す
+        if let Some(ref track) = self.selected_track {
+            return Some(track.clone());
+        }
+        
+        // music_treeから最初の楽曲を探す
+        for node in &self.music_tree {
+            if let Some(track) = self.get_first_track_from_node(node) {
+                return Some(track);
+            }
+        }
+        
+        None
+    }
+    
+    fn play_track(&mut self, track: TrackInfo) {
+        // 既存の再生を停止
+        self.stop_playback();
+        
+        // 新しい音声ストリームとシンクを作成
+        if let Ok((_stream, stream_handle)) = OutputStream::try_default() {
+            let sink = Arc::new(Sink::try_new(&stream_handle).unwrap());
+            
+            // ファイルを開いて再生
+            if let Ok(file) = std::fs::File::open(&track.path) {
+                if let Ok(source) = Decoder::new(std::io::BufReader::new(file)) {
+                    sink.append(source);
+                    
+                    self._stream = Some(_stream);
+                    self.sink = Some(sink);
+                    self.current_playing_track = Some(track);
+                    self.playback_state = PlaybackState::Playing;
+                }
+            }
+        }
+    }
+    
+    fn pause_playback(&mut self) {
+        if let Some(ref sink) = self.sink {
+            sink.pause();
+            self.playback_state = PlaybackState::Paused;
+        }
+    }
+    
+    fn resume_playback(&mut self) {
+        if let Some(ref sink) = self.sink {
+            sink.play();
+            self.playback_state = PlaybackState::Playing;
+        }
+    }
+    
+    fn stop_playback(&mut self) {
+        if let Some(ref sink) = self.sink {
+            sink.stop();
+        }
+        self._stream = None;
+        self.sink = None;
+        self.current_playing_track = None;
+        self.playback_state = PlaybackState::Stopped;
     }
     
     fn show_clickable_highlighted_text(&self, ui: &mut egui::Ui, icon: &str, text: &str, search_query: &str) -> bool {
@@ -1018,10 +1151,53 @@ impl eframe::App for MyApp {
                         .show(&mut right_ui, |ui| {
                             match self.right_pane_tab {
                                 RightTab::Playback => {
-                                    ui.vertical_centered(|ui| {
-                                        ui.add_space(50.0);
-                                        ui.label("再生タブ");
-                                        ui.label("ここに音楽再生コントロールを追加予定");
+                                    // 再生コントロールボタン（水平配置・中央揃え）
+                                    ui.horizontal(|ui| {
+                                        ui.add_space(5.0); // 左端マージンを追加
+                                        
+                                        let button_size = [48.0, 48.0]; // 縦横2倍のサイズ
+                                        
+                                        // 前へボタン
+                                        if ui.add_sized(button_size, egui::Button::new("⏮")).clicked() {
+                                            // TODO: 前の楽曲に移動
+                                        }
+                                        
+                                        ui.add_space(10.0);
+                                        
+                                        // 再生/一時停止ボタン（状態により表示切り替え）
+                                        let play_pause_button_text = match self.playback_state {
+                                            PlaybackState::Playing => "⏸", // 一時停止アイコン
+                                            _ => "▶",                      // 再生アイコン
+                                        };
+                                        if ui.add_sized(button_size, egui::Button::new(play_pause_button_text)).clicked() {
+                                            match self.playback_state {
+                                                PlaybackState::Playing => {
+                                                    self.pause_playback();
+                                                },
+                                                PlaybackState::Paused => {
+                                                    self.resume_playback();
+                                                },
+                                                PlaybackState::Stopped => {
+                                                    if let Some(track) = self.get_playable_track() {
+                                                        self.play_track(track);
+                                                    }
+                                                },
+                                            }
+                                        }
+                                        
+                                        ui.add_space(10.0);
+                                        
+                                        // 停止ボタン
+                                        if ui.add_sized(button_size, egui::Button::new("⏹")).clicked() {
+                                            self.stop_playback();
+                                        }
+                                        
+                                        ui.add_space(10.0);
+                                        
+                                        // 次へボタン
+                                        if ui.add_sized(button_size, egui::Button::new("⏭")).clicked() {
+                                            // TODO: 次の楽曲に移動
+                                        }
                                     });
                                 },
                                 RightTab::Info => {
