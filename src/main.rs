@@ -864,10 +864,19 @@ impl eframe::App for MyApp {
     }
     
     fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
-        // Ctrl+F ショートカットの処理
+        // キーボードショートカットの処理
         if ctx.input(|i| i.key_pressed(egui::Key::F) && i.modifiers.ctrl) {
+            // Ctrl+F: 検索
             self.current_tab = Tab::Main;
             self.focus_search = true;
+        }
+        if ctx.input(|i| i.key_pressed(egui::Key::Period) && i.modifiers.ctrl) {
+            // Ctrl+.: 設定
+            self.current_tab = Tab::Settings;
+        }
+        if ctx.input(|i| i.key_pressed(egui::Key::Q) && i.modifiers.ctrl) {
+            // Ctrl+Q: 終了
+            ctx.send_viewport_cmd(egui::ViewportCommand::Close);
         }
         egui::TopBottomPanel::top("menu_bar").show(ctx, |ui| {
             egui::menu::bar(ui, |ui| {
@@ -877,11 +886,11 @@ impl eframe::App for MyApp {
                         self.focus_search = true;
                         ui.close_menu();
                     }
-                    if ui.button("設定").clicked() {
+                    if ui.add(egui::Button::new("設定").shortcut_text("Ctrl+.")).clicked() {
                         self.current_tab = Tab::Settings;
                         ui.close_menu();
                     }
-                    if ui.button("終了").clicked() {
+                    if ui.add(egui::Button::new("終了").shortcut_text("Ctrl+Q")).clicked() {
                         ctx.send_viewport_cmd(egui::ViewportCommand::Close);
                     }
                 });
