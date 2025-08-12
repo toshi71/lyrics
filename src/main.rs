@@ -118,6 +118,7 @@ struct MyApp {
     original_music_tree: Vec<MusicTreeNode>,
     search_query: String,
     focus_search: bool,
+    splitter_position: f32,
 }
 
 impl MyApp {
@@ -131,6 +132,7 @@ impl MyApp {
             original_music_tree: Vec::new(),
             search_query: String::new(),
             focus_search: false,
+            splitter_position: 0.33, // 左:右 = 1:2
         };
         app.refresh_music_tree();
         app
@@ -907,47 +909,96 @@ impl eframe::App for MyApp {
         egui::CentralPanel::default().show(ctx, |ui| {
             match self.current_tab {
                 Tab::Main => {
+                    let available_rect = ui.available_rect_before_wrap();
+                    let available_width = available_rect.width();
+                    let available_height = available_rect.height();
+                    let left_width = available_width * self.splitter_position;
+                    
+                    // 左ペイン（既存のメインコンテンツ）
+                    let left_rect = egui::Rect::from_min_size(
+                        available_rect.min,
+                        egui::Vec2::new(left_width - 1.0, available_height)
+                    );
+                    let mut left_ui = ui.child_ui(left_rect, egui::Layout::top_down(egui::Align::LEFT), None);
+                    left_ui.set_clip_rect(left_rect);
+                    
                     if self.settings.target_directory.is_empty() {
-                        ui.vertical_centered(|ui| {
+                        left_ui.vertical_centered(|ui| {
                             ui.add_space(50.0);
                             ui.label("対象ディレクトリが設定されていません。");
                             ui.label("設定タブでディレクトリを選択してください。");
                         });
                     } else {
-                        egui::ScrollArea::vertical().show(ui, |ui| {
-                            ui.label(format!("対象ディレクトリ: {}", self.settings.target_directory));
-                            ui.separator();
-                            
-                            ui.horizontal(|ui| {
-                                ui.label("検索:");
+                        egui::ScrollArea::both()
+                            .id_source("left_pane_scroll")
+                            .auto_shrink([false, false])
+                            .scroll_bar_visibility(egui::scroll_area::ScrollBarVisibility::VisibleWhenNeeded)
+                            .show(&mut left_ui, |ui| {
+                                ui.label(format!("対象ディレクトリ: {}", self.settings.target_directory));
+                                ui.separator();
                                 
-                                let response = ui.text_edit_singleline(&mut self.search_query);
-                                
-                                // フォーカス要求がある場合
-                                if self.focus_search {
-                                    response.request_focus();
-                                    self.focus_search = false;
-                                    // テキストを全選択
-                                    if !self.search_query.is_empty() {
-                                        ui.ctx().memory_mut(|mem| {
-                                            mem.request_focus(response.id);
-                                        });
+                                ui.horizontal(|ui| {
+                                    ui.label("検索:");
+                                    
+                                    let available_width = ui.available_width() - 10.0;
+                                    let response = ui.add_sized(
+                                        [available_width, 20.0],
+                                        egui::TextEdit::singleline(&mut self.search_query)
+                                    );
+                                    
+                                    // フォーカス要求がある場合
+                                    if self.focus_search {
+                                        response.request_focus();
+                                        self.focus_search = false;
+                                        // テキストを全選択
+                                        if !self.search_query.is_empty() {
+                                            ui.ctx().memory_mut(|mem| {
+                                                mem.request_focus(response.id);
+                                            });
+                                        }
                                     }
-                                }
+                                    
+                                    if response.changed() {
+                                        self.apply_search_filter();
+                                    }
+                                });
+                                ui.add_space(10.0);
                                 
-                                if response.changed() {
-                                    self.apply_search_filter();
-                                }
-                                if ui.button("クリア").clicked() {
-                                    self.search_query.clear();
-                                    self.apply_search_filter();
-                                }
+                                self.show_music_tree(ui);
                             });
-                            ui.add_space(10.0);
-                            
-                            self.show_music_tree(ui);
-                        });
                     }
+                    
+                    // セパレーター
+                    let separator_rect = egui::Rect::from_min_size(
+                        egui::Pos2::new(available_rect.min.x + left_width, available_rect.min.y),
+                        egui::Vec2::new(2.0, available_height)
+                    );
+                    ui.allocate_ui_at_rect(separator_rect, |ui| {
+                        ui.separator();
+                    });
+                    
+                    // 右ペイン（新しい領域）
+                    let right_rect = egui::Rect::from_min_size(
+                        egui::Pos2::new(available_rect.min.x + left_width + 2.0, available_rect.min.y),
+                        egui::Vec2::new(available_width - left_width - 2.0, available_height)
+                    );
+                    let mut right_ui = ui.child_ui(right_rect, egui::Layout::top_down(egui::Align::LEFT), None);
+                    right_ui.set_clip_rect(right_rect);
+                    
+                    egui::ScrollArea::both()
+                        .id_source("right_pane_scroll")
+                        .auto_shrink([false, false])
+                        .scroll_bar_visibility(egui::scroll_area::ScrollBarVisibility::VisibleWhenNeeded)
+                        .show(&mut right_ui, |ui| {
+                            ui.vertical_centered(|ui| {
+                                ui.add_space(50.0);
+                                ui.label("右側ペイン");
+                                ui.label("ここに新しいコンテンツを追加できます");
+                                
+                                // テスト用の長いテキスト
+                                ui.label("これは非常に長いテキストの例です。ペインの幅を超える場合、水平スクロールによって全体を表示できるようになります。");
+                            });
+                        });
                 },
                 Tab::Settings => {
                     ui.add_space(20.0);
