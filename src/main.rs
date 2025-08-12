@@ -62,6 +62,13 @@ enum Tab {
     Settings,
 }
 
+#[derive(PartialEq)]
+enum RightTab {
+    Playback,
+    Info,
+    Lrc,
+}
+
 #[derive(Serialize, Deserialize, Clone)]
 struct Settings {
     target_directory: String,
@@ -119,6 +126,7 @@ struct MyApp {
     search_query: String,
     focus_search: bool,
     splitter_position: f32,
+    right_pane_tab: RightTab,
 }
 
 impl MyApp {
@@ -133,6 +141,7 @@ impl MyApp {
             search_query: String::new(),
             focus_search: false,
             splitter_position: 0.33, // 左:右 = 1:2
+            right_pane_tab: RightTab::Playback,
         };
         app.refresh_music_tree();
         app
@@ -985,19 +994,51 @@ impl eframe::App for MyApp {
                     let mut right_ui = ui.child_ui(right_rect, egui::Layout::top_down(egui::Align::LEFT), None);
                     right_ui.set_clip_rect(right_rect);
                     
+                    // タブヘッダー
+                    right_ui.allocate_ui_with_layout(
+                        egui::Vec2::new(right_ui.available_width(), right_ui.spacing().button_padding.y * 2.0 + right_ui.text_style_height(&egui::TextStyle::Button)),
+                        egui::Layout::top_down(egui::Align::LEFT),
+                        |ui| {
+                            ui.add_space(2.0); // 上マージン
+                            ui.horizontal(|ui| {
+                                ui.add_space(4.0); // 左マージン
+                                ui.selectable_value(&mut self.right_pane_tab, RightTab::Playback, "再生");
+                                ui.selectable_value(&mut self.right_pane_tab, RightTab::Info, "情報");
+                                ui.selectable_value(&mut self.right_pane_tab, RightTab::Lrc, "LRC");
+                            });
+                        }
+                    );
+                    right_ui.separator();
+                    
+                    // タブコンテンツエリア
                     egui::ScrollArea::both()
                         .id_source("right_pane_scroll")
                         .auto_shrink([false, false])
                         .scroll_bar_visibility(egui::scroll_area::ScrollBarVisibility::VisibleWhenNeeded)
                         .show(&mut right_ui, |ui| {
-                            ui.vertical_centered(|ui| {
-                                ui.add_space(50.0);
-                                ui.label("右側ペイン");
-                                ui.label("ここに新しいコンテンツを追加できます");
-                                
-                                // テスト用の長いテキスト
-                                ui.label("これは非常に長いテキストの例です。ペインの幅を超える場合、水平スクロールによって全体を表示できるようになります。");
-                            });
+                            match self.right_pane_tab {
+                                RightTab::Playback => {
+                                    ui.vertical_centered(|ui| {
+                                        ui.add_space(50.0);
+                                        ui.label("再生タブ");
+                                        ui.label("ここに音楽再生コントロールを追加予定");
+                                    });
+                                },
+                                RightTab::Info => {
+                                    ui.vertical_centered(|ui| {
+                                        ui.add_space(50.0);
+                                        ui.label("情報タブ");
+                                        ui.label("ここに楽曲情報を表示予定");
+                                    });
+                                },
+                                RightTab::Lrc => {
+                                    ui.vertical_centered(|ui| {
+                                        ui.add_space(50.0);
+                                        ui.label("LRCタブ");
+                                        ui.label("ここに歌詞を表示予定");
+                                    });
+                                },
+                            }
                         });
                 },
                 Tab::Settings => {
