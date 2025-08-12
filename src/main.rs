@@ -65,12 +65,14 @@ enum Tab {
 #[derive(Serialize, Deserialize, Clone)]
 struct Settings {
     target_directory: String,
+    classical_composer_hierarchy: bool,
 }
 
 impl Default for Settings {
     fn default() -> Self {
         Self {
             target_directory: String::new(),
+            classical_composer_hierarchy: false,
         }
     }
 }
@@ -89,9 +91,11 @@ struct MusicTreeNode {
 
 #[derive(Debug, Clone, PartialEq)]
 enum MusicNodeType {
+    Composer,
     Artist,
     Album,
     Track,
+    SectionHeader,
 }
 
 #[derive(Debug, Clone)]
@@ -99,6 +103,8 @@ struct TrackInfo {
     title: String,
     artist: String,
     album: String,
+    composer: Option<String>,
+    genre: Option<String>,
     track_number: Option<u32>,
     disc_number: Option<u32>,
     path: PathBuf,
@@ -184,6 +190,157 @@ impl MyApp {
     }
     
     fn build_music_tree(&self, tracks: Vec<TrackInfo>) -> Vec<MusicTreeNode> {
+        if self.settings.classical_composer_hierarchy {
+            self.build_composer_based_tree(tracks)
+        } else {
+            self.build_artist_based_tree(tracks)
+        }
+    }
+    
+    fn is_classical_genre(&self, genre: &Option<String>) -> bool {
+        if let Some(g) = genre {
+            let g_lower = g.to_lowercase();
+            g_lower == "classical" || g_lower == "クラシック"
+        } else {
+            false
+        }
+    }
+    
+    fn build_composer_based_tree(&self, tracks: Vec<TrackInfo>) -> Vec<MusicTreeNode> {
+        let mut classical_tracks = Vec::new();
+        let mut non_classical_tracks = Vec::new();
+        
+        // クラシックと非クラシックを分ける
+        for track in tracks {
+            if self.is_classical_genre(&track.genre) {
+                classical_tracks.push(track);
+            } else {
+                non_classical_tracks.push(track);
+            }
+        }
+        
+        let mut root_nodes = Vec::new();
+        
+        let classical_exists = !classical_tracks.is_empty();
+        let non_classical_exists = !non_classical_tracks.is_empty();
+        
+        // クラシック音楽（作曲家 > アーティスト > アルバム > 曲）を先に表示
+        if classical_exists {
+            // まずクラシック音楽の構造を構築
+            let mut classical_nodes = Vec::new();
+            let mut composer_map: HashMap<String, HashMap<String, HashMap<String, Vec<TrackInfo>>>> = HashMap::new();
+            
+            for track in classical_tracks {
+                let composer = track.composer.clone()
+                    .unwrap_or_else(|| "Unknown Composer".to_string());
+                
+                composer_map
+                    .entry(composer)
+                    .or_default()
+                    .entry(track.artist.clone())
+                    .or_default()
+                    .entry(track.album.clone())
+                    .or_default()
+                    .push(track);
+            }
+            
+            let mut composer_nodes = Vec::new();
+            
+            for (composer_name, artists) in composer_map {
+                let mut artist_nodes = Vec::new();
+                
+                for (artist_name, albums) in artists {
+                    let mut album_nodes = Vec::new();
+                    
+                    for (album_name, mut album_tracks) in albums {
+                        self.sort_tracks(&mut album_tracks);
+                        
+                        let mut track_nodes = Vec::new();
+                        for track in album_tracks {
+                            let display_name = self.format_track_display_name(&track);
+                            
+                            track_nodes.push(MusicTreeNode {
+                                name: display_name,
+                                node_type: MusicNodeType::Track,
+                                children: Vec::new(),
+                                expanded: false,
+                                file_path: Some(track.path.clone()),
+                                track_info: Some(track),
+                            });
+                        }
+                        
+                        album_nodes.push(MusicTreeNode {
+                            name: album_name,
+                            node_type: MusicNodeType::Album,
+                            children: track_nodes,
+                            expanded: false,
+                            file_path: None,
+                            track_info: None,
+                        });
+                    }
+                    
+                    album_nodes.sort_by(|a, b| a.name.cmp(&b.name));
+                    
+                    artist_nodes.push(MusicTreeNode {
+                        name: artist_name,
+                        node_type: MusicNodeType::Artist,
+                        children: album_nodes,
+                        expanded: false,
+                        file_path: None,
+                        track_info: None,
+                    });
+                }
+                
+                artist_nodes.sort_by(|a, b| a.name.cmp(&b.name));
+                
+                composer_nodes.push(MusicTreeNode {
+                    name: composer_name,
+                    node_type: MusicNodeType::Composer,
+                    children: artist_nodes,
+                    expanded: false,
+                    file_path: None,
+                    track_info: None,
+                });
+            }
+            
+            composer_nodes.sort_by(|a, b| a.name.cmp(&b.name));
+            classical_nodes.extend(composer_nodes);
+            
+            // クラシック音楽セクションヘッダーを作成
+            root_nodes.push(MusicTreeNode {
+                name: "═══ クラシック音楽 ═══".to_string(),
+                node_type: MusicNodeType::SectionHeader,
+                children: classical_nodes,
+                expanded: true, // デフォルトで展開
+                file_path: None,
+                track_info: None,
+            });
+        }
+        
+        // 非クラシック音楽（通常の階層）を後に表示
+        if non_classical_exists {
+            let non_classical_tree = self.build_artist_based_tree(non_classical_tracks);
+            
+            // 非クラシック音楽セクションの目印を追加（両方のセクションがある場合のみ）
+            if classical_exists {
+                root_nodes.push(MusicTreeNode {
+                    name: "═══ 一般音楽 ═══".to_string(),
+                    node_type: MusicNodeType::SectionHeader,
+                    children: non_classical_tree,
+                    expanded: true, // デフォルトで展開
+                    file_path: None,
+                    track_info: None,
+                });
+            } else {
+                // クラシック音楽がない場合はセクションヘッダーなしで直接表示
+                root_nodes.extend(non_classical_tree);
+            }
+        }
+        
+        root_nodes
+    }
+    
+    fn build_artist_based_tree(&self, tracks: Vec<TrackInfo>) -> Vec<MusicTreeNode> {
         let mut artist_map: HashMap<String, HashMap<String, Vec<TrackInfo>>> = HashMap::new();
         
         // トラックをアーティスト > アルバム > 曲 でグループ化
@@ -202,43 +359,11 @@ impl MyApp {
             let mut album_nodes = Vec::new();
             
             for (album_name, mut album_tracks) in albums {
-                // 曲をディスク番号、トラック番号順でソート
-                album_tracks.sort_by(|a, b| {
-                    // ディスク番号でソート（Noneは0として扱う）
-                    let disc_cmp = a.disc_number.unwrap_or(0).cmp(&b.disc_number.unwrap_or(0));
-                    if disc_cmp != std::cmp::Ordering::Equal {
-                        return disc_cmp;
-                    }
-                    
-                    // ディスク番号が同じ場合はトラック番号でソート
-                    let track_cmp = a.track_number.unwrap_or(0).cmp(&b.track_number.unwrap_or(0));
-                    if track_cmp != std::cmp::Ordering::Equal {
-                        return track_cmp;
-                    }
-                    
-                    // トラック番号も同じ場合はタイトルでソート
-                    a.title.cmp(&b.title)
-                });
+                self.sort_tracks(&mut album_tracks);
                 
                 let mut track_nodes = Vec::new();
                 for track in album_tracks {
-                    // 表示名を生成（ディスク番号、トラック番号、タイトル）
-                    let display_name = {
-                        let mut parts = Vec::new();
-                        
-                        if let Some(disc) = track.disc_number {
-                            if let Some(track_num) = track.track_number {
-                                parts.push(format!("{}-{:02}", disc, track_num));
-                            } else {
-                                parts.push(format!("{}-", disc));
-                            }
-                        } else if let Some(track_num) = track.track_number {
-                            parts.push(format!("{:02}", track_num));
-                        }
-                        
-                        parts.push(track.title.clone());
-                        parts.join(" ")
-                    };
+                    let display_name = self.format_track_display_name(&track);
                     
                     track_nodes.push(MusicTreeNode {
                         name: display_name,
@@ -277,6 +402,42 @@ impl MyApp {
         artist_nodes.sort_by(|a, b| a.name.cmp(&b.name));
         
         artist_nodes
+    }
+    
+    fn sort_tracks(&self, tracks: &mut Vec<TrackInfo>) {
+        tracks.sort_by(|a, b| {
+            // ディスク番号でソート（Noneは0として扱う）
+            let disc_cmp = a.disc_number.unwrap_or(0).cmp(&b.disc_number.unwrap_or(0));
+            if disc_cmp != std::cmp::Ordering::Equal {
+                return disc_cmp;
+            }
+            
+            // ディスク番号が同じ場合はトラック番号でソート
+            let track_cmp = a.track_number.unwrap_or(0).cmp(&b.track_number.unwrap_or(0));
+            if track_cmp != std::cmp::Ordering::Equal {
+                return track_cmp;
+            }
+            
+            // トラック番号も同じ場合はタイトルでソート
+            a.title.cmp(&b.title)
+        });
+    }
+    
+    fn format_track_display_name(&self, track: &TrackInfo) -> String {
+        let mut parts = Vec::new();
+        
+        if let Some(disc) = track.disc_number {
+            if let Some(track_num) = track.track_number {
+                parts.push(format!("{}-{:02}", disc, track_num));
+            } else {
+                parts.push(format!("{}-", disc));
+            }
+        } else if let Some(track_num) = track.track_number {
+            parts.push(format!("{:02}", track_num));
+        }
+        
+        parts.push(track.title.clone());
+        parts.join(" ")
     }
     
     fn is_flac_file(&self, path: &Path) -> bool {
@@ -326,10 +487,21 @@ impl MyApp {
                     .and_then(|s| s.split('/').next()) // "1/2" のような形式に対応
                     .and_then(|s| s.parse::<u32>().ok());
                 
+                // 作曲家とジャンル情報を取得
+                let composer = tag.get_vorbis("COMPOSER")
+                    .and_then(|mut iter| iter.next())
+                    .map(|s| s.to_string());
+                
+                let genre = tag.get_vorbis("GENRE")
+                    .and_then(|mut iter| iter.next())
+                    .map(|s| s.to_string());
+                
                 Some(TrackInfo {
                     title,
                     artist,
                     album,
+                    composer,
+                    genre,
                     track_number,
                     disc_number,
                     path: path.to_path_buf(),
@@ -349,6 +521,14 @@ impl MyApp {
     fn show_music_tree_node(&mut self, ui: &mut egui::Ui, index: usize, node: &MusicTreeNode) {
         ui.horizontal(|ui| {
             let (_icon, label) = match node.node_type {
+                MusicNodeType::SectionHeader => {
+                    let icon = if node.expanded { "▼" } else { "▶" };
+                    (icon, format!("{} {}", icon, node.name))
+                },
+                MusicNodeType::Composer => {
+                    let icon = if node.expanded { "🎼" } else { "🎼" };
+                    (icon, format!("{} {}", icon, node.name))
+                },
                 MusicNodeType::Artist => {
                     let icon = if node.expanded { "👤" } else { "👤" };
                     (icon, format!("{} {}", icon, node.name))
@@ -362,7 +542,7 @@ impl MyApp {
                 },
             };
             
-            if node.node_type != MusicNodeType::Track && !node.children.is_empty() {
+            if (node.node_type != MusicNodeType::Track) && !node.children.is_empty() {
                 if ui.selectable_label(false, label).clicked() {
                     self.music_tree[index].expanded = !self.music_tree[index].expanded;
                 }
@@ -383,6 +563,14 @@ impl MyApp {
     fn show_music_tree_child(&mut self, ui: &mut egui::Ui, parent_index: usize, child_index: usize, node: &MusicTreeNode) {
         ui.horizontal(|ui| {
             let (_icon, label) = match node.node_type {
+                MusicNodeType::SectionHeader => {
+                    let icon = if node.expanded { "▼" } else { "▶" };
+                    (icon, format!("{} {}", icon, node.name))
+                },
+                MusicNodeType::Composer => {
+                    let icon = if node.expanded { "🎼" } else { "🎼" };
+                    (icon, format!("{} {}", icon, node.name))
+                },
                 MusicNodeType::Artist => {
                     let icon = if node.expanded { "👤" } else { "👤" };
                     (icon, format!("{} {}", icon, node.name))
@@ -396,7 +584,7 @@ impl MyApp {
                 },
             };
             
-            if node.node_type != MusicNodeType::Track && !node.children.is_empty() {
+            if (node.node_type != MusicNodeType::Track) && !node.children.is_empty() {
                 if ui.selectable_label(false, label).clicked() {
                     self.music_tree[parent_index].children[child_index].expanded = !self.music_tree[parent_index].children[child_index].expanded;
                 }
@@ -407,9 +595,95 @@ impl MyApp {
         
         if node.expanded && !node.children.is_empty() {
             ui.indent(format!("music_indent_{}_{}", parent_index, child_index), |ui| {
-                for (_grandchild_index, grandchild) in node.children.iter().enumerate() {
+                for (grandchild_index, grandchild) in node.children.iter().enumerate() {
+                    self.show_music_tree_grandchild(ui, parent_index, child_index, grandchild_index, grandchild);
+                }
+            });
+        }
+    }
+    
+    fn show_music_tree_grandchild(&mut self, ui: &mut egui::Ui, parent_index: usize, child_index: usize, grandchild_index: usize, node: &MusicTreeNode) {
+        ui.horizontal(|ui| {
+            let (_icon, label) = match node.node_type {
+                MusicNodeType::SectionHeader => {
+                    let icon = if node.expanded { "▼" } else { "▶" };
+                    (icon, format!("{} {}", icon, node.name))
+                },
+                MusicNodeType::Composer => {
+                    let icon = if node.expanded { "🎼" } else { "🎼" };
+                    (icon, format!("{} {}", icon, node.name))
+                },
+                MusicNodeType::Artist => {
+                    let icon = if node.expanded { "👤" } else { "👤" };
+                    (icon, format!("{} {}", icon, node.name))
+                },
+                MusicNodeType::Album => {
+                    let icon = if node.expanded { "💿" } else { "💿" };
+                    (icon, format!("{} {}", icon, node.name))
+                },
+                MusicNodeType::Track => {
+                    ("🎵", format!("🎵 {}", node.name))
+                },
+            };
+            
+            if (node.node_type != MusicNodeType::Track) && !node.children.is_empty() {
+                if ui.selectable_label(false, label).clicked() {
+                    self.music_tree[parent_index].children[child_index].children[grandchild_index].expanded 
+                        = !self.music_tree[parent_index].children[child_index].children[grandchild_index].expanded;
+                }
+            } else {
+                ui.label(label);
+            }
+        });
+        
+        if node.expanded && !node.children.is_empty() {
+            ui.indent(format!("music_indent_{}_{}_{}", parent_index, child_index, grandchild_index), |ui| {
+                for (greatgrandchild_index, greatgrandchild) in node.children.iter().enumerate() {
+                    self.show_music_tree_greatgrandchild(ui, parent_index, child_index, grandchild_index, greatgrandchild_index, greatgrandchild);
+                }
+            });
+        }
+    }
+    
+    fn show_music_tree_greatgrandchild(&mut self, ui: &mut egui::Ui, parent_index: usize, child_index: usize, grandchild_index: usize, greatgrandchild_index: usize, node: &MusicTreeNode) {
+        ui.horizontal(|ui| {
+            let (_icon, label) = match node.node_type {
+                MusicNodeType::SectionHeader => {
+                    let icon = if node.expanded { "▼" } else { "▶" };
+                    (icon, format!("{} {}", icon, node.name))
+                },
+                MusicNodeType::Composer => {
+                    let icon = if node.expanded { "🎼" } else { "🎼" };
+                    (icon, format!("{} {}", icon, node.name))
+                },
+                MusicNodeType::Artist => {
+                    let icon = if node.expanded { "👤" } else { "👤" };
+                    (icon, format!("{} {}", icon, node.name))
+                },
+                MusicNodeType::Album => {
+                    let icon = if node.expanded { "💿" } else { "💿" };
+                    (icon, format!("{} {}", icon, node.name))
+                },
+                MusicNodeType::Track => {
+                    ("🎵", format!("🎵 {}", node.name))
+                },
+            };
+            
+            if (node.node_type != MusicNodeType::Track) && !node.children.is_empty() {
+                if ui.selectable_label(false, label).clicked() {
+                    self.music_tree[parent_index].children[child_index].children[grandchild_index].children[greatgrandchild_index].expanded 
+                        = !self.music_tree[parent_index].children[child_index].children[grandchild_index].children[greatgrandchild_index].expanded;
+                }
+            } else {
+                ui.label(label);
+            }
+        });
+        
+        if node.expanded && !node.children.is_empty() {
+            ui.indent(format!("music_indent_{}_{}_{}_{}", parent_index, child_index, grandchild_index, greatgrandchild_index), |ui| {
+                for child in &node.children {
                     ui.horizontal(|ui| {
-                        ui.label(format!("🎵 {}", grandchild.name));
+                        ui.label(format!("🎵 {}", child.name));
                     });
                 }
             });
@@ -479,6 +753,17 @@ impl eframe::App for MyApp {
                                 self.save_settings();
                                 self.refresh_music_tree();
                             }
+                        }
+                    });
+                    
+                    ui.add_space(20.0);
+                    
+                    ui.horizontal(|ui| {
+                        let response = ui.checkbox(&mut self.settings.classical_composer_hierarchy, 
+                            "クラシック音楽（ジャンルが\"Classical\"）では作曲家階層を追加");
+                        if response.changed() {
+                            self.save_settings();
+                            self.refresh_music_tree();
                         }
                     });
                 },
