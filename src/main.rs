@@ -582,15 +582,20 @@ impl MyApp {
             };
             
             if (node.node_type != MusicNodeType::Track) && !node.children.is_empty() {
-                if self.show_clickable_highlighted_text(ui, icon, &node.name, &self.search_query) {
+                let (clicked, _) = self.show_clickable_highlighted_text(ui, icon, &node.name, &self.search_query);
+                if clicked {
                     self.music_tree[index].expanded = !self.music_tree[index].expanded;
                 }
             } else {
                 ui.horizontal(|ui| {
                     if node.node_type == MusicNodeType::Track {
-                        if self.show_clickable_highlighted_text(ui, icon, &node.name, &self.search_query) {
-                            if let Some(track_info) = &node.track_info {
+                        let (clicked, double_clicked) = self.show_clickable_highlighted_text(ui, icon, &node.name, &self.search_query);
+                        if let Some(track_info) = &node.track_info {
+                            if clicked {
                                 self.selected_track = Some(track_info.clone());
+                            }
+                            if double_clicked {
+                                self.play_track(track_info.clone());
                             }
                         }
                     } else {
@@ -635,15 +640,20 @@ impl MyApp {
             };
             
             if (node.node_type != MusicNodeType::Track) && !node.children.is_empty() {
-                if self.show_clickable_highlighted_text(ui, icon, &node.name, &self.search_query) {
+                let (clicked, _) = self.show_clickable_highlighted_text(ui, icon, &node.name, &self.search_query);
+                if clicked {
                     self.music_tree[parent_index].children[child_index].expanded = !self.music_tree[parent_index].children[child_index].expanded;
                 }
             } else {
                 ui.horizontal(|ui| {
                     if node.node_type == MusicNodeType::Track {
-                        if self.show_clickable_highlighted_text(ui, icon, &node.name, &self.search_query) {
-                            if let Some(track_info) = &node.track_info {
+                        let (clicked, double_clicked) = self.show_clickable_highlighted_text(ui, icon, &node.name, &self.search_query);
+                        if let Some(track_info) = &node.track_info {
+                            if clicked {
                                 self.selected_track = Some(track_info.clone());
+                            }
+                            if double_clicked {
+                                self.play_track(track_info.clone());
                             }
                         }
                     } else {
@@ -688,16 +698,21 @@ impl MyApp {
             };
             
             if (node.node_type != MusicNodeType::Track) && !node.children.is_empty() {
-                if self.show_clickable_highlighted_text(ui, icon, &node.name, &self.search_query) {
+                let (clicked, _) = self.show_clickable_highlighted_text(ui, icon, &node.name, &self.search_query);
+                if clicked {
                     self.music_tree[parent_index].children[child_index].children[grandchild_index].expanded 
                         = !self.music_tree[parent_index].children[child_index].children[grandchild_index].expanded;
                 }
             } else {
                 ui.horizontal(|ui| {
                     if node.node_type == MusicNodeType::Track {
-                        if self.show_clickable_highlighted_text(ui, icon, &node.name, &self.search_query) {
-                            if let Some(track_info) = &node.track_info {
+                        let (clicked, double_clicked) = self.show_clickable_highlighted_text(ui, icon, &node.name, &self.search_query);
+                        if let Some(track_info) = &node.track_info {
+                            if clicked {
                                 self.selected_track = Some(track_info.clone());
+                            }
+                            if double_clicked {
+                                self.play_track(track_info.clone());
                             }
                         }
                     } else {
@@ -742,16 +757,21 @@ impl MyApp {
             };
             
             if (node.node_type != MusicNodeType::Track) && !node.children.is_empty() {
-                if self.show_clickable_highlighted_text(ui, icon, &node.name, &self.search_query) {
+                let (clicked, _) = self.show_clickable_highlighted_text(ui, icon, &node.name, &self.search_query);
+                if clicked {
                     self.music_tree[parent_index].children[child_index].children[grandchild_index].children[greatgrandchild_index].expanded 
                         = !self.music_tree[parent_index].children[child_index].children[grandchild_index].children[greatgrandchild_index].expanded;
                 }
             } else {
                 ui.horizontal(|ui| {
                     if node.node_type == MusicNodeType::Track {
-                        if self.show_clickable_highlighted_text(ui, icon, &node.name, &self.search_query) {
-                            if let Some(track_info) = &node.track_info {
+                        let (clicked, double_clicked) = self.show_clickable_highlighted_text(ui, icon, &node.name, &self.search_query);
+                        if let Some(track_info) = &node.track_info {
+                            if clicked {
                                 self.selected_track = Some(track_info.clone());
+                            }
+                            if double_clicked {
+                                self.play_track(track_info.clone());
                             }
                         }
                     } else {
@@ -766,9 +786,13 @@ impl MyApp {
             ui.indent(format!("music_indent_{}_{}_{}_{}", parent_index, child_index, grandchild_index, greatgrandchild_index), |ui| {
                 for child in &node.children {
                     ui.horizontal(|ui| {
-                        if self.show_clickable_highlighted_text(ui, "🎵", &child.name, &self.search_query) {
-                            if let Some(track_info) = &child.track_info {
+                        let (clicked, double_clicked) = self.show_clickable_highlighted_text(ui, "🎵", &child.name, &self.search_query);
+                        if let Some(track_info) = &child.track_info {
+                            if clicked {
                                 self.selected_track = Some(track_info.clone());
+                            }
+                            if double_clicked {
+                                self.play_track(track_info.clone());
                             }
                         }
                     });
@@ -949,11 +973,14 @@ impl MyApp {
         self.playback_state = PlaybackState::Stopped;
     }
     
-    fn show_clickable_highlighted_text(&self, ui: &mut egui::Ui, icon: &str, text: &str, search_query: &str) -> bool {
+    fn show_clickable_highlighted_text(&self, ui: &mut egui::Ui, icon: &str, text: &str, search_query: &str) -> (bool, bool) {
         let mut clicked = false;
+        let mut double_clicked = false;
         
         if search_query.is_empty() {
-            clicked = ui.selectable_label(false, format!("{} {}", icon, text)).clicked();
+            let response = ui.selectable_label(false, format!("{} {}", icon, text));
+            clicked = response.clicked();
+            double_clicked = response.double_clicked();
         } else {
             let query_lower = search_query.to_lowercase();
             let text_lower = text.to_lowercase();
@@ -961,6 +988,7 @@ impl MyApp {
             ui.horizontal(|ui| {
                 let response = ui.selectable_label(false, format!("{} ", icon));
                 clicked = response.clicked();
+                double_clicked = response.double_clicked();
                 
                 if let Some(start_index) = text_lower.find(&query_lower) {
                     let end_index = start_index + search_query.len();
@@ -972,33 +1000,49 @@ impl MyApp {
                     ui.spacing_mut().item_spacing.x = 0.0;
                     
                     if !before.is_empty() {
-                        if ui.selectable_label(false, before).clicked() {
+                        let response = ui.selectable_label(false, before);
+                        if response.clicked() {
                             clicked = true;
+                        }
+                        if response.double_clicked() {
+                            double_clicked = true;
                         }
                     }
                     
-                    if ui.selectable_label(false, 
+                    let response = ui.selectable_label(false, 
                         egui::RichText::new(highlight)
                             .background_color(egui::Color32::YELLOW)
                             .color(egui::Color32::BLACK)
-                    ).clicked() {
+                    );
+                    if response.clicked() {
                         clicked = true;
+                    }
+                    if response.double_clicked() {
+                        double_clicked = true;
                     }
                     
                     if !after.is_empty() {
-                        if ui.selectable_label(false, after).clicked() {
+                        let response = ui.selectable_label(false, after);
+                        if response.clicked() {
                             clicked = true;
+                        }
+                        if response.double_clicked() {
+                            double_clicked = true;
                         }
                     }
                 } else {
-                    if ui.selectable_label(false, text).clicked() {
+                    let response = ui.selectable_label(false, text);
+                    if response.clicked() {
                         clicked = true;
+                    }
+                    if response.double_clicked() {
+                        double_clicked = true;
                     }
                 }
             });
         }
         
-        clicked
+        (clicked, double_clicked)
     }
 }
 
