@@ -115,6 +115,9 @@ struct MyApp {
     current_tab: Tab,
     settings: Settings,
     music_tree: Vec<MusicTreeNode>,
+    original_music_tree: Vec<MusicTreeNode>,
+    search_query: String,
+    focus_search: bool,
 }
 
 impl MyApp {
@@ -125,6 +128,9 @@ impl MyApp {
             current_tab: Tab::Main,
             settings,
             music_tree: Vec::new(),
+            original_music_tree: Vec::new(),
+            search_query: String::new(),
+            focus_search: false,
         };
         app.refresh_music_tree();
         app
@@ -161,9 +167,11 @@ impl MyApp {
         let target_path = PathBuf::from(&self.settings.target_directory);
         if target_path.exists() && target_path.is_dir() {
             let tracks = self.collect_all_tracks(&target_path);
-            self.music_tree = self.build_music_tree(tracks);
+            self.original_music_tree = self.build_music_tree(tracks);
+            self.apply_search_filter();
         } else {
             self.music_tree.clear();
+            self.original_music_tree.clear();
         }
     }
     
@@ -520,7 +528,7 @@ impl MyApp {
     
     fn show_music_tree_node(&mut self, ui: &mut egui::Ui, index: usize, node: &MusicTreeNode) {
         ui.horizontal(|ui| {
-            let (_icon, label) = match node.node_type {
+            let (icon, _label) = match node.node_type {
                 MusicNodeType::SectionHeader => {
                     let icon = if node.expanded { "▼" } else { "▶" };
                     (icon, format!("{} {}", icon, node.name))
@@ -543,11 +551,14 @@ impl MyApp {
             };
             
             if (node.node_type != MusicNodeType::Track) && !node.children.is_empty() {
-                if ui.selectable_label(false, label).clicked() {
+                if self.show_clickable_highlighted_text(ui, icon, &node.name, &self.search_query) {
                     self.music_tree[index].expanded = !self.music_tree[index].expanded;
                 }
             } else {
-                ui.label(label);
+                ui.horizontal(|ui| {
+                    ui.label(format!("{} ", icon));
+                    self.show_highlighted_text(ui, &node.name, &self.search_query);
+                });
             }
         });
         
@@ -562,7 +573,7 @@ impl MyApp {
     
     fn show_music_tree_child(&mut self, ui: &mut egui::Ui, parent_index: usize, child_index: usize, node: &MusicTreeNode) {
         ui.horizontal(|ui| {
-            let (_icon, label) = match node.node_type {
+            let (icon, _label) = match node.node_type {
                 MusicNodeType::SectionHeader => {
                     let icon = if node.expanded { "▼" } else { "▶" };
                     (icon, format!("{} {}", icon, node.name))
@@ -585,11 +596,14 @@ impl MyApp {
             };
             
             if (node.node_type != MusicNodeType::Track) && !node.children.is_empty() {
-                if ui.selectable_label(false, label).clicked() {
+                if self.show_clickable_highlighted_text(ui, icon, &node.name, &self.search_query) {
                     self.music_tree[parent_index].children[child_index].expanded = !self.music_tree[parent_index].children[child_index].expanded;
                 }
             } else {
-                ui.label(label);
+                ui.horizontal(|ui| {
+                    ui.label(format!("{} ", icon));
+                    self.show_highlighted_text(ui, &node.name, &self.search_query);
+                });
             }
         });
         
@@ -604,7 +618,7 @@ impl MyApp {
     
     fn show_music_tree_grandchild(&mut self, ui: &mut egui::Ui, parent_index: usize, child_index: usize, grandchild_index: usize, node: &MusicTreeNode) {
         ui.horizontal(|ui| {
-            let (_icon, label) = match node.node_type {
+            let (icon, _label) = match node.node_type {
                 MusicNodeType::SectionHeader => {
                     let icon = if node.expanded { "▼" } else { "▶" };
                     (icon, format!("{} {}", icon, node.name))
@@ -627,12 +641,15 @@ impl MyApp {
             };
             
             if (node.node_type != MusicNodeType::Track) && !node.children.is_empty() {
-                if ui.selectable_label(false, label).clicked() {
+                if self.show_clickable_highlighted_text(ui, icon, &node.name, &self.search_query) {
                     self.music_tree[parent_index].children[child_index].children[grandchild_index].expanded 
                         = !self.music_tree[parent_index].children[child_index].children[grandchild_index].expanded;
                 }
             } else {
-                ui.label(label);
+                ui.horizontal(|ui| {
+                    ui.label(format!("{} ", icon));
+                    self.show_highlighted_text(ui, &node.name, &self.search_query);
+                });
             }
         });
         
@@ -647,7 +664,7 @@ impl MyApp {
     
     fn show_music_tree_greatgrandchild(&mut self, ui: &mut egui::Ui, parent_index: usize, child_index: usize, grandchild_index: usize, greatgrandchild_index: usize, node: &MusicTreeNode) {
         ui.horizontal(|ui| {
-            let (_icon, label) = match node.node_type {
+            let (icon, _label) = match node.node_type {
                 MusicNodeType::SectionHeader => {
                     let icon = if node.expanded { "▼" } else { "▶" };
                     (icon, format!("{} {}", icon, node.name))
@@ -670,12 +687,15 @@ impl MyApp {
             };
             
             if (node.node_type != MusicNodeType::Track) && !node.children.is_empty() {
-                if ui.selectable_label(false, label).clicked() {
+                if self.show_clickable_highlighted_text(ui, icon, &node.name, &self.search_query) {
                     self.music_tree[parent_index].children[child_index].children[grandchild_index].children[greatgrandchild_index].expanded 
                         = !self.music_tree[parent_index].children[child_index].children[grandchild_index].children[greatgrandchild_index].expanded;
                 }
             } else {
-                ui.label(label);
+                ui.horizontal(|ui| {
+                    ui.label(format!("{} ", icon));
+                    self.show_highlighted_text(ui, &node.name, &self.search_query);
+                });
             }
         });
         
@@ -683,11 +703,158 @@ impl MyApp {
             ui.indent(format!("music_indent_{}_{}_{}_{}", parent_index, child_index, grandchild_index, greatgrandchild_index), |ui| {
                 for child in &node.children {
                     ui.horizontal(|ui| {
-                        ui.label(format!("🎵 {}", child.name));
+                        ui.label("🎵 ");
+                        self.show_highlighted_text(ui, &child.name, &self.search_query);
                     });
                 }
             });
         }
+    }
+    
+    fn apply_search_filter(&mut self) {
+        if self.search_query.is_empty() {
+            self.music_tree = self.original_music_tree.clone();
+        } else {
+            let query = self.search_query.to_lowercase();
+            self.music_tree = self.filter_music_tree(&self.original_music_tree.clone(), &query);
+        }
+    }
+    
+    fn filter_music_tree(&self, nodes: &[MusicTreeNode], query: &str) -> Vec<MusicTreeNode> {
+        let mut filtered_nodes = Vec::new();
+        
+        for node in nodes {
+            if let Some(filtered_node) = self.filter_node(node, query) {
+                filtered_nodes.push(filtered_node);
+            }
+        }
+        
+        filtered_nodes
+    }
+    
+    fn filter_node(&self, node: &MusicTreeNode, query: &str) -> Option<MusicTreeNode> {
+        let name_matches = node.name.to_lowercase().contains(query);
+        
+        let mut filtered_children = Vec::new();
+        for child in &node.children {
+            if let Some(filtered_child) = self.filter_node(child, query) {
+                filtered_children.push(filtered_child);
+            }
+        }
+        
+        if name_matches || !filtered_children.is_empty() {
+            // 名前がマッチした場合は、すべての子要素を含める
+            let children_to_use = if name_matches {
+                node.children.clone()
+            } else {
+                filtered_children
+            };
+            
+            let has_children = !children_to_use.is_empty();
+            // 検索結果では、子要素がある場合や名前がマッチした場合は展開状態にする
+            let should_expand = has_children || (name_matches && !node.children.is_empty());
+            
+            Some(MusicTreeNode {
+                name: node.name.clone(),
+                node_type: node.node_type.clone(),
+                children: children_to_use,
+                expanded: should_expand,
+                file_path: node.file_path.clone(),
+                track_info: node.track_info.clone(),
+            })
+        } else {
+            None
+        }
+    }
+    
+    
+    fn show_highlighted_text(&self, ui: &mut egui::Ui, text: &str, search_query: &str) {
+        if search_query.is_empty() {
+            ui.label(text);
+        } else {
+            let query_lower = search_query.to_lowercase();
+            let text_lower = text.to_lowercase();
+            
+            if let Some(start_index) = text_lower.find(&query_lower) {
+                let end_index = start_index + search_query.len();
+                
+                let before = &text[..start_index];
+                let highlight = &text[start_index..end_index];
+                let after = &text[end_index..];
+                
+                ui.horizontal(|ui| {
+                    ui.spacing_mut().item_spacing.x = 0.0;
+                    
+                    if !before.is_empty() {
+                        ui.label(before);
+                    }
+                    
+                    ui.label(
+                        egui::RichText::new(highlight)
+                            .background_color(egui::Color32::YELLOW)
+                            .color(egui::Color32::BLACK)
+                    );
+                    
+                    if !after.is_empty() {
+                        ui.label(after);
+                    }
+                });
+            } else {
+                ui.label(text);
+            }
+        }
+    }
+    
+    fn show_clickable_highlighted_text(&self, ui: &mut egui::Ui, icon: &str, text: &str, search_query: &str) -> bool {
+        let mut clicked = false;
+        
+        if search_query.is_empty() {
+            clicked = ui.selectable_label(false, format!("{} {}", icon, text)).clicked();
+        } else {
+            let query_lower = search_query.to_lowercase();
+            let text_lower = text.to_lowercase();
+            
+            ui.horizontal(|ui| {
+                let response = ui.selectable_label(false, format!("{} ", icon));
+                clicked = response.clicked();
+                
+                if let Some(start_index) = text_lower.find(&query_lower) {
+                    let end_index = start_index + search_query.len();
+                    
+                    let before = &text[..start_index];
+                    let highlight = &text[start_index..end_index];
+                    let after = &text[end_index..];
+                    
+                    ui.spacing_mut().item_spacing.x = 0.0;
+                    
+                    if !before.is_empty() {
+                        if ui.selectable_label(false, before).clicked() {
+                            clicked = true;
+                        }
+                    }
+                    
+                    if ui.selectable_label(false, 
+                        egui::RichText::new(highlight)
+                            .background_color(egui::Color32::YELLOW)
+                            .color(egui::Color32::BLACK)
+                    ).clicked() {
+                        clicked = true;
+                    }
+                    
+                    if !after.is_empty() {
+                        if ui.selectable_label(false, after).clicked() {
+                            clicked = true;
+                        }
+                    }
+                } else {
+                    if ui.selectable_label(false, text).clicked() {
+                        clicked = true;
+                    }
+                }
+            });
+        }
+        
+        clicked
     }
 }
 
@@ -697,9 +864,19 @@ impl eframe::App for MyApp {
     }
     
     fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
+        // Ctrl+F ショートカットの処理
+        if ctx.input(|i| i.key_pressed(egui::Key::F) && i.modifiers.ctrl) {
+            self.current_tab = Tab::Main;
+            self.focus_search = true;
+        }
         egui::TopBottomPanel::top("menu_bar").show(ctx, |ui| {
             egui::menu::bar(ui, |ui| {
                 ui.menu_button("ファイル", |ui| {
+                    if ui.add(egui::Button::new("検索").shortcut_text("Ctrl+F")).clicked() {
+                        self.current_tab = Tab::Main;
+                        self.focus_search = true;
+                        ui.close_menu();
+                    }
                     if ui.button("設定").clicked() {
                         self.current_tab = Tab::Settings;
                         ui.close_menu();
@@ -731,6 +908,34 @@ impl eframe::App for MyApp {
                         egui::ScrollArea::vertical().show(ui, |ui| {
                             ui.label(format!("対象ディレクトリ: {}", self.settings.target_directory));
                             ui.separator();
+                            
+                            ui.horizontal(|ui| {
+                                ui.label("検索:");
+                                
+                                let response = ui.text_edit_singleline(&mut self.search_query);
+                                
+                                // フォーカス要求がある場合
+                                if self.focus_search {
+                                    response.request_focus();
+                                    self.focus_search = false;
+                                    // テキストを全選択
+                                    if !self.search_query.is_empty() {
+                                        ui.ctx().memory_mut(|mem| {
+                                            mem.request_focus(response.id);
+                                        });
+                                    }
+                                }
+                                
+                                if response.changed() {
+                                    self.apply_search_filter();
+                                }
+                                if ui.button("クリア").clicked() {
+                                    self.search_query.clear();
+                                    self.apply_search_filter();
+                                }
+                            });
+                            ui.add_space(10.0);
+                            
                             self.show_music_tree(ui);
                         });
                     }
