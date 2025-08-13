@@ -7,6 +7,7 @@ use std::collections::HashMap;
 use std::fs;
 use std::path::{Path, PathBuf};
 use std::sync::Arc;
+use std::time::{Duration, Instant};
 use rodio::{Decoder, OutputStream, Sink};
 
 fn main() -> Result<(), eframe::Error> {
@@ -142,6 +143,12 @@ struct MyApp {
     _stream: Option<OutputStream>,
     sink: Option<Arc<Sink>>,
     current_playing_track: Option<TrackInfo>,
+    // 再生キュー
+    playback_queue: Vec<TrackInfo>,
+    current_queue_index: Option<usize>,
+    // 再生位置管理
+    playback_start_time: Option<Instant>,
+    playback_paused_duration: Duration,
 }
 
 impl MyApp {
@@ -162,6 +169,10 @@ impl MyApp {
             _stream: None,
             sink: None,
             current_playing_track: None,
+            playback_queue: Vec::new(),
+            current_queue_index: None,
+            playback_start_time: None,
+            playback_paused_duration: Duration::new(0, 0),
         };
         app.refresh_music_tree();
         app
@@ -931,6 +942,10 @@ impl MyApp {
         // 既存の再生を停止
         self.stop_playback();
         
+        // キューの先頭に楽曲を追加し、現在のインデックスを0に設定
+        self.playback_queue.insert(0, track.clone());
+        self.current_queue_index = Some(0);
+        
         // 新しい音声ストリームとシンクを作成
         if let Ok((_stream, stream_handle)) = OutputStream::try_default() {
             let sink = Arc::new(Sink::try_new(&stream_handle).unwrap());
@@ -944,6 +959,8 @@ impl MyApp {
                     self.sink = Some(sink);
                     self.current_playing_track = Some(track);
                     self.playback_state = PlaybackState::Playing;
+                    self.playback_start_time = Some(Instant::now());
+                    self.playback_paused_duration = Duration::new(0, 0);
                 }
             }
         }
@@ -951,6 +968,11 @@ impl MyApp {
     
     fn pause_playback(&mut self) {
         if let Some(ref sink) = self.sink {
+            // 一時停止前の経過時間を保存
+            if let Some(start_time) = self.playback_start_time {
+                let elapsed = start_time.elapsed();
+                self.playback_paused_duration = self.playback_paused_duration + elapsed;
+            }
             sink.pause();
             self.playback_state = PlaybackState::Paused;
         }
@@ -960,6 +982,8 @@ impl MyApp {
         if let Some(ref sink) = self.sink {
             sink.play();
             self.playback_state = PlaybackState::Playing;
+            // 再生再開時刻を記録
+            self.playback_start_time = Some(Instant::now());
         }
     }
     
@@ -970,7 +994,103 @@ impl MyApp {
         self._stream = None;
         self.sink = None;
         self.current_playing_track = None;
+        self.current_queue_index = None;
         self.playback_state = PlaybackState::Stopped;
+        self.playback_start_time = None;
+        self.playback_paused_duration = Duration::new(0, 0);
+    }
+    
+    fn play_next_track(&mut self) {
+        if let Some(current_index) = self.current_queue_index {
+            let next_index = current_index + 1;
+            if next_index < self.playback_queue.len() {
+                let next_track = self.playback_queue[next_index].clone();
+                self.play_track_from_queue(next_track, next_index);
+            }
+        }
+    }
+    
+    fn play_track_from_queue(&mut self, track: TrackInfo, queue_index: usize) {
+        // 既存の再生を停止（キューはそのまま）
+        if let Some(ref sink) = self.sink {
+            sink.stop();
+        }
+        self._stream = None;
+        self.sink = None;
+        
+        // キューインデックスを更新
+        self.current_queue_index = Some(queue_index);
+        
+        // 新しい音声ストリームとシンクを作成
+        if let Ok((_stream, stream_handle)) = OutputStream::try_default() {
+            let sink = Arc::new(Sink::try_new(&stream_handle).unwrap());
+            
+            // ファイルを開いて再生
+            if let Ok(file) = std::fs::File::open(&track.path) {
+                if let Ok(source) = Decoder::new(std::io::BufReader::new(file)) {
+                    sink.append(source);
+                    
+                    self._stream = Some(_stream);
+                    self.sink = Some(sink);
+                    self.current_playing_track = Some(track);
+                    self.playback_state = PlaybackState::Playing;
+                    self.playback_start_time = Some(Instant::now());
+                    self.playback_paused_duration = Duration::new(0, 0);
+                }
+            }
+        }
+    }
+    
+    fn get_current_playback_position(&self) -> Duration {
+        if let Some(start_time) = self.playback_start_time {
+            if self.playback_state == PlaybackState::Playing {
+                // 再生中の場合：一時停止時間 + 現在の経過時間
+                self.playback_paused_duration + start_time.elapsed()
+            } else {
+                // 一時停止中の場合：一時停止時点までの累積時間
+                self.playback_paused_duration
+            }
+        } else {
+            Duration::new(0, 0)
+        }
+    }
+    
+    fn restart_current_track(&mut self) {
+        if let Some(ref track) = self.current_playing_track.clone() {
+            if let Some(queue_index) = self.current_queue_index {
+                self.play_track_from_queue(track.clone(), queue_index);
+            }
+        }
+    }
+    
+    fn play_previous_track(&mut self) {
+        if let Some(current_index) = self.current_queue_index {
+            if current_index > 0 {
+                let prev_index = current_index - 1;
+                let prev_track = self.playback_queue[prev_index].clone();
+                self.play_track_from_queue(prev_track, prev_index);
+            }
+        }
+    }
+    
+    fn handle_previous_button(&mut self) {
+        let position = self.get_current_playback_position();
+        
+        // 3秒以内の場合は前の楽曲、それ以外は楽曲の先頭に戻る
+        if position.as_secs() <= 3 {
+            self.play_previous_track();
+        } else {
+            self.restart_current_track();
+        }
+    }
+    
+    fn clear_playback_queue(&mut self) {
+        // 再生を停止
+        self.stop_playback();
+        
+        // キューをクリア
+        self.playback_queue.clear();
+        self.current_queue_index = None;
     }
     
     fn show_clickable_highlighted_text(&self, ui: &mut egui::Ui, icon: &str, text: &str, search_query: &str) -> (bool, bool) {
@@ -1195,6 +1315,55 @@ impl eframe::App for MyApp {
                         .show(&mut right_ui, |ui| {
                             match self.right_pane_tab {
                                 RightTab::Playback => {
+                                    // 再生キューのヘッダー
+                                    ui.horizontal(|ui| {
+                                        ui.label("再生キュー:");
+                                        ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
+                                            if ui.button("🗑 クリア").clicked() {
+                                                self.clear_playback_queue();
+                                            }
+                                        });
+                                    });
+                                    ui.separator();
+                                    
+                                    // キュー表示エリア（10行分の固定高さ）
+                                    let queue_height = ui.text_style_height(&egui::TextStyle::Body) * 12.0; // 10行+マージン
+                                    egui::ScrollArea::vertical()
+                                        .id_source("playback_queue_scroll")
+                                        .max_height(queue_height)
+                                        .auto_shrink([false, true])
+                                        .scroll_bar_visibility(egui::scroll_area::ScrollBarVisibility::VisibleWhenNeeded)
+                                        .show(ui, |ui| {
+                                            if self.playback_queue.is_empty() {
+                                                ui.label("キューは空です");
+                                            } else {
+                                                for (index, track) in self.playback_queue.iter().enumerate() {
+                                                    ui.horizontal(|ui| {
+                                                        // 現在再生中のトラックにマークを表示
+                                                        let is_current = if let Some(current_index) = self.current_queue_index {
+                                                            index == current_index
+                                                        } else {
+                                                            false
+                                                        };
+                                                        
+                                                        if is_current {
+                                                            ui.label("🎵"); // 再生中マーク
+                                                        } else {
+                                                            ui.label("   "); // 空白でインデントを合わせる
+                                                        }
+                                                        
+                                                        // トラック情報の表示
+                                                        let display_text = format!("{} - {}", track.artist, track.title);
+                                                        ui.label(display_text);
+                                                    });
+                                                }
+                                            }
+                                        });
+                                    
+                                    ui.add_space(10.0);
+                                    ui.separator();
+                                    ui.add_space(10.0);
+                                    
                                     // 再生コントロールボタン（水平配置・中央揃え）
                                     ui.horizontal(|ui| {
                                         ui.add_space(5.0); // 左端マージンを追加
@@ -1203,7 +1372,7 @@ impl eframe::App for MyApp {
                                         
                                         // 前へボタン
                                         if ui.add_sized(button_size, egui::Button::new("⏮")).clicked() {
-                                            // TODO: 前の楽曲に移動
+                                            self.handle_previous_button();
                                         }
                                         
                                         ui.add_space(10.0);
@@ -1240,7 +1409,7 @@ impl eframe::App for MyApp {
                                         
                                         // 次へボタン
                                         if ui.add_sized(button_size, egui::Button::new("⏭")).clicked() {
-                                            // TODO: 次の楽曲に移動
+                                            self.play_next_track();
                                         }
                                     });
                                 },
