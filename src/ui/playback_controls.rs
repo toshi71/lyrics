@@ -17,6 +17,11 @@ impl PlaybackControlsUI {
         on_stop: &mut dyn FnMut(),
         on_next: &mut dyn FnMut(),
         on_queue_item_selected: &mut dyn FnMut(usize, bool, bool), // index, ctrl_held, shift_held
+        on_queue_item_double_clicked: &mut dyn FnMut(usize), // index
+        on_move_selected_up: &mut dyn FnMut(),
+        on_move_selected_down: &mut dyn FnMut(),
+        on_move_selected_to_top: &mut dyn FnMut(),
+        on_move_selected_to_bottom: &mut dyn FnMut(),
         on_remove_selected: &mut dyn FnMut(),
     ) {
         // Queue header
@@ -30,7 +35,7 @@ impl PlaybackControlsUI {
         });
         ui.separator();
 
-        // Queue display area
+        // Queue display area with drag and drop support
         let queue_height = ui.text_style_height(&egui::TextStyle::Body) * 12.0;
         egui::ScrollArea::vertical()
             .id_source("playback_queue_scroll")
@@ -55,7 +60,7 @@ impl PlaybackControlsUI {
                             
                             let display_text = format!("{} - {}", track.artist, track.title);
                             
-                            // Make the row selectable and handle right-click
+                            // Make the row selectable
                             let response = ui.selectable_label(is_selected, display_text);
                             
                             // Handle left click for selection with modifier keys
@@ -63,6 +68,11 @@ impl PlaybackControlsUI {
                                 let ctrl_held = ui.input(|i| i.modifiers.ctrl);
                                 let shift_held = ui.input(|i| i.modifiers.shift);
                                 on_queue_item_selected(index, ctrl_held, shift_held);
+                            }
+                            
+                            // Handle double-click to start playback
+                            if response.double_clicked() {
+                                on_queue_item_double_clicked(index);
                             }
                             
                             // Handle right-click context menu
@@ -76,13 +86,14 @@ impl PlaybackControlsUI {
                                     1 // Will be 1 after auto-selection
                                 };
                                 
-                                let menu_text = if selected_count == 1 {
+                                // Delete option
+                                let delete_text = if selected_count == 1 {
                                     "キューから削除".to_string()
                                 } else {
                                     format!("選択中の{}曲をキューから削除", selected_count)
                                 };
                                 
-                                if ui.button(menu_text).clicked() {
+                                if ui.button(delete_text).clicked() {
                                     // If this item wasn't selected, select it first
                                     if !item_is_selected {
                                         on_queue_item_selected(index, false, false);
@@ -90,6 +101,55 @@ impl PlaybackControlsUI {
                                     on_remove_selected();
                                     ui.close_menu();
                                 }
+                                
+                                ui.separator();
+                                
+                                // Movement options
+                                let move_text = if selected_count == 1 {
+                                    "楽曲を移動".to_string()
+                                } else {
+                                    format!("選択中の{}曲を移動", selected_count)
+                                };
+                                
+                                ui.menu_button(move_text, |ui| {
+                                    if ui.button("⬆ 1つ上に移動").clicked() {
+                                        // If this item wasn't selected, select it first
+                                        if !item_is_selected {
+                                            on_queue_item_selected(index, false, false);
+                                        }
+                                        on_move_selected_up();
+                                        ui.close_menu();
+                                    }
+                                    
+                                    if ui.button("⬇ 1つ下に移動").clicked() {
+                                        // If this item wasn't selected, select it first
+                                        if !item_is_selected {
+                                            on_queue_item_selected(index, false, false);
+                                        }
+                                        on_move_selected_down();
+                                        ui.close_menu();
+                                    }
+                                    
+                                    ui.separator();
+                                    
+                                    if ui.button("⏫ 最初に移動").clicked() {
+                                        // If this item wasn't selected, select it first
+                                        if !item_is_selected {
+                                            on_queue_item_selected(index, false, false);
+                                        }
+                                        on_move_selected_to_top();
+                                        ui.close_menu();
+                                    }
+                                    
+                                    if ui.button("⏬ 最後に移動").clicked() {
+                                        // If this item wasn't selected, select it first
+                                        if !item_is_selected {
+                                            on_queue_item_selected(index, false, false);
+                                        }
+                                        on_move_selected_to_bottom();
+                                        ui.close_menu();
+                                    }
+                                });
                             });
                         });
                     }

@@ -391,6 +391,16 @@ impl MyApp {
         self.playback_queue.clear();
     }
 
+    fn handle_queue_item_double_clicked(&mut self, index: usize) {
+        // Set the current index to the double-clicked track and start playing
+        self.playback_queue.set_current_index(index);
+        if let Some(track) = self.playback_queue.get_current_track() {
+            if let Err(_) = self.audio_player.play(track.clone()) {
+                // Handle error silently
+            }
+        }
+    }
+
     fn handle_remove_selected_from_queue(&mut self) {
         // If current playing track is being removed, stop playback
         if let Some(current_index) = self.playback_queue.get_current_index() {
@@ -583,6 +593,11 @@ impl MyApp {
                         let mut stop_clicked = false;
                         let mut next_clicked = false;
                         let mut queue_item_selection: Option<(usize, bool, bool)> = None;
+                        let mut queue_item_double_clicked: Option<usize> = None;
+                        let mut move_selected_up = false;
+                        let mut move_selected_down = false;
+                        let mut move_selected_to_top = false;
+                        let mut move_selected_to_bottom = false;
                         let mut remove_selected = false;
                         
                         PlaybackControlsUI::show(
@@ -597,6 +612,11 @@ impl MyApp {
                             &mut || stop_clicked = true,
                             &mut || next_clicked = true,
                             &mut |index, ctrl_held, shift_held| queue_item_selection = Some((index, ctrl_held, shift_held)),
+                            &mut |index| queue_item_double_clicked = Some(index),
+                            &mut || move_selected_up = true,
+                            &mut || move_selected_down = true,
+                            &mut || move_selected_to_top = true,
+                            &mut || move_selected_to_bottom = true,
                             &mut || remove_selected = true,
                         );
                         
@@ -618,6 +638,21 @@ impl MyApp {
                         }
                         if let Some((index, ctrl_held, shift_held)) = queue_item_selection {
                             self.playback_queue.handle_item_selection(index, ctrl_held, shift_held);
+                        }
+                        if let Some(index) = queue_item_double_clicked {
+                            self.handle_queue_item_double_clicked(index);
+                        }
+                        if move_selected_up {
+                            self.playback_queue.move_selected_up();
+                        }
+                        if move_selected_down {
+                            self.playback_queue.move_selected_down();
+                        }
+                        if move_selected_to_top {
+                            self.playback_queue.move_selected_to_top();
+                        }
+                        if move_selected_to_bottom {
+                            self.playback_queue.move_selected_to_bottom();
                         }
                         if remove_selected {
                             self.handle_remove_selected_from_queue();
