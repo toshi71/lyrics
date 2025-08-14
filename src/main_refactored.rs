@@ -316,17 +316,12 @@ impl MyApp {
                     ui.separator();
                     
                     // Search UI
-                    let mut search_changed = false;
                     SearchUI::show(
                         ui,
                         &mut self.search_query,
                         &mut self.focus_search,
-                        &mut || search_changed = true,
+                        &mut || self.apply_search_filter(),
                     );
-                    
-                    if search_changed {
-                        self.apply_search_filter();
-                    }
                     
                     ui.add_space(10.0);
                     self.show_music_tree(ui);
@@ -378,46 +373,17 @@ impl MyApp {
             .show(ui, |ui| {
                 match self.right_pane_tab {
                     RightTab::Playback => {
-                        // Store data needed for UI
-                        let queue_tracks = self.playback_queue.get_tracks().clone();
-                        let current_index = self.playback_queue.get_current_index();
-                        let playback_state = self.audio_player.get_state().clone();
-                        
-                        // Collect button actions
-                        let mut clear_queue = false;
-                        let mut previous_clicked = false;
-                        let mut play_pause_clicked = false;
-                        let mut stop_clicked = false;
-                        let mut next_clicked = false;
-                        
                         PlaybackControlsUI::show(
                             ui,
-                            &queue_tracks,
-                            current_index,
-                            &playback_state,
-                            &mut || clear_queue = true,
-                            &mut || previous_clicked = true,
-                            &mut || play_pause_clicked = true,
-                            &mut || stop_clicked = true,
-                            &mut || next_clicked = true,
+                            self.playback_queue.get_tracks(),
+                            self.playback_queue.get_current_index(),
+                            self.audio_player.get_state(),
+                            &mut || self.clear_playback_queue(),
+                            &mut || self.handle_previous_button(),
+                            &mut || self.handle_play_pause(),
+                            &mut || self.handle_stop(),
+                            &mut || self.handle_next(),
                         );
-                        
-                        // Handle actions after UI
-                        if clear_queue {
-                            self.clear_playback_queue();
-                        }
-                        if previous_clicked {
-                            self.handle_previous_button();
-                        }
-                        if play_pause_clicked {
-                            self.handle_play_pause();
-                        }
-                        if stop_clicked {
-                            self.handle_stop();
-                        }
-                        if next_clicked {
-                            self.handle_next();
-                        }
                     },
                     RightTab::Info => {
                         ui.vertical_centered(|ui| {
