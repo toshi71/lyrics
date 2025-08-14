@@ -209,6 +209,17 @@ impl MyApp {
         self.audio_player.stop();
         self.playback_queue.clear();
     }
+
+    fn handle_remove_selected_from_queue(&mut self) {
+        // If current playing track is being removed, stop playback
+        if let Some(current_index) = self.playback_queue.get_current_index() {
+            if self.playback_queue.is_selected(current_index) {
+                self.audio_player.stop();
+            }
+        }
+        
+        self.playback_queue.remove_selected();
+    }
 }
 
 impl eframe::App for MyApp {
@@ -382,24 +393,30 @@ impl MyApp {
                         let queue_tracks = self.playback_queue.get_tracks().clone();
                         let current_index = self.playback_queue.get_current_index();
                         let playback_state = self.audio_player.get_state().clone();
+                        let selected_indices = self.playback_queue.get_selected_indices();
                         
-                        // Collect button actions
+                        // Collect actions
                         let mut clear_queue = false;
                         let mut previous_clicked = false;
                         let mut play_pause_clicked = false;
                         let mut stop_clicked = false;
                         let mut next_clicked = false;
+                        let mut toggle_selection_index: Option<usize> = None;
+                        let mut remove_selected = false;
                         
                         PlaybackControlsUI::show(
                             ui,
                             &queue_tracks,
                             current_index,
                             &playback_state,
+                            &selected_indices,
                             &mut || clear_queue = true,
                             &mut || previous_clicked = true,
                             &mut || play_pause_clicked = true,
                             &mut || stop_clicked = true,
                             &mut || next_clicked = true,
+                            &mut |index| toggle_selection_index = Some(index),
+                            &mut || remove_selected = true,
                         );
                         
                         // Handle actions after UI
@@ -417,6 +434,12 @@ impl MyApp {
                         }
                         if next_clicked {
                             self.handle_next();
+                        }
+                        if let Some(index) = toggle_selection_index {
+                            self.playback_queue.toggle_selection(index);
+                        }
+                        if remove_selected {
+                            self.handle_remove_selected_from_queue();
                         }
                     },
                     RightTab::Info => {
