@@ -4,6 +4,7 @@ pub struct PlaybackQueue {
     tracks: Vec<TrackInfo>,
     current_index: Option<usize>,
     selected_indices: std::collections::HashSet<usize>,
+    last_selected_index: Option<usize>, // For range selection
 }
 
 impl PlaybackQueue {
@@ -12,6 +13,7 @@ impl PlaybackQueue {
             tracks: Vec::new(),
             current_index: None,
             selected_indices: std::collections::HashSet::new(),
+            last_selected_index: None,
         }
     }
 
@@ -179,5 +181,61 @@ impl PlaybackQueue {
 
     pub fn has_selection(&self) -> bool {
         !self.selected_indices.is_empty()
+    }
+
+    pub fn handle_item_selection(&mut self, index: usize, ctrl_held: bool, shift_held: bool) {
+        if index >= self.tracks.len() {
+            return; // Invalid index
+        }
+
+        if shift_held && self.last_selected_index.is_some() {
+            // Range selection mode
+            self.handle_range_selection(index);
+        } else if ctrl_held {
+            // Multiple selection mode - preserve existing selections
+            
+            // Toggle the clicked item
+            if self.selected_indices.contains(&index) {
+                // Deselect if already selected
+                self.selected_indices.remove(&index);
+            } else {
+                // Add to selection
+                self.selected_indices.insert(index);
+            }
+            
+            // Update last selected index
+            self.last_selected_index = Some(index);
+        } else {
+            // Single selection mode - clear multiple selections
+            self.selected_indices.clear();
+            self.selected_indices.insert(index);
+            self.last_selected_index = Some(index);
+        }
+    }
+
+    fn handle_range_selection(&mut self, end_index: usize) {
+        let start_index = match self.last_selected_index {
+            Some(idx) => idx,
+            None => return,
+        };
+
+        if start_index == end_index {
+            // Same item - just select it
+            self.selected_indices.clear();
+            self.selected_indices.insert(end_index);
+            return;
+        }
+
+        // Select range (inclusive)
+        let (min_idx, max_idx) = if start_index <= end_index {
+            (start_index, end_index)
+        } else {
+            (end_index, start_index)
+        };
+
+        self.selected_indices.clear();
+        for i in min_idx..=max_idx {
+            self.selected_indices.insert(i);
+        }
     }
 }

@@ -582,7 +582,7 @@ impl MyApp {
                         let mut play_pause_clicked = false;
                         let mut stop_clicked = false;
                         let mut next_clicked = false;
-                        let mut toggle_selection_index: Option<usize> = None;
+                        let mut queue_item_selection: Option<(usize, bool, bool)> = None;
                         let mut remove_selected = false;
                         
                         PlaybackControlsUI::show(
@@ -596,7 +596,7 @@ impl MyApp {
                             &mut || play_pause_clicked = true,
                             &mut || stop_clicked = true,
                             &mut || next_clicked = true,
-                            &mut |index| toggle_selection_index = Some(index),
+                            &mut |index, ctrl_held, shift_held| queue_item_selection = Some((index, ctrl_held, shift_held)),
                             &mut || remove_selected = true,
                         );
                         
@@ -616,8 +616,8 @@ impl MyApp {
                         if next_clicked {
                             self.handle_next();
                         }
-                        if let Some(index) = toggle_selection_index {
-                            self.playback_queue.toggle_selection(index);
+                        if let Some((index, ctrl_held, shift_held)) = queue_item_selection {
+                            self.playback_queue.handle_item_selection(index, ctrl_held, shift_held);
                         }
                         if remove_selected {
                             self.handle_remove_selected_from_queue();

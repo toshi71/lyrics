@@ -16,7 +16,7 @@ impl PlaybackControlsUI {
         on_play_pause: &mut dyn FnMut(),
         on_stop: &mut dyn FnMut(),
         on_next: &mut dyn FnMut(),
-        on_toggle_selection: &mut dyn FnMut(usize),
+        on_queue_item_selected: &mut dyn FnMut(usize, bool, bool), // index, ctrl_held, shift_held
         on_remove_selected: &mut dyn FnMut(),
     ) {
         // Queue header
@@ -58,27 +58,37 @@ impl PlaybackControlsUI {
                             // Make the row selectable and handle right-click
                             let response = ui.selectable_label(is_selected, display_text);
                             
-                            // Handle left click for selection
+                            // Handle left click for selection with modifier keys
                             if response.clicked() {
-                                on_toggle_selection(index);
+                                let ctrl_held = ui.input(|i| i.modifiers.ctrl);
+                                let shift_held = ui.input(|i| i.modifiers.shift);
+                                on_queue_item_selected(index, ctrl_held, shift_held);
                             }
                             
                             // Handle right-click context menu
                             response.context_menu(|ui| {
-                                if selected_indices.is_empty() {
-                                    // If nothing is selected, show menu for this item only
-                                    if ui.button("キューから削除").clicked() {
-                                        on_toggle_selection(index); // Select this item
-                                        on_remove_selected(); // Remove it
-                                        ui.close_menu();
-                                    }
+                                // Determine if this item is currently selected
+                                let item_is_selected = selected_indices.contains(&index);
+                                
+                                let selected_count = if !selected_indices.is_empty() {
+                                    selected_indices.len()
                                 } else {
-                                    // Show menu for selected items
-                                    let count = selected_indices.len();
-                                    if ui.button(format!("選択中の{}曲をキューから削除", count)).clicked() {
-                                        on_remove_selected();
-                                        ui.close_menu();
+                                    1 // Will be 1 after auto-selection
+                                };
+                                
+                                let menu_text = if selected_count == 1 {
+                                    "キューから削除".to_string()
+                                } else {
+                                    format!("選択中の{}曲をキューから削除", selected_count)
+                                };
+                                
+                                if ui.button(menu_text).clicked() {
+                                    // If this item wasn't selected, select it first
+                                    if !item_is_selected {
+                                        on_queue_item_selected(index, false, false);
                                     }
+                                    on_remove_selected();
+                                    ui.close_menu();
                                 }
                             });
                         });
