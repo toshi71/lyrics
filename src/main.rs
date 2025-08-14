@@ -85,6 +85,8 @@ struct MyApp {
     splitter_position: f32,
     right_pane_tab: RightTab,
     selected_track: Option<TrackInfo>,
+    selected_tracks: std::collections::HashSet<std::path::PathBuf>, // Multiple selection support
+    last_selected_path: Option<std::path::PathBuf>, // For range selection
     audio_player: AudioPlayer,
     playback_queue: PlaybackQueue,
 }
@@ -101,6 +103,8 @@ impl MyApp {
             splitter_position: 0.33,
             right_pane_tab: RightTab::Playback,
             selected_track: None,
+            selected_tracks: std::collections::HashSet::new(),
+            last_selected_path: None,
             audio_player: AudioPlayer::new(),
             playback_queue: PlaybackQueue::new(),
             settings,
@@ -126,40 +130,213 @@ impl MyApp {
     }
 
     fn show_music_tree(&mut self, ui: &mut egui::Ui) {
-        let mut selected_track = None;
+        let mut track_selection = None;
         let mut double_clicked_track = None;
+        let mut add_to_queue_track = None;
+        let mut add_album_to_queue_node = None;
+        let mut add_artist_to_queue_node = None;
         
         MusicTreeUI::show(
             ui,
             self.music_library.get_tree_mut(),
             &self.search_query,
-            &mut |track| selected_track = Some(track),
+            self.selected_track.as_ref(),
+            &self.selected_tracks,
+            &mut |track, ctrl_held, shift_held| track_selection = Some((track, ctrl_held, shift_held)),
             &mut |track| double_clicked_track = Some(track),
+            &mut |track| add_to_queue_track = Some(track),
+            &mut |node| add_album_to_queue_node = Some(node.clone()),
+            &mut |node| add_artist_to_queue_node = Some(node.clone()),
         );
         
-        if let Some(track) = selected_track {
-            self.selected_track = Some(track);
+        if let Some((track, ctrl_held, shift_held)) = track_selection {
+            self.handle_track_selection(track, ctrl_held, shift_held);
         }
         
-        if let Some(track) = double_clicked_track {
-            self.play_track(track);
+        if let Some(track) = add_to_queue_track {
+            self.handle_add_to_queue_from_context_menu(track);
+        }
+        
+        if let Some(node) = add_album_to_queue_node {
+            self.handle_add_album_to_queue(node);
+        }
+        
+        if let Some(node) = add_artist_to_queue_node {
+            self.handle_add_artist_to_queue(node);
+        }
+        
+        // TODO: Implement queue addition on double-click
+        // For now, double-click does nothing
+        if let Some(_track) = double_clicked_track {
+            // Double-click functionality will be implemented later as "add to queue"
         }
     }
 
-    fn play_track(&mut self, track: TrackInfo) {
-        self.playback_queue.add_track_at_front(track.clone());
-        if let Err(_) = self.audio_player.play(track) {
-            // Handle error silently for now
+    fn handle_track_selection(&mut self, track: TrackInfo, ctrl_held: bool, shift_held: bool) {
+        if shift_held && self.last_selected_path.is_some() {
+            // Range selection mode
+            self.handle_range_selection(track.clone());
+        } else if ctrl_held {
+            // Multiple selection mode - preserve existing selections
+            
+            // If there's a currently selected single track, add it to multiple selections first
+            if let Some(ref current_track) = self.selected_track {
+                if !self.selected_tracks.contains(&current_track.path) {
+                    self.selected_tracks.insert(current_track.path.clone());
+                }
+            }
+            
+            // Toggle the clicked track
+            if self.selected_tracks.contains(&track.path) {
+                // Deselect if already selected
+                self.selected_tracks.remove(&track.path);
+            } else {
+                // Add to selection
+                self.selected_tracks.insert(track.path.clone());
+            }
+            
+            // Keep the last clicked track as the primary selection
+            self.selected_track = Some(track.clone());
+            self.last_selected_path = Some(track.path);
+        } else {
+            // Single selection mode - clear multiple selections
+            self.selected_tracks.clear();
+            self.selected_track = Some(track.clone());
+            self.last_selected_path = Some(track.path);
         }
     }
 
-    fn get_playable_track(&self) -> Option<TrackInfo> {
-        if let Some(ref track) = self.selected_track {
-            return Some(track.clone());
+    fn handle_range_selection(&mut self, end_track: TrackInfo) {
+        let start_path = match &self.last_selected_path {
+            Some(path) => path.clone(),
+            None => return,
+        };
+
+        if start_path == end_track.path {
+            // Same track - just select it
+            self.selected_tracks.clear();
+            self.selected_tracks.insert(end_track.path.clone());
+            self.selected_track = Some(end_track);
+            return;
+        }
+
+        // Get all tracks in display order and find the range
+        let all_tracks = self.get_all_tracks_in_display_order();
+        
+        // Find indices of start and end tracks
+        let start_index = all_tracks.iter().position(|t| t.path == start_path);
+        let end_index = all_tracks.iter().position(|t| t.path == end_track.path);
+        
+        if let (Some(start_idx), Some(end_idx)) = (start_index, end_index) {
+            // Clear current selection
+            self.selected_tracks.clear();
+            
+            // Select range (inclusive)
+            let (min_idx, max_idx) = if start_idx <= end_idx {
+                (start_idx, end_idx)
+            } else {
+                (end_idx, start_idx)
+            };
+            
+            for track in &all_tracks[min_idx..=max_idx] {
+                self.selected_tracks.insert(track.path.clone());
+            }
+            
+            self.selected_track = Some(end_track);
+        } else {
+            // Fallback to just selecting both tracks
+            self.selected_tracks.clear();
+            self.selected_tracks.insert(start_path);
+            self.selected_tracks.insert(end_track.path.clone());
+            self.selected_track = Some(end_track);
+        }
+    }
+
+    fn get_all_tracks_in_display_order(&self) -> Vec<TrackInfo> {
+        let mut tracks = Vec::new();
+        // Access the tree through the music library's immutable reference
+        self.music_library.collect_displayed_tracks(&mut tracks);
+        tracks
+    }
+
+    fn add_selected_tracks_to_queue(&mut self) {
+        let mut tracks_to_add = Vec::new();
+        
+        // If there are multiple selections, add all of them
+        if !self.selected_tracks.is_empty() {
+            let all_tracks = self.get_all_tracks_in_display_order();
+            for track in all_tracks {
+                if self.selected_tracks.contains(&track.path) {
+                    tracks_to_add.push(track);
+                }
+            }
+        } else if let Some(ref selected_track) = self.selected_track {
+            // If only single selection, add that track
+            tracks_to_add.push(selected_track.clone());
         }
         
-        self.music_library.get_first_track()
+        // Add tracks to queue in order
+        for track in tracks_to_add {
+            self.playback_queue.add_track(track);
+        }
     }
+
+    fn handle_add_to_queue_from_context_menu(&mut self, clicked_track: TrackInfo) {
+        // Check if the clicked track is already selected
+        let track_is_selected = self.selected_tracks.contains(&clicked_track.path) || 
+            (self.selected_track.as_ref().map(|st| st.path == clicked_track.path).unwrap_or(false));
+        
+        if track_is_selected {
+            // If the track is already selected, add all currently selected tracks
+            self.add_selected_tracks_to_queue();
+        } else {
+            // If the track is not selected, select it first and then add only that track
+            self.selected_tracks.clear();
+            self.selected_track = Some(clicked_track.clone());
+            self.last_selected_path = Some(clicked_track.path.clone());
+            
+            // Add only this track to queue
+            self.playback_queue.add_track(clicked_track);
+        }
+    }
+
+    fn handle_add_album_to_queue(&mut self, album_node: crate::music::MusicTreeNode) {
+        // Collect all tracks from the album node
+        let mut album_tracks = Vec::new();
+        self.collect_tracks_from_node(&album_node, &mut album_tracks);
+        
+        // Add tracks to queue in order (they should already be sorted by track number)
+        for track in album_tracks {
+            self.playback_queue.add_track(track);
+        }
+    }
+
+    fn handle_add_artist_to_queue(&mut self, artist_node: crate::music::MusicTreeNode) {
+        // Collect all tracks from the artist/composer node
+        let mut artist_tracks = Vec::new();
+        self.collect_tracks_from_node(&artist_node, &mut artist_tracks);
+        
+        // Add tracks to queue in order (they should already be sorted)
+        for track in artist_tracks {
+            self.playback_queue.add_track(track);
+        }
+    }
+
+    fn collect_tracks_from_node(&self, node: &crate::music::MusicTreeNode, tracks: &mut Vec<TrackInfo>) {
+        // If this is a track node, add it
+        if let Some(track_info) = &node.track_info {
+            tracks.push(track_info.clone());
+        }
+        
+        // Recursively collect from children
+        for child in &node.children {
+            self.collect_tracks_from_node(child, tracks);
+        }
+    }
+
+    // Removed play_track method - now using queue-only playback
+
+    // Removed get_playable_track method - now using direct queue access
 
     fn handle_previous_button(&mut self) {
         let position = self.audio_player.get_playback_position();
@@ -186,9 +363,13 @@ impl MyApp {
                 self.audio_player.resume();
             },
             PlaybackState::Stopped => {
-                if let Some(track) = self.get_playable_track() {
-                    self.play_track(track);
+                // Only play from queue, no fallback to selected track
+                if let Some(track) = self.playback_queue.get_current_track() {
+                    if let Err(_) = self.audio_player.play(track.clone()) {
+                        // Handle error silently for now
+                    }
                 }
+                // If queue is empty, do nothing
             },
         }
     }

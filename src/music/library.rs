@@ -328,4 +328,23 @@ impl MusicLibrary {
         
         None
     }
+
+    pub fn collect_displayed_tracks(&self, tracks: &mut Vec<TrackInfo>) {
+        for node in &self.tree {
+            self.collect_tracks_from_node(node, tracks);
+        }
+    }
+
+    fn collect_tracks_from_node(&self, node: &MusicTreeNode, tracks: &mut Vec<TrackInfo>) {
+        if let Some(track_info) = &node.track_info {
+            tracks.push(track_info.clone());
+        }
+        
+        // Only collect from expanded nodes to match UI display order
+        if node.expanded {
+            for child in &node.children {
+                self.collect_tracks_from_node(child, tracks);
+            }
+        }
+    }
 }

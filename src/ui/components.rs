@@ -42,22 +42,22 @@ pub fn show_clickable_highlighted_text(
     icon: &str, 
     text: &str, 
     search_query: &str
-) -> (bool, bool) {
+) -> (bool, egui::Response) {
     let mut clicked = false;
-    let mut double_clicked = false;
+    let mut main_response: Option<egui::Response> = None;
     
     if search_query.is_empty() {
         let response = ui.selectable_label(false, format!("{} {}", icon, text));
         clicked = response.clicked();
-        double_clicked = response.double_clicked();
+        main_response = Some(response);
     } else {
         let query_lower = search_query.to_lowercase();
         let text_lower = text.to_lowercase();
         
-        ui.horizontal(|ui| {
+        let resp = ui.horizontal(|ui| {
             let response = ui.selectable_label(false, format!("{} ", icon));
             clicked = response.clicked();
-            double_clicked = response.double_clicked();
+            let mut combined_response = response;
             
             if let Some(start_index) = text_lower.find(&query_lower) {
                 let end_index = start_index + search_query.len();
@@ -73,9 +73,7 @@ pub fn show_clickable_highlighted_text(
                     if response.clicked() {
                         clicked = true;
                     }
-                    if response.double_clicked() {
-                        double_clicked = true;
-                    }
+                    combined_response = combined_response.union(response);
                 }
                 
                 let response = ui.selectable_label(false, 
@@ -86,30 +84,27 @@ pub fn show_clickable_highlighted_text(
                 if response.clicked() {
                     clicked = true;
                 }
-                if response.double_clicked() {
-                    double_clicked = true;
-                }
+                combined_response = combined_response.union(response);
                 
                 if !after.is_empty() {
                     let response = ui.selectable_label(false, after);
                     if response.clicked() {
                         clicked = true;
                     }
-                    if response.double_clicked() {
-                        double_clicked = true;
-                    }
+                    combined_response = combined_response.union(response);
                 }
             } else {
                 let response = ui.selectable_label(false, text);
                 if response.clicked() {
                     clicked = true;
                 }
-                if response.double_clicked() {
-                    double_clicked = true;
-                }
+                combined_response = combined_response.union(response);
             }
+            
+            combined_response
         });
+        main_response = Some(resp.inner);
     }
     
-    (clicked, double_clicked)
+    (clicked, main_response.unwrap())
 }
