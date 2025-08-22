@@ -1,5 +1,6 @@
 mod music;
 mod player;
+mod playlist;
 mod settings;
 mod ui;
 
@@ -9,7 +10,8 @@ use font_kit::properties::Properties;
 use font_kit::source::SystemSource;
 
 use music::{MusicLibrary, TrackInfo};
-use player::{AudioPlayer, PlaybackQueue, PlaybackState};
+use player::{AudioPlayer, PlaybackState};
+use playlist::PlaylistManager;
 use settings::Settings;
 use ui::{MusicTreeUI, PlaybackControlsUI, SearchUI};
 
@@ -88,7 +90,7 @@ struct MyApp {
     selected_tracks: std::collections::HashSet<std::path::PathBuf>, // Multiple selection support
     last_selected_path: Option<std::path::PathBuf>, // For range selection
     audio_player: AudioPlayer,
-    playback_queue: PlaybackQueue,
+    playlist_manager: PlaylistManager,
 }
 
 impl MyApp {
@@ -106,7 +108,7 @@ impl MyApp {
             selected_tracks: std::collections::HashSet::new(),
             last_selected_path: None,
             audio_player: AudioPlayer::new(),
-            playback_queue: PlaybackQueue::new(),
+            playlist_manager: PlaylistManager::auto_load().unwrap_or_else(|_| PlaylistManager::new()),
             settings,
         };
         app.refresh_music_library();
@@ -115,6 +117,7 @@ impl MyApp {
 
     fn save_settings(&self) {
         let _ = self.settings.save();
+        let _ = self.playlist_manager.auto_save();
     }
 
     fn refresh_music_library(&mut self) {
@@ -277,7 +280,7 @@ impl MyApp {
         
         // Add tracks to queue in order
         for track in tracks_to_add {
-            self.playback_queue.add_track(track);
+            self.playlist_manager.add_track(track);
         }
     }
 
@@ -296,7 +299,7 @@ impl MyApp {
             self.last_selected_path = Some(clicked_track.path.clone());
             
             // Add only this track to queue
-            self.playback_queue.add_track(clicked_track);
+            self.playlist_manager.add_track(clicked_track);
         }
     }
 
@@ -307,7 +310,7 @@ impl MyApp {
         
         // Add tracks to queue in order (they should already be sorted by track number)
         for track in album_tracks {
-            self.playback_queue.add_track(track);
+            self.playlist_manager.add_track(track);
         }
     }
 
@@ -318,7 +321,7 @@ impl MyApp {
         
         // Add tracks to queue in order (they should already be sorted)
         for track in artist_tracks {
-            self.playback_queue.add_track(track);
+            self.playlist_manager.add_track(track);
         }
     }
 
@@ -342,8 +345,8 @@ impl MyApp {
         let position = self.audio_player.get_playback_position();
         
         if position.as_secs() <= 3 {
-            if let Some(prev_track) = self.playback_queue.move_to_previous() {
-                if let Err(_) = self.audio_player.play(prev_track.clone()) {
+            if let Some(prev_track) = self.playlist_manager.move_to_previous() {
+                if let Err(_) = self.audio_player.play(prev_track) {
                     // Handle error silently
                 }
             }
@@ -364,7 +367,7 @@ impl MyApp {
             },
             PlaybackState::Stopped => {
                 // Only play from queue, no fallback to selected track
-                if let Some(track) = self.playback_queue.get_current_track() {
+                if let Some(track) = self.playlist_manager.get_current_track() {
                     if let Err(_) = self.audio_player.play(track.clone()) {
                         // Handle error silently for now
                     }
@@ -379,8 +382,8 @@ impl MyApp {
     }
 
     fn handle_next(&mut self) {
-        if let Some(next_track) = self.playback_queue.move_to_next() {
-            if let Err(_) = self.audio_player.play(next_track.clone()) {
+        if let Some(next_track) = self.playlist_manager.move_to_next() {
+            if let Err(_) = self.audio_player.play(next_track) {
                 // Handle error silently
             }
         }
@@ -388,13 +391,13 @@ impl MyApp {
 
     fn clear_playback_queue(&mut self) {
         self.audio_player.stop();
-        self.playback_queue.clear();
+        self.playlist_manager.clear();
     }
 
     fn handle_queue_item_double_clicked(&mut self, index: usize) {
         // Set the current index to the double-clicked track and start playing
-        self.playback_queue.set_current_index(index);
-        if let Some(track) = self.playback_queue.get_current_track() {
+        self.playlist_manager.set_current_index(index);
+        if let Some(track) = self.playlist_manager.get_current_track() {
             if let Err(_) = self.audio_player.play(track.clone()) {
                 // Handle error silently
             }
@@ -403,13 +406,13 @@ impl MyApp {
 
     fn handle_remove_selected_from_queue(&mut self) {
         // If current playing track is being removed, stop playback
-        if let Some(current_index) = self.playback_queue.get_current_index() {
-            if self.playback_queue.is_selected(current_index) {
+        if let Some(current_index) = self.playlist_manager.get_current_index() {
+            if self.playlist_manager.is_selected(current_index) {
                 self.audio_player.stop();
             }
         }
         
-        self.playback_queue.remove_selected();
+        self.playlist_manager.remove_selected();
     }
 }
 
@@ -581,10 +584,10 @@ impl MyApp {
                 match self.right_pane_tab {
                     RightTab::Playback => {
                         // Store data needed for UI
-                        let queue_tracks = self.playback_queue.get_tracks().clone();
-                        let current_index = self.playback_queue.get_current_index();
+                        let queue_tracks = self.playlist_manager.get_tracks().cloned().unwrap_or_default();
+                        let current_index = self.playlist_manager.get_current_index();
                         let playback_state = self.audio_player.get_state().clone();
-                        let selected_indices = self.playback_queue.get_selected_indices();
+                        let selected_indices: Vec<usize> = self.playlist_manager.get_selected_indices().iter().cloned().collect();
                         
                         // Collect actions
                         let mut clear_queue = false;
@@ -637,22 +640,22 @@ impl MyApp {
                             self.handle_next();
                         }
                         if let Some((index, ctrl_held, shift_held)) = queue_item_selection {
-                            self.playback_queue.handle_item_selection(index, ctrl_held, shift_held);
+                            self.playlist_manager.handle_item_selection(index, ctrl_held, shift_held);
                         }
                         if let Some(index) = queue_item_double_clicked {
                             self.handle_queue_item_double_clicked(index);
                         }
                         if move_selected_up {
-                            self.playback_queue.move_selected_up();
+                            self.playlist_manager.move_selected_up();
                         }
                         if move_selected_down {
-                            self.playback_queue.move_selected_down();
+                            self.playlist_manager.move_selected_down();
                         }
                         if move_selected_to_top {
-                            self.playback_queue.move_selected_to_top();
+                            self.playlist_manager.move_selected_to_top();
                         }
                         if move_selected_to_bottom {
-                            self.playback_queue.move_selected_to_bottom();
+                            self.playlist_manager.move_selected_to_bottom();
                         }
                         if remove_selected {
                             self.handle_remove_selected_from_queue();

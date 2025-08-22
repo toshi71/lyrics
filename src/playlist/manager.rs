@@ -1,0 +1,451 @@
+use std::collections::HashSet;
+use std::time::SystemTime;
+use serde::{Deserialize, Serialize};
+use crate::music::TrackInfo;
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct Playlist {
+    pub id: String,
+    pub name: String,
+    pub tracks: Vec<TrackInfo>,
+    pub created_at: SystemTime,
+    pub modified_at: SystemTime,
+}
+
+impl Playlist {
+    pub fn new(id: String, name: String) -> Self {
+        let now = SystemTime::now();
+        Self {
+            id,
+            name,
+            tracks: Vec::new(),
+            created_at: now,
+            modified_at: now,
+        }
+    }
+
+    pub fn add_track(&mut self, track: TrackInfo) {
+        self.tracks.push(track);
+        self.modified_at = SystemTime::now();
+    }
+
+    pub fn remove_track(&mut self, index: usize) -> Option<TrackInfo> {
+        if index < self.tracks.len() {
+            self.modified_at = SystemTime::now();
+            Some(self.tracks.remove(index))
+        } else {
+            None
+        }
+    }
+
+    pub fn move_track(&mut self, from: usize, to: usize) -> bool {
+        if from < self.tracks.len() && to < self.tracks.len() {
+            let track = self.tracks.remove(from);
+            self.tracks.insert(to, track);
+            self.modified_at = SystemTime::now();
+            true
+        } else {
+            false
+        }
+    }
+
+    pub fn clear(&mut self) {
+        self.tracks.clear();
+        self.modified_at = SystemTime::now();
+    }
+
+    pub fn is_empty(&self) -> bool {
+        self.tracks.is_empty()
+    }
+
+    pub fn len(&self) -> usize {
+        self.tracks.len()
+    }
+
+    pub fn get_track(&self, index: usize) -> Option<&TrackInfo> {
+        self.tracks.get(index)
+    }
+
+    pub fn get_tracks(&self) -> &Vec<TrackInfo> {
+        &self.tracks
+    }
+}
+
+#[derive(Debug)]
+pub struct PlaylistManager {
+    pub(crate) playlists: Vec<Playlist>,
+    pub(crate) active_playlist_id: String,
+    selected_indices: HashSet<usize>,
+    current_playing_index: Option<usize>,
+}
+
+impl PlaylistManager {
+    pub fn new() -> Self {
+        let default_playlist = Playlist::new("default".to_string(), "デフォルト".to_string());
+        let active_playlist_id = default_playlist.id.clone();
+        
+        Self {
+            playlists: vec![default_playlist],
+            active_playlist_id,
+            selected_indices: HashSet::new(),
+            current_playing_index: None,
+        }
+    }
+
+    // プレイリスト管理
+    pub fn create_playlist(&mut self, name: String) -> String {
+        let id = format!("playlist_{}", self.playlists.len());
+        let playlist = Playlist::new(id.clone(), name);
+        self.playlists.push(playlist);
+        id
+    }
+
+    pub fn delete_playlist(&mut self, id: &str) -> bool {
+        if id == "default" {
+            return false; // デフォルトプレイリストは削除不可
+        }
+        
+        if let Some(index) = self.playlists.iter().position(|p| p.id == id) {
+            self.playlists.remove(index);
+            
+            // アクティブプレイリストが削除された場合はデフォルトに切り替え
+            if self.active_playlist_id == id {
+                self.active_playlist_id = "default".to_string();
+                self.selected_indices.clear();
+                self.current_playing_index = None;
+            }
+            true
+        } else {
+            false
+        }
+    }
+
+    pub fn rename_playlist(&mut self, id: &str, new_name: String) -> bool {
+        if id == "default" {
+            return false; // デフォルトプレイリストは名前変更不可
+        }
+        
+        if let Some(playlist) = self.playlists.iter_mut().find(|p| p.id == id) {
+            playlist.name = new_name;
+            playlist.modified_at = SystemTime::now();
+            true
+        } else {
+            false
+        }
+    }
+
+    pub fn get_playlist(&self, id: &str) -> Option<&Playlist> {
+        self.playlists.iter().find(|p| p.id == id)
+    }
+
+    pub fn get_playlist_mut(&mut self, id: &str) -> Option<&mut Playlist> {
+        self.playlists.iter_mut().find(|p| p.id == id)
+    }
+
+    pub fn get_playlists(&self) -> &Vec<Playlist> {
+        &self.playlists
+    }
+
+    // アクティブプレイリスト管理
+    pub fn set_active_playlist(&mut self, id: &str) -> bool {
+        if self.playlists.iter().any(|p| p.id == id) {
+            self.active_playlist_id = id.to_string();
+            self.selected_indices.clear();
+            self.current_playing_index = None;
+            true
+        } else {
+            false
+        }
+    }
+
+    pub fn get_active_playlist_id(&self) -> &str {
+        &self.active_playlist_id
+    }
+
+    pub fn get_active_playlist(&self) -> Option<&Playlist> {
+        self.get_playlist(&self.active_playlist_id)
+    }
+
+    pub fn get_active_playlist_mut(&mut self) -> Option<&mut Playlist> {
+        let id = self.active_playlist_id.clone();
+        self.get_playlist_mut(&id)
+    }
+
+    // 楽曲操作（アクティブプレイリストに対して）
+    pub fn add_track(&mut self, track: TrackInfo) {
+        let active_id = self.active_playlist_id.clone();
+        if let Some(playlist) = self.get_playlist_mut(&active_id) {
+            playlist.add_track(track);
+        }
+    }
+
+    pub fn remove_track(&mut self, index: usize) -> Option<TrackInfo> {
+        // 先に現在再生中のトラックが削除される場合の処理
+        if let Some(current_index) = self.current_playing_index {
+            if index == current_index {
+                self.current_playing_index = None;
+            } else if index < current_index {
+                self.current_playing_index = Some(current_index - 1);
+            }
+        }
+        
+        // 選択状態の更新
+        self.selected_indices.remove(&index);
+        let mut new_selected = HashSet::new();
+        for &selected_index in &self.selected_indices {
+            if selected_index > index {
+                new_selected.insert(selected_index - 1);
+            } else {
+                new_selected.insert(selected_index);
+            }
+        }
+        self.selected_indices = new_selected;
+        
+        // 最後にプレイリストから削除
+        let active_id = self.active_playlist_id.clone();
+        self.get_playlist_mut(&active_id)?.remove_track(index)
+    }
+
+    pub fn move_track(&mut self, from: usize, to: usize) -> bool {
+        let active_id = self.active_playlist_id.clone();
+        if let Some(playlist) = self.get_playlist_mut(&active_id) {
+            if playlist.move_track(from, to) {
+                // 現在再生中のインデックスの更新
+                if let Some(current_index) = self.current_playing_index {
+                    if current_index == from {
+                        self.current_playing_index = Some(to);
+                    } else if from < current_index && to >= current_index {
+                        self.current_playing_index = Some(current_index - 1);
+                    } else if from > current_index && to <= current_index {
+                        self.current_playing_index = Some(current_index + 1);
+                    }
+                }
+                
+                // 選択状態の更新（簡略化のため一旦クリア）
+                self.selected_indices.clear();
+                true
+            } else {
+                false
+            }
+        } else {
+            false
+        }
+    }
+
+    pub fn clear_active_playlist(&mut self) {
+        let active_id = self.active_playlist_id.clone();
+        if let Some(playlist) = self.get_playlist_mut(&active_id) {
+            playlist.clear();
+        }
+        self.selected_indices.clear();
+        self.current_playing_index = None;
+    }
+
+    // 選択管理
+    pub fn get_selected_indices(&self) -> &HashSet<usize> {
+        &self.selected_indices
+    }
+
+    pub fn set_selected(&mut self, index: usize, selected: bool) {
+        if selected {
+            self.selected_indices.insert(index);
+        } else {
+            self.selected_indices.remove(&index);
+        }
+    }
+
+    pub fn clear_selection(&mut self) {
+        self.selected_indices.clear();
+    }
+
+    pub fn is_selected(&self, index: usize) -> bool {
+        self.selected_indices.contains(&index)
+    }
+
+    // 再生管理
+    pub fn get_current_playing_index(&self) -> Option<usize> {
+        self.current_playing_index
+    }
+
+    pub fn set_current_playing_index(&mut self, index: Option<usize>) {
+        self.current_playing_index = index;
+    }
+
+    pub fn get_current_track(&self) -> Option<&TrackInfo> {
+        if let (Some(playlist), Some(index)) = (self.get_active_playlist(), self.current_playing_index) {
+            playlist.get_track(index)
+        } else {
+            None
+        }
+    }
+
+    // 便利メソッド
+    pub fn get_active_tracks(&self) -> Option<&Vec<TrackInfo>> {
+        self.get_active_playlist().map(|p| p.get_tracks())
+    }
+
+    pub fn get_active_track_count(&self) -> usize {
+        self.get_active_playlist().map_or(0, |p| p.len())
+    }
+
+    pub fn is_active_playlist_empty(&self) -> bool {
+        self.get_active_playlist().map_or(true, |p| p.is_empty())
+    }
+
+    // 再生制御メソッド（PlaybackQueueからの移行）
+    pub fn move_to_next(&mut self) -> Option<TrackInfo> {
+        let active_id = self.active_playlist_id.clone();
+        let track_count = self.playlists.iter()
+            .find(|p| p.id == active_id)
+            .map(|p| p.tracks.len())
+            .unwrap_or(0);
+
+        if track_count == 0 {
+            return None;
+        }
+
+        let next_index = if let Some(current_index) = self.current_playing_index {
+            current_index + 1
+        } else {
+            0
+        };
+
+        if next_index < track_count {
+            self.current_playing_index = Some(next_index);
+            self.playlists.iter()
+                .find(|p| p.id == active_id)
+                .and_then(|p| p.tracks.get(next_index))
+                .cloned()
+        } else {
+            None
+        }
+    }
+
+    pub fn move_to_previous(&mut self) -> Option<TrackInfo> {
+        if let Some(current_index) = self.current_playing_index {
+            if current_index > 0 {
+                let prev_index = current_index - 1;
+                self.current_playing_index = Some(prev_index);
+                let active_id = self.active_playlist_id.clone();
+                return self.playlists.iter()
+                    .find(|p| p.id == active_id)
+                    .and_then(|p| p.tracks.get(prev_index))
+                    .cloned();
+            }
+        }
+        None
+    }
+
+    // PlaybackQueueの選択操作との互換性
+    pub fn handle_item_selection(&mut self, index: usize, ctrl_held: bool, shift_held: bool) {
+        if shift_held {
+            // 範囲選択（簡単な実装）
+            self.selected_indices.clear();
+            if let Some(last_selected) = self.selected_indices.iter().max() {
+                let start = (*last_selected).min(index);
+                let end = (*last_selected).max(index);
+                for i in start..=end {
+                    self.selected_indices.insert(i);
+                }
+            } else {
+                self.selected_indices.insert(index);
+            }
+        } else if ctrl_held {
+            // 複数選択のトグル
+            if self.selected_indices.contains(&index) {
+                self.selected_indices.remove(&index);
+            } else {
+                self.selected_indices.insert(index);
+            }
+        } else {
+            // 単一選択
+            self.selected_indices.clear();
+            self.selected_indices.insert(index);
+        }
+    }
+
+    pub fn remove_selected(&mut self) {
+        let mut indices_to_remove: Vec<usize> = self.selected_indices.iter().cloned().collect();
+        indices_to_remove.sort_by(|a, b| b.cmp(a)); // 後ろから削除
+
+        for index in indices_to_remove {
+            self.remove_track(index);
+        }
+        self.selected_indices.clear();
+    }
+
+    // プレイリスト内での移動操作
+    pub fn move_selected_up(&mut self) {
+        let mut indices: Vec<usize> = self.selected_indices.iter().cloned().collect();
+        indices.sort();
+
+        for index in indices {
+            if index > 0 {
+                self.move_track(index, index - 1);
+                // 選択状態を更新
+                self.selected_indices.remove(&index);
+                self.selected_indices.insert(index - 1);
+            }
+        }
+    }
+
+    pub fn move_selected_down(&mut self) {
+        let mut indices: Vec<usize> = self.selected_indices.iter().cloned().collect();
+        indices.sort_by(|a, b| b.cmp(a)); // 後ろから処理
+
+        let max_index = self.get_active_track_count().saturating_sub(1);
+        for index in indices {
+            if index < max_index {
+                self.move_track(index, index + 1);
+                // 選択状態を更新
+                self.selected_indices.remove(&index);
+                self.selected_indices.insert(index + 1);
+            }
+        }
+    }
+
+    pub fn move_selected_to_top(&mut self) {
+        let mut indices: Vec<usize> = self.selected_indices.iter().cloned().collect();
+        indices.sort();
+
+        self.selected_indices.clear();
+        for (new_pos, index) in indices.into_iter().enumerate() {
+            self.move_track(index - new_pos, new_pos);
+            self.selected_indices.insert(new_pos);
+        }
+    }
+
+    pub fn move_selected_to_bottom(&mut self) {
+        let mut indices: Vec<usize> = self.selected_indices.iter().cloned().collect();
+        indices.sort_by(|a, b| b.cmp(a));
+
+        let track_count = self.get_active_track_count();
+        self.selected_indices.clear();
+        
+        for (offset, index) in indices.into_iter().enumerate() {
+            let new_pos = track_count - 1 - offset;
+            self.move_track(index, new_pos);
+            self.selected_indices.insert(new_pos);
+        }
+    }
+
+    pub fn clear(&mut self) {
+        self.clear_active_playlist();
+    }
+
+    pub fn set_current_index(&mut self, index: usize) {
+        if let Some(tracks) = self.get_active_tracks() {
+            if index < tracks.len() {
+                self.current_playing_index = Some(index);
+            }
+        }
+    }
+
+    pub fn get_current_index(&self) -> Option<usize> {
+        self.current_playing_index
+    }
+
+    pub fn get_tracks(&self) -> Option<&Vec<TrackInfo>> {
+        self.get_active_tracks()
+    }
+}

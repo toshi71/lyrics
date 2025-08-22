@@ -1,6 +1,7 @@
 use std::path::{Path, PathBuf};
+use serde::{Deserialize, Serialize};
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct TrackInfo {
     pub title: String,
     pub artist: String,
