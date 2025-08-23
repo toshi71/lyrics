@@ -8,12 +8,14 @@ use eframe::egui;
 use font_kit::family_name::FamilyName;
 use font_kit::properties::Properties;
 use font_kit::source::SystemSource;
+use music::MusicTreeNode;
 
 use music::{MusicLibrary, TrackInfo};
 use player::{AudioPlayer, PlaybackState};
 use playlist::PlaylistManager;
 use settings::Settings;
 use ui::{MusicTreeUI, PlaybackControlsUI, SearchUI};
+
 
 fn main() -> Result<(), eframe::Error> {
     let options = eframe::NativeOptions {
@@ -91,6 +93,9 @@ struct MyApp {
     last_selected_path: Option<std::path::PathBuf>, // For range selection
     audio_player: AudioPlayer,
     playlist_manager: PlaylistManager,
+    // プレイリスト名編集用
+    editing_playlist_id: Option<String>,
+    editing_playlist_name: String,
 }
 
 impl MyApp {
@@ -109,6 +114,8 @@ impl MyApp {
             last_selected_path: None,
             audio_player: AudioPlayer::new(),
             playlist_manager: PlaylistManager::auto_load().unwrap_or_else(|_| PlaylistManager::new()),
+            editing_playlist_id: None,
+            editing_playlist_name: String::new(),
             settings,
         };
         app.refresh_music_library();
@@ -135,9 +142,9 @@ impl MyApp {
     fn show_music_tree(&mut self, ui: &mut egui::Ui) {
         let mut track_selection = None;
         let mut double_clicked_track = None;
-        let mut add_to_queue_track = None;
-        let mut add_album_to_queue_node = None;
-        let mut add_artist_to_queue_node = None;
+        let mut add_to_playlist_track: Option<(TrackInfo, String)> = None; // (track, playlist_id)
+        let mut add_album_to_playlist: Option<(MusicTreeNode, String)> = None; // (album_node, playlist_id)
+        let mut add_artist_to_playlist: Option<(MusicTreeNode, String)> = None; // (artist_node, playlist_id)
         
         MusicTreeUI::show(
             ui,
@@ -145,27 +152,28 @@ impl MyApp {
             &self.search_query,
             self.selected_track.as_ref(),
             &self.selected_tracks,
+            &self.playlist_manager.get_playlists(),
             &mut |track, ctrl_held, shift_held| track_selection = Some((track, ctrl_held, shift_held)),
             &mut |track| double_clicked_track = Some(track),
-            &mut |track| add_to_queue_track = Some(track),
-            &mut |node| add_album_to_queue_node = Some(node.clone()),
-            &mut |node| add_artist_to_queue_node = Some(node.clone()),
+            &mut |track, playlist_id| add_to_playlist_track = Some((track, playlist_id)),
+            &mut |node, playlist_id| add_album_to_playlist = Some((node.clone(), playlist_id)),
+            &mut |node, playlist_id| add_artist_to_playlist = Some((node.clone(), playlist_id)),
         );
         
         if let Some((track, ctrl_held, shift_held)) = track_selection {
             self.handle_track_selection(track, ctrl_held, shift_held);
         }
         
-        if let Some(track) = add_to_queue_track {
-            self.handle_add_to_queue_from_context_menu(track);
+        if let Some((track, playlist_id)) = add_to_playlist_track {
+            self.handle_add_to_playlist(track, playlist_id);
         }
         
-        if let Some(node) = add_album_to_queue_node {
-            self.handle_add_album_to_queue(node);
+        if let Some((node, playlist_id)) = add_album_to_playlist {
+            self.handle_add_album_to_playlist(node, playlist_id);
         }
         
-        if let Some(node) = add_artist_to_queue_node {
-            self.handle_add_artist_to_queue(node);
+        if let Some((node, playlist_id)) = add_artist_to_playlist {
+            self.handle_add_artist_to_playlist(node, playlist_id);
         }
         
         // TODO: Implement queue addition on double-click
@@ -262,80 +270,6 @@ impl MyApp {
         tracks
     }
 
-    fn add_selected_tracks_to_queue(&mut self) {
-        let mut tracks_to_add = Vec::new();
-        
-        // If there are multiple selections, add all of them
-        if !self.selected_tracks.is_empty() {
-            let all_tracks = self.get_all_tracks_in_display_order();
-            for track in all_tracks {
-                if self.selected_tracks.contains(&track.path) {
-                    tracks_to_add.push(track);
-                }
-            }
-        } else if let Some(ref selected_track) = self.selected_track {
-            // If only single selection, add that track
-            tracks_to_add.push(selected_track.clone());
-        }
-        
-        // Add tracks to queue in order
-        for track in tracks_to_add {
-            self.playlist_manager.add_track(track);
-        }
-    }
-
-    fn handle_add_to_queue_from_context_menu(&mut self, clicked_track: TrackInfo) {
-        // Check if the clicked track is already selected
-        let track_is_selected = self.selected_tracks.contains(&clicked_track.path) || 
-            (self.selected_track.as_ref().map(|st| st.path == clicked_track.path).unwrap_or(false));
-        
-        if track_is_selected {
-            // If the track is already selected, add all currently selected tracks
-            self.add_selected_tracks_to_queue();
-        } else {
-            // If the track is not selected, select it first and then add only that track
-            self.selected_tracks.clear();
-            self.selected_track = Some(clicked_track.clone());
-            self.last_selected_path = Some(clicked_track.path.clone());
-            
-            // Add only this track to queue
-            self.playlist_manager.add_track(clicked_track);
-        }
-    }
-
-    fn handle_add_album_to_queue(&mut self, album_node: crate::music::MusicTreeNode) {
-        // Collect all tracks from the album node
-        let mut album_tracks = Vec::new();
-        self.collect_tracks_from_node(&album_node, &mut album_tracks);
-        
-        // Add tracks to queue in order (they should already be sorted by track number)
-        for track in album_tracks {
-            self.playlist_manager.add_track(track);
-        }
-    }
-
-    fn handle_add_artist_to_queue(&mut self, artist_node: crate::music::MusicTreeNode) {
-        // Collect all tracks from the artist/composer node
-        let mut artist_tracks = Vec::new();
-        self.collect_tracks_from_node(&artist_node, &mut artist_tracks);
-        
-        // Add tracks to queue in order (they should already be sorted)
-        for track in artist_tracks {
-            self.playlist_manager.add_track(track);
-        }
-    }
-
-    fn collect_tracks_from_node(&self, node: &crate::music::MusicTreeNode, tracks: &mut Vec<TrackInfo>) {
-        // If this is a track node, add it
-        if let Some(track_info) = &node.track_info {
-            tracks.push(track_info.clone());
-        }
-        
-        // Recursively collect from children
-        for child in &node.children {
-            self.collect_tracks_from_node(child, tracks);
-        }
-    }
 
     // Removed play_track method - now using queue-only playback
 
@@ -379,6 +313,8 @@ impl MyApp {
 
     fn handle_stop(&mut self) {
         self.audio_player.stop();
+        // 停止時は再生状態をクリア
+        self.playlist_manager.set_current_playing_index(None);
     }
 
     fn handle_next(&mut self) {
@@ -392,6 +328,8 @@ impl MyApp {
     fn clear_playback_queue(&mut self) {
         self.audio_player.stop();
         self.playlist_manager.clear();
+        // クリア時は再生状態もリセット
+        self.playlist_manager.set_current_playing_index(None);
     }
 
     fn handle_queue_item_double_clicked(&mut self, index: usize) {
@@ -409,6 +347,8 @@ impl MyApp {
         if let Some(current_index) = self.playlist_manager.get_current_index() {
             if self.playlist_manager.is_selected(current_index) {
                 self.audio_player.stop();
+                // 再生中の楽曲が削除される場合は再生状態もクリア
+                self.playlist_manager.set_current_playing_index(None);
             }
         }
         
@@ -558,8 +498,8 @@ impl MyApp {
         self.show_right_pane(&mut right_ui);
     }
 
-    fn show_right_pane(&mut self, ui: &mut egui::Ui) {
-        // Tab header
+    fn show_playlist_tabs(&mut self, ui: &mut egui::Ui) {
+        
         ui.allocate_ui_with_layout(
             egui::Vec2::new(ui.available_width(), ui.spacing().button_padding.y * 2.0 + ui.text_style_height(&egui::TextStyle::Button)),
             egui::Layout::top_down(egui::Align::LEFT),
@@ -567,116 +507,414 @@ impl MyApp {
                 ui.add_space(2.0);
                 ui.horizontal(|ui| {
                     ui.add_space(4.0);
-                    ui.selectable_value(&mut self.right_pane_tab, RightTab::Playback, "再生");
-                    ui.selectable_value(&mut self.right_pane_tab, RightTab::Info, "情報");
-                    ui.selectable_value(&mut self.right_pane_tab, RightTab::Lrc, "LRC");
+                    
+                    // デフォルトプレイリストタブ (左端に固定)
+                    let is_default_active = self.playlist_manager.get_active_playlist_id() == "default";
+                    let is_default_playing = self.playlist_manager.get_current_playing_playlist_id() == Some("default") 
+                        && self.playlist_manager.get_current_track().is_some();
+                    let default_label = if is_default_playing {
+                        "🎵 デフォルト"  // 再生中マーク付き
+                    } else {
+                        "デフォルト"
+                    };
+                    
+                    if ui.selectable_label(is_default_active, default_label).clicked() {
+                        self.playlist_manager.set_active_playlist("default");
+                    }
+                    
+                    // ユーザー作成プレイリストタブ
+                    let playlists = self.playlist_manager.get_playlists().clone();
+                    let mut playlist_to_activate = None;
+                    let mut playlist_to_delete = None;
+                    let mut playlist_to_start_editing = None;
+                    let mut playlist_rename_result: Option<(String, String)> = None; // (id, new_name)
+                    let mut cancel_editing = false;
+                    
+                    for playlist in &playlists {
+                        if playlist.id == "default" {
+                            continue; // デフォルトは既に表示済み
+                        }
+                        
+                        let is_active = self.playlist_manager.get_active_playlist_id() == playlist.id;
+                        let is_editing = self.editing_playlist_id.as_ref() == Some(&playlist.id);
+                        let is_playing = self.playlist_manager.get_current_playing_playlist_id() == Some(&playlist.id)
+                            && self.playlist_manager.get_current_track().is_some();
+                        
+                        
+                        if is_editing {
+                            // 編集モード：テキスト入力フィールドを表示
+                            let response = ui.text_edit_singleline(&mut self.editing_playlist_name);
+                            
+                            // フォーカスを設定（初回のみ）
+                            if response.gained_focus() {
+                                response.request_focus();
+                            }
+                            
+                            // Enter/Escapeキーの処理
+                            if response.lost_focus() || ui.input(|i| i.key_pressed(egui::Key::Enter)) {
+                                let new_name = self.editing_playlist_name.trim();
+                                if !new_name.is_empty() && self.is_playlist_name_unique(new_name, &playlist.id) {
+                                    playlist_rename_result = Some((playlist.id.clone(), new_name.to_string()));
+                                }
+                                cancel_editing = true;
+                            }
+                            
+                            if ui.input(|i| i.key_pressed(egui::Key::Escape)) {
+                                cancel_editing = true;
+                            }
+                        } else {
+                            // 通常モード：selectable_labelを表示
+                            let display_name = if is_playing {
+                                format!("🎵 {}", playlist.name)  // 再生中マーク付き
+                            } else {
+                                playlist.name.clone()
+                            };
+                            let response = ui.selectable_label(is_active, display_name);
+                            
+                            if response.clicked() {
+                                playlist_to_activate = Some(playlist.id.clone());
+                            }
+                            
+                            // 右クリックメニュー（デフォルトプレイリスト以外）
+                            response.context_menu(|ui| {
+                                if ui.button("✏ 名前を変更").clicked() {
+                                    playlist_to_start_editing = Some((playlist.id.clone(), playlist.name.clone()));
+                                    ui.close_menu();
+                                }
+                                
+                                ui.separator();
+                                
+                                // サブメニューで削除確認
+                                ui.menu_button("🗑 削除", |ui| {
+                                    let track_count = self.playlist_manager.get_playlist(&playlist.id)
+                                        .map(|p| p.tracks.len())
+                                        .unwrap_or(0);
+                                    
+                                    if track_count > 0 {
+                                        ui.label(format!("「{}」を削除しますか？", playlist.name));
+                                        ui.label(format!("（{}曲が含まれています）", track_count));
+                                        ui.separator();
+                                    }
+                                    
+                                    if ui.button("削除を確認").clicked() {
+                                        playlist_to_delete = Some(playlist.id.clone());
+                                        ui.close_menu();
+                                    }
+                                });
+                            });
+                        }
+                    }
+                    
+                    // アクション実行（借用チェッカー対応）
+                    if let Some(id) = playlist_to_activate {
+                        self.playlist_manager.set_active_playlist(&id);
+                    }
+                    if let Some(id) = playlist_to_delete {
+                        if self.playlist_manager.delete_playlist(&id) {
+                            // 削除成功時に自動保存
+                            let _ = self.playlist_manager.auto_save();
+                        }
+                    }
+                    if let Some((id, name)) = playlist_to_start_editing {
+                        self.editing_playlist_id = Some(id);
+                        self.editing_playlist_name = name;
+                    }
+                    if let Some((id, new_name)) = playlist_rename_result {
+                        if self.playlist_manager.rename_playlist(&id, new_name) {
+                            // 名前変更成功時に自動保存
+                            let _ = self.playlist_manager.auto_save();
+                        }
+                        self.editing_playlist_id = None;
+                        self.editing_playlist_name.clear();
+                    }
+                    if cancel_editing {
+                        self.editing_playlist_id = None;
+                        self.editing_playlist_name.clear();
+                    }
+                    
+                    // + ボタン (新しいプレイリスト作成)
+                    if ui.button("+").clicked() {
+                        // ユーザープレイリストの数をカウント（デフォルト以外）
+                        let user_playlist_count = self.playlist_manager.get_playlists()
+                            .iter()
+                            .filter(|p| p.id != "default")
+                            .count();
+                        let new_name = format!("新しいプレイリスト{}", user_playlist_count + 1);
+                        let new_id = self.playlist_manager.create_playlist(new_name);
+                        self.playlist_manager.set_active_playlist(&new_id);
+                        
+                        // 作成成功時に自動保存
+                        let _ = self.playlist_manager.auto_save();
+                    }
                 });
             }
         );
-        ui.separator();
-        
-        // Tab content
-        egui::ScrollArea::both()
-            .id_source("right_pane_scroll")
-            .auto_shrink([false, false])
-            .scroll_bar_visibility(egui::scroll_area::ScrollBarVisibility::VisibleWhenNeeded)
-            .show(ui, |ui| {
-                match self.right_pane_tab {
-                    RightTab::Playback => {
-                        // Store data needed for UI
-                        let queue_tracks = self.playlist_manager.get_tracks().cloned().unwrap_or_default();
-                        let current_index = self.playlist_manager.get_current_index();
-                        let playback_state = self.audio_player.get_state().clone();
-                        let selected_indices: Vec<usize> = self.playlist_manager.get_selected_indices().iter().cloned().collect();
-                        
-                        // Collect actions
-                        let mut clear_queue = false;
-                        let mut previous_clicked = false;
-                        let mut play_pause_clicked = false;
-                        let mut stop_clicked = false;
-                        let mut next_clicked = false;
-                        let mut queue_item_selection: Option<(usize, bool, bool)> = None;
-                        let mut queue_item_double_clicked: Option<usize> = None;
-                        let mut move_selected_up = false;
-                        let mut move_selected_down = false;
-                        let mut move_selected_to_top = false;
-                        let mut move_selected_to_bottom = false;
-                        let mut remove_selected = false;
-                        
-                        PlaybackControlsUI::show(
-                            ui,
-                            &queue_tracks,
-                            current_index,
-                            &playback_state,
-                            &selected_indices,
-                            &mut || clear_queue = true,
-                            &mut || previous_clicked = true,
-                            &mut || play_pause_clicked = true,
-                            &mut || stop_clicked = true,
-                            &mut || next_clicked = true,
-                            &mut |index, ctrl_held, shift_held| queue_item_selection = Some((index, ctrl_held, shift_held)),
-                            &mut |index| queue_item_double_clicked = Some(index),
-                            &mut || move_selected_up = true,
-                            &mut || move_selected_down = true,
-                            &mut || move_selected_to_top = true,
-                            &mut || move_selected_to_bottom = true,
-                            &mut || remove_selected = true,
-                        );
-                        
-                        // Handle actions after UI
-                        if clear_queue {
-                            self.clear_playback_queue();
-                        }
-                        if previous_clicked {
-                            self.handle_previous_button();
-                        }
-                        if play_pause_clicked {
-                            self.handle_play_pause();
-                        }
-                        if stop_clicked {
-                            self.handle_stop();
-                        }
-                        if next_clicked {
-                            self.handle_next();
-                        }
-                        if let Some((index, ctrl_held, shift_held)) = queue_item_selection {
-                            self.playlist_manager.handle_item_selection(index, ctrl_held, shift_held);
-                        }
-                        if let Some(index) = queue_item_double_clicked {
-                            self.handle_queue_item_double_clicked(index);
-                        }
-                        if move_selected_up {
-                            self.playlist_manager.move_selected_up();
-                        }
-                        if move_selected_down {
-                            self.playlist_manager.move_selected_down();
-                        }
-                        if move_selected_to_top {
-                            self.playlist_manager.move_selected_to_top();
-                        }
-                        if move_selected_to_bottom {
-                            self.playlist_manager.move_selected_to_bottom();
-                        }
-                        if remove_selected {
-                            self.handle_remove_selected_from_queue();
-                        }
-                    },
-                    RightTab::Info => {
-                        ui.vertical_centered(|ui| {
-                            ui.add_space(50.0);
-                            ui.label("情報タブ");
-                            ui.label("ここに楽曲情報を表示予定");
+    }
+    
+    fn show_right_pane(&mut self, ui: &mut egui::Ui) {
+        ui.vertical(|ui| {
+            // 1. プレイリストタブを最上部に表示
+            self.show_playlist_tabs(ui);
+            ui.separator();
+            
+            // 2. プレイリスト楽曲表示（固定高さ、10曲分、スクロール対応）
+            ui.heading("プレイリスト");
+            let playlist_height = (ui.text_style_height(&egui::TextStyle::Body) + ui.spacing().item_spacing.y) * 10.0 + 40.0; // 10曲分の高さ + マージン
+            
+            egui::ScrollArea::vertical()
+                .id_source("playlist_scroll")
+                .auto_shrink([false, false])
+                .max_height(playlist_height)
+                .show(ui, |ui| {
+                    self.show_playlist_list(ui);
+                });
+            
+            ui.separator();
+            
+            // 3. 下部を左右に分割
+            ui.horizontal(|ui| {
+                // 左側：再生コントロール
+                ui.vertical(|ui| {
+                    ui.set_width(ui.available_width() * 0.4);
+                    ui.heading("再生コントロール");
+                    ui.separator();
+                    self.show_playback_controls_only(ui);
+                });
+                
+                ui.separator();
+                
+                // 右側：情報・LRCタブ
+                ui.vertical(|ui| {
+                    ui.set_width(ui.available_width());
+                    
+                    // 情報・LRCタブ切り替え
+                    ui.horizontal(|ui| {
+                        ui.selectable_value(&mut self.right_pane_tab, RightTab::Info, "情報");
+                        ui.selectable_value(&mut self.right_pane_tab, RightTab::Lrc, "LRC");
+                    });
+                    
+                    ui.separator();
+                    
+                    // タブのコンテンツを表示
+                    egui::ScrollArea::both()
+                        .id_source("info_lrc_scroll")
+                        .auto_shrink([false, false])
+                        .show(ui, |ui| {
+                            match self.right_pane_tab {
+                                RightTab::Playback => {
+                                    // このケースは使用しない（プレイリストは上部で表示）
+                                    ui.label("プレイリスト表示（上部で表示）");
+                                },
+                                RightTab::Info => {
+                                    // 現在再生中の楽曲情報を優先表示
+                                    if let Some(current_track) = self.playlist_manager.get_current_track() {
+                                        ui.heading("🎵 現在再生中");
+                                        if let Some(playing_playlist_id) = self.playlist_manager.get_current_playing_playlist_id() {
+                                            if let Some(playlist) = self.playlist_manager.get_playlist(playing_playlist_id) {
+                                                ui.label(format!("プレイリスト: {}", playlist.name));
+                                            }
+                                        }
+                                        ui.separator();
+                                        
+                                        egui::Grid::new("current_track_info_grid")
+                                            .num_columns(2)
+                                            .spacing([10.0, 5.0])
+                                            .show(ui, |ui| {
+                                                ui.label("タイトル:");
+                                                ui.label(&current_track.title);
+                                                ui.end_row();
+                                                
+                                                ui.label("アーティスト:");
+                                                ui.label(&current_track.artist);
+                                                ui.end_row();
+                                                
+                                                ui.label("アルバム:");
+                                                ui.label(&current_track.album);
+                                                ui.end_row();
+                                                
+                                                if let Some(composer) = &current_track.composer {
+                                                    ui.label("作曲者:");
+                                                    ui.label(composer);
+                                                    ui.end_row();
+                                                }
+                                                
+                                                if let Some(genre) = &current_track.genre {
+                                                    ui.label("ジャンル:");
+                                                    ui.label(genre);
+                                                    ui.end_row();
+                                                }
+                                                
+                                                if let Some(track_num) = current_track.track_number {
+                                                    ui.label("トラック番号:");
+                                                    ui.label(track_num.to_string());
+                                                    ui.end_row();
+                                                }
+                                            });
+                                            
+                                        ui.add_space(20.0);
+                                        ui.separator();
+                                        ui.add_space(10.0);
+                                    }
+                                    
+                                    if let Some(track) = &self.selected_track {
+                                        ui.heading("選択中の楽曲");
+                                        egui::Grid::new("track_info_grid")
+                                            .num_columns(2)
+                                            .spacing([10.0, 5.0])
+                                            .show(ui, |ui| {
+                                                ui.label("タイトル:");
+                                                ui.label(&track.title);
+                                                ui.end_row();
+                                                
+                                                ui.label("アーティスト:");
+                                                ui.label(&track.artist);
+                                                ui.end_row();
+                                                
+                                                ui.label("アルバム:");
+                                                ui.label(&track.album);
+                                                ui.end_row();
+                                                
+                                                if let Some(composer) = &track.composer {
+                                                    ui.label("作曲者:");
+                                                    ui.label(composer);
+                                                    ui.end_row();
+                                                }
+                                                
+                                                if let Some(genre) = &track.genre {
+                                                    ui.label("ジャンル:");
+                                                    ui.label(genre);
+                                                    ui.end_row();
+                                                }
+                                                
+                                                if let Some(track_num) = track.track_number {
+                                                    ui.label("トラック番号:");
+                                                    ui.label(track_num.to_string());
+                                                    ui.end_row();
+                                                }
+                                                
+                                                ui.label("ファイルパス:");
+                                                ui.label(track.path.display().to_string());
+                                                ui.end_row();
+                                            });
+                                    } else if self.playlist_manager.get_current_track().is_none() {
+                                        ui.label("楽曲を選択するか、再生を開始してください");
+                                    }
+                                },
+                                RightTab::Lrc => {
+                                    ui.label("LRC歌詞表示機能は未実装です");
+                                },
+                            }
                         });
-                    },
-                    RightTab::Lrc => {
-                        ui.vertical_centered(|ui| {
-                            ui.add_space(50.0);
-                            ui.label("LRCタブ");
-                            ui.label("ここに歌詞を表示予定");
-                        });
-                    },
-                }
+                });
             });
+        });
+    }
+
+    fn show_playlist_list(&mut self, ui: &mut egui::Ui) {
+        // Store data needed for UI
+        let queue_tracks = self.playlist_manager.get_tracks().cloned().unwrap_or_default();
+        let current_index = self.playlist_manager.get_current_index();
+        let selected_indices: Vec<usize> = self.playlist_manager.get_selected_indices().iter().cloned().collect();
+        let playlists = self.playlist_manager.get_playlists().clone();
+        let current_playlist_id = self.playlist_manager.get_active_playlist_id().to_string();
+        
+        // Collect actions
+        let mut queue_item_selection: Option<(usize, bool, bool)> = None;
+        let mut queue_item_double_clicked: Option<usize> = None;
+        let mut move_selected_up = false;
+        let mut move_selected_down = false;
+        let mut move_selected_to_top = false;
+        let mut move_selected_to_bottom = false;
+        let mut remove_selected = false;
+        let mut copy_to_playlist: Option<String> = None;
+        let mut move_to_playlist: Option<String> = None;
+        
+        PlaybackControlsUI::show_track_list(
+            ui,
+            &queue_tracks,
+            current_index,
+            self.playlist_manager.get_current_playing_playlist_id(),
+            self.playlist_manager.get_current_track(),
+            &selected_indices,
+            &playlists,
+            &current_playlist_id,
+            &mut |index, ctrl_held, shift_held| queue_item_selection = Some((index, ctrl_held, shift_held)),
+            &mut |index| queue_item_double_clicked = Some(index),
+            &mut || move_selected_up = true,
+            &mut || move_selected_down = true,
+            &mut || move_selected_to_top = true,
+            &mut || move_selected_to_bottom = true,
+            &mut || remove_selected = true,
+            &mut |playlist_id| copy_to_playlist = Some(playlist_id),
+            &mut |playlist_id| move_to_playlist = Some(playlist_id),
+        );
+        
+        // Handle actions after UI
+        if let Some((index, ctrl_held, shift_held)) = queue_item_selection {
+            self.playlist_manager.handle_item_selection(index, ctrl_held, shift_held);
+        }
+        if let Some(index) = queue_item_double_clicked {
+            self.handle_queue_item_double_clicked(index);
+        }
+        if move_selected_up {
+            self.playlist_manager.move_selected_up();
+        }
+        if move_selected_down {
+            self.playlist_manager.move_selected_down();
+        }
+        if move_selected_to_top {
+            self.playlist_manager.move_selected_to_top();
+        }
+        if move_selected_to_bottom {
+            self.playlist_manager.move_selected_to_bottom();
+        }
+        if remove_selected {
+            self.handle_remove_selected_from_queue();
+        }
+        if let Some(playlist_id) = copy_to_playlist {
+            self.handle_copy_selected_to_playlist(playlist_id);
+        }
+        if let Some(playlist_id) = move_to_playlist {
+            self.handle_move_selected_to_playlist(playlist_id);
+        }
+    }
+
+    fn show_playback_controls_only(&mut self, ui: &mut egui::Ui) {
+        let playback_state = self.audio_player.get_state().clone();
+        
+        // Collect actions
+        let mut clear_queue = false;
+        let mut previous_clicked = false;
+        let mut play_pause_clicked = false;
+        let mut stop_clicked = false;
+        let mut next_clicked = false;
+        
+        PlaybackControlsUI::show_controls_only(
+            ui,
+            &playback_state,
+            &mut || clear_queue = true,
+            &mut || previous_clicked = true,
+            &mut || play_pause_clicked = true,
+            &mut || stop_clicked = true,
+            &mut || next_clicked = true,
+        );
+        
+        // Handle actions after UI
+        if clear_queue {
+            self.clear_playback_queue();
+        }
+        if previous_clicked {
+            self.handle_previous_button();
+        }
+        if play_pause_clicked {
+            self.handle_play_pause();
+        }
+        if stop_clicked {
+            self.handle_stop();
+        }
+        if next_clicked {
+            self.handle_next();
+        }
     }
 
     fn show_settings_tab(&mut self, ui: &mut egui::Ui) {
@@ -710,5 +948,115 @@ impl MyApp {
                 self.save_settings();
             }
         });
+    }
+
+    // プレイリスト名の重複チェック
+    fn is_playlist_name_unique(&self, name: &str, excluding_id: &str) -> bool {
+        !self.playlist_manager.get_playlists()
+            .iter()
+            .any(|p| p.id != excluding_id && p.name == name)
+    }
+
+    // プレイリストに楽曲を追加
+    fn handle_add_to_playlist(&mut self, track: TrackInfo, playlist_id: String) {
+        // 指定されたプレイリストに楽曲を追加
+        if let Some(playlist) = self.playlist_manager.get_playlist_mut(&playlist_id) {
+            playlist.add_track(track);
+            // 自動保存
+            let _ = self.playlist_manager.auto_save();
+        }
+    }
+
+    // アルバムをプレイリストに追加
+    fn handle_add_album_to_playlist(&mut self, node: MusicTreeNode, playlist_id: String) {
+        let tracks = self.collect_all_tracks_from_node(&node);
+        if let Some(playlist) = self.playlist_manager.get_playlist_mut(&playlist_id) {
+            for track in tracks {
+                playlist.add_track(track);
+            }
+            // 自動保存
+            let _ = self.playlist_manager.auto_save();
+        }
+    }
+
+    // アーティスト・作曲家をプレイリストに追加
+    fn handle_add_artist_to_playlist(&mut self, node: MusicTreeNode, playlist_id: String) {
+        let tracks = self.collect_all_tracks_from_node(&node);
+        if let Some(playlist) = self.playlist_manager.get_playlist_mut(&playlist_id) {
+            for track in tracks {
+                playlist.add_track(track);
+            }
+            // 自動保存
+            let _ = self.playlist_manager.auto_save();
+        }
+    }
+
+    // ノードから全ての楽曲を収集するヘルパー関数（プレイリスト用）
+    fn collect_all_tracks_from_node(&self, node: &MusicTreeNode) -> Vec<TrackInfo> {
+        let mut tracks = Vec::new();
+        self.collect_all_tracks_recursive(node, &mut tracks);
+        tracks
+    }
+
+    // 再帰的に楽曲を収集（プレイリスト用）
+    fn collect_all_tracks_recursive(&self, node: &MusicTreeNode, tracks: &mut Vec<TrackInfo>) {
+        if let Some(track_info) = &node.track_info {
+            tracks.push(track_info.clone());
+        }
+        
+        for child in &node.children {
+            self.collect_all_tracks_recursive(child, tracks);
+        }
+    }
+
+    // 選択中の楽曲を他のプレイリストにコピー
+    fn handle_copy_selected_to_playlist(&mut self, target_playlist_id: String) {
+        // 現在選択されている楽曲を取得
+        let selected_tracks = self.get_selected_tracks_from_active_playlist();
+        
+        // ターゲットプレイリストに楽曲を追加
+        if let Some(target_playlist) = self.playlist_manager.get_playlist_mut(&target_playlist_id) {
+            for track in selected_tracks {
+                target_playlist.add_track(track);
+            }
+            // 自動保存
+            let _ = self.playlist_manager.auto_save();
+        }
+    }
+
+    // 選択中の楽曲を他のプレイリストに移動
+    fn handle_move_selected_to_playlist(&mut self, target_playlist_id: String) {
+        // 現在選択されている楽曲を取得
+        let selected_tracks = self.get_selected_tracks_from_active_playlist();
+        
+        // ターゲットプレイリストに楽曲を追加
+        if let Some(target_playlist) = self.playlist_manager.get_playlist_mut(&target_playlist_id) {
+            for track in selected_tracks {
+                target_playlist.add_track(track);
+            }
+        }
+        
+        // 現在のプレイリストから選択されている楽曲を削除
+        self.playlist_manager.remove_selected();
+        
+        // 自動保存
+        let _ = self.playlist_manager.auto_save();
+    }
+
+    // アクティブプレイリストから選択中の楽曲を取得
+    fn get_selected_tracks_from_active_playlist(&self) -> Vec<TrackInfo> {
+        let mut selected_tracks = Vec::new();
+        
+        if let Some(tracks) = self.playlist_manager.get_active_tracks() {
+            let selected_indices = self.playlist_manager.get_selected_indices();
+            
+            for &index in selected_indices {
+                if let Some(track) = tracks.get(index) {
+                    selected_tracks.push(track.clone());
+                }
+            }
+        }
+        
+        selected_tracks
     }
 }

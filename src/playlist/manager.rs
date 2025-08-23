@@ -3,6 +3,7 @@ use std::time::SystemTime;
 use serde::{Deserialize, Serialize};
 use crate::music::TrackInfo;
 
+
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Playlist {
     pub id: String,
@@ -77,6 +78,7 @@ pub struct PlaylistManager {
     pub(crate) active_playlist_id: String,
     selected_indices: HashSet<usize>,
     current_playing_index: Option<usize>,
+    pub(crate) current_playing_playlist_id: Option<String>, // 現在再生中の楽曲があるプレイリスト
 }
 
 impl PlaylistManager {
@@ -89,6 +91,7 @@ impl PlaylistManager {
             active_playlist_id,
             selected_indices: HashSet::new(),
             current_playing_index: None,
+            current_playing_playlist_id: None,
         }
     }
 
@@ -112,7 +115,12 @@ impl PlaylistManager {
             if self.active_playlist_id == id {
                 self.active_playlist_id = "default".to_string();
                 self.selected_indices.clear();
+            }
+            
+            // 現在再生中のプレイリストが削除された場合は再生状態をリセット
+            if self.current_playing_playlist_id.as_deref() == Some(id) {
                 self.current_playing_index = None;
+                self.current_playing_playlist_id = None;
             }
             true
         } else {
@@ -151,7 +159,11 @@ impl PlaylistManager {
         if self.playlists.iter().any(|p| p.id == id) {
             self.active_playlist_id = id.to_string();
             self.selected_indices.clear();
-            self.current_playing_index = None;
+            
+            // 重要：プレイリスト切り替え時は再生状態を保持する
+            // current_playing_index と current_playing_playlist_id は現在再生中の楽曲の管理情報であり、
+            // プレイリスト表示切り替えとは独立して管理する
+            
             true
         } else {
             false
@@ -238,7 +250,12 @@ impl PlaylistManager {
             playlist.clear();
         }
         self.selected_indices.clear();
-        self.current_playing_index = None;
+        
+        // アクティブプレイリストが現在再生中のプレイリストの場合、再生状態もリセット
+        if self.current_playing_playlist_id.as_deref() == Some(&active_id) {
+            self.current_playing_index = None;
+            self.current_playing_playlist_id = None;
+        }
     }
 
     // 選択管理
@@ -268,15 +285,40 @@ impl PlaylistManager {
     }
 
     pub fn set_current_playing_index(&mut self, index: Option<usize>) {
+        
         self.current_playing_index = index;
+        if index.is_some() {
+            self.current_playing_playlist_id = Some(self.active_playlist_id.clone());
+        } else {
+            self.current_playing_playlist_id = None;
+        }
+        
+    }
+    
+    // 特定のプレイリストでの再生状態を設定するメソッド
+    pub fn set_current_playing_with_playlist(&mut self, index: Option<usize>, playlist_id: String) {
+        
+        self.current_playing_index = index;
+        if index.is_some() {
+            self.current_playing_playlist_id = Some(playlist_id);
+        } else {
+            self.current_playing_playlist_id = None;
+        }
+        
     }
 
     pub fn get_current_track(&self) -> Option<&TrackInfo> {
-        if let (Some(playlist), Some(index)) = (self.get_active_playlist(), self.current_playing_index) {
-            playlist.get_track(index)
+        // 現在再生中の楽曲は、現在再生中のプレイリストから取得する
+        if let (Some(playing_playlist_id), Some(index)) = (&self.current_playing_playlist_id, self.current_playing_index) {
+            self.get_playlist(playing_playlist_id)
+                .and_then(|playlist| playlist.get_track(index))
         } else {
             None
         }
+    }
+    
+    pub fn get_current_playing_playlist_id(&self) -> Option<&str> {
+        self.current_playing_playlist_id.as_deref()
     }
 
     // 便利メソッド
@@ -294,9 +336,12 @@ impl PlaylistManager {
 
     // 再生制御メソッド（PlaybackQueueからの移行）
     pub fn move_to_next(&mut self) -> Option<TrackInfo> {
-        let active_id = self.active_playlist_id.clone();
+        // 現在再生中のプレイリストから次の楽曲を取得
+        let playing_playlist_id = self.current_playing_playlist_id.clone()
+            .unwrap_or_else(|| self.active_playlist_id.clone());
+            
         let track_count = self.playlists.iter()
-            .find(|p| p.id == active_id)
+            .find(|p| p.id == playing_playlist_id)
             .map(|p| p.tracks.len())
             .unwrap_or(0);
 
@@ -311,9 +356,10 @@ impl PlaylistManager {
         };
 
         if next_index < track_count {
-            self.current_playing_index = Some(next_index);
+            self.set_current_playing_with_playlist(Some(next_index), playing_playlist_id.clone());
+            
             self.playlists.iter()
-                .find(|p| p.id == active_id)
+                .find(|p| p.id == playing_playlist_id)
                 .and_then(|p| p.tracks.get(next_index))
                 .cloned()
         } else {
@@ -325,10 +371,15 @@ impl PlaylistManager {
         if let Some(current_index) = self.current_playing_index {
             if current_index > 0 {
                 let prev_index = current_index - 1;
-                self.current_playing_index = Some(prev_index);
-                let active_id = self.active_playlist_id.clone();
+                
+                // 現在再生中のプレイリストから前の楽曲を取得
+                let playing_playlist_id = self.current_playing_playlist_id.clone()
+                    .unwrap_or_else(|| self.active_playlist_id.clone());
+                
+                self.set_current_playing_with_playlist(Some(prev_index), playing_playlist_id.clone());
+                
                 return self.playlists.iter()
-                    .find(|p| p.id == active_id)
+                    .find(|p| p.id == playing_playlist_id)
                     .and_then(|p| p.tracks.get(prev_index))
                     .cloned();
             }
@@ -436,7 +487,7 @@ impl PlaylistManager {
     pub fn set_current_index(&mut self, index: usize) {
         if let Some(tracks) = self.get_active_tracks() {
             if index < tracks.len() {
-                self.current_playing_index = Some(index);
+                self.set_current_playing_index(Some(index));
             }
         }
     }

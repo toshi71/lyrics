@@ -1,5 +1,6 @@
 use crate::music::{MusicTreeNode, MusicNodeType, TrackInfo};
 use crate::ui::components::show_clickable_highlighted_text;
+use crate::playlist::Playlist;
 use eframe::egui;
 use std::collections::HashSet;
 use std::path::PathBuf;
@@ -13,11 +14,12 @@ impl MusicTreeUI {
         search_query: &str,
         selected_track: Option<&TrackInfo>,
         selected_tracks: &HashSet<PathBuf>,
+        playlists: &Vec<Playlist>,
         on_track_selected: &mut dyn FnMut(TrackInfo, bool, bool), // ctrl_held, shift_held
         on_track_double_clicked: &mut dyn FnMut(TrackInfo),
-        on_add_to_queue: &mut dyn FnMut(TrackInfo), // Add specific track or selected tracks to queue
-        on_add_album_to_queue: &mut dyn FnMut(&MusicTreeNode), // Add entire album to queue
-        on_add_artist_to_queue: &mut dyn FnMut(&MusicTreeNode), // Add entire artist to queue
+        on_add_to_playlist: &mut dyn FnMut(TrackInfo, String), // Add track to specific playlist
+        on_add_album_to_playlist: &mut dyn FnMut(&MusicTreeNode, String), // Add album to specific playlist
+        on_add_artist_to_playlist: &mut dyn FnMut(&MusicTreeNode, String), // Add artist to specific playlist
     ) {
         let mut actions = Vec::new();
         
@@ -28,13 +30,14 @@ impl MusicTreeUI {
                 search_query,
                 selected_track,
                 selected_tracks,
+                playlists,
                 i,
                 &[],
                 on_track_selected,
                 on_track_double_clicked,
-                on_add_to_queue,
-                on_add_album_to_queue,
-                on_add_artist_to_queue,
+                on_add_to_playlist,
+                on_add_album_to_playlist,
+                on_add_artist_to_playlist,
             ) {
                 actions.push(action);
             }
@@ -56,13 +59,14 @@ impl MusicTreeUI {
         search_query: &str,
         selected_track: Option<&TrackInfo>,
         selected_tracks: &HashSet<PathBuf>,
+        playlists: &Vec<Playlist>,
         index: usize,
         parent_path: &[usize],
         on_track_selected: &mut dyn FnMut(TrackInfo, bool, bool),
         on_track_double_clicked: &mut dyn FnMut(TrackInfo),
-        on_add_to_queue: &mut dyn FnMut(TrackInfo),
-        on_add_album_to_queue: &mut dyn FnMut(&MusicTreeNode),
-        on_add_artist_to_queue: &mut dyn FnMut(&MusicTreeNode),
+        on_add_to_playlist: &mut dyn FnMut(TrackInfo, String),
+        on_add_album_to_playlist: &mut dyn FnMut(&MusicTreeNode, String),
+        on_add_artist_to_playlist: &mut dyn FnMut(&MusicTreeNode, String),
     ) -> Option<TreeAction> {
         let mut current_path = parent_path.to_vec();
         current_path.push(index);
@@ -81,26 +85,41 @@ impl MusicTreeUI {
                 match node.node_type {
                     MusicNodeType::Album => {
                         response.context_menu(|ui| {
-                            if ui.button("アルバムをキューに追加").clicked() {
-                                on_add_album_to_queue(node);
-                                ui.close_menu();
-                            }
+                            // プレイリストに追加メニュー
+                            ui.menu_button("アルバムをプレイリストに追加", |ui| {
+                                for playlist in playlists {
+                                    if ui.button(&playlist.name).clicked() {
+                                        on_add_album_to_playlist(node, playlist.id.clone());
+                                        ui.close_menu();
+                                    }
+                                }
+                            });
                         });
                     },
                     MusicNodeType::Artist => {
                         response.context_menu(|ui| {
-                            if ui.button("アーティストの楽曲をキューに追加").clicked() {
-                                on_add_artist_to_queue(node);
-                                ui.close_menu();
-                            }
+                            // プレイリストに追加メニュー
+                            ui.menu_button("アーティストをプレイリストに追加", |ui| {
+                                for playlist in playlists {
+                                    if ui.button(&playlist.name).clicked() {
+                                        on_add_artist_to_playlist(node, playlist.id.clone());
+                                        ui.close_menu();
+                                    }
+                                }
+                            });
                         });
                     },
                     MusicNodeType::Composer => {
                         response.context_menu(|ui| {
-                            if ui.button("作曲家の楽曲をキューに追加").clicked() {
-                                on_add_artist_to_queue(node);
-                                ui.close_menu();
-                            }
+                            // プレイリストに追加メニュー
+                            ui.menu_button("作曲家をプレイリストに追加", |ui| {
+                                for playlist in playlists {
+                                    if ui.button(&playlist.name).clicked() {
+                                        on_add_artist_to_playlist(node, playlist.id.clone());
+                                        ui.close_menu();
+                                    }
+                                }
+                            });
                         });
                     },
                     _ => {} // No context menu for section headers
@@ -129,32 +148,15 @@ impl MusicTreeUI {
                     
                     // Right-click context menu with auto-selection
                     response.context_menu(|ui| {
-                        // Determine if this track is selected and what text to show
-                        let track_is_selected = selected_tracks.contains(&track_info.path) || 
-                            (selected_track.map(|st| st.path == track_info.path).unwrap_or(false));
-                        
-                        let menu_text = if track_is_selected {
-                            // If the track is selected, show count based on current selection
-                            let selected_count = if !selected_tracks.is_empty() {
-                                selected_tracks.len()
-                            } else {
-                                1
-                            };
-                            
-                            if selected_count == 1 {
-                                "楽曲をキューに追加".to_string()
-                            } else {
-                                format!("{}曲をキューに追加", selected_count)
+                        // プレイリストに追加メニュー
+                        ui.menu_button("プレイリストに追加", |ui| {
+                            for playlist in playlists {
+                                if ui.button(&playlist.name).clicked() {
+                                    on_add_to_playlist(track_info.clone(), playlist.id.clone());
+                                    ui.close_menu();
+                                }
                             }
-                        } else {
-                            // If the track is not selected, it will auto-select this single track
-                            "楽曲をキューに追加".to_string()
-                        };
-                        
-                        if ui.button(menu_text).clicked() {
-                            on_add_to_queue(track_info.clone());
-                            ui.close_menu();
-                        }
+                        });
                     });
                 }
             } else {
@@ -171,13 +173,14 @@ impl MusicTreeUI {
                         search_query,
                         selected_track,
                         selected_tracks,
+                        playlists,
                         child_index,
                         &current_path,
                         on_track_selected,
                         on_track_double_clicked,
-                        on_add_to_queue,
-                        on_add_album_to_queue,
-                        on_add_artist_to_queue,
+                        on_add_to_playlist,
+                        on_add_album_to_playlist,
+                        on_add_artist_to_playlist,
                     ) {
                         if action.is_none() {
                             action = Some(child_action);

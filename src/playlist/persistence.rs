@@ -7,6 +7,8 @@ use serde::{Deserialize, Serialize};
 struct PlaylistsData {
     playlists: Vec<Playlist>,
     active_playlist_id: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    current_playing_playlist_id: Option<String>,
 }
 
 impl PlaylistManager {
@@ -14,6 +16,7 @@ impl PlaylistManager {
         let data = PlaylistsData {
             playlists: self.playlists.clone(),
             active_playlist_id: self.active_playlist_id.clone(),
+            current_playing_playlist_id: self.current_playing_playlist_id.clone(),
         };
         
         let json_data = serde_json::to_string_pretty(&data)?;
@@ -62,6 +65,14 @@ impl PlaylistManager {
         let mut manager = PlaylistManager::new();
         manager.playlists = playlists;
         manager.active_playlist_id = active_playlist_id;
+        
+        // 現在再生中のプレイリストIDを復元（存在チェック）
+        if let Some(playing_id) = data.current_playing_playlist_id {
+            if manager.playlists.iter().any(|p| p.id == playing_id) {
+                manager.current_playing_playlist_id = Some(playing_id);
+            }
+        }
+        
         Ok(manager)
     }
     
