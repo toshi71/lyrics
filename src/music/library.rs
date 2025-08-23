@@ -26,6 +26,9 @@ impl MusicLibrary {
         if path.exists() && path.is_dir() {
             self.collect_tracks_recursive(path);
             self.build_tree();
+            
+            // Step 4-3: スキャン後にメモリ最適化
+            self.optimize_memory();
         }
     }
 
@@ -49,6 +52,25 @@ impl MusicLibrary {
     pub fn set_classical_hierarchy(&mut self, enabled: bool) {
         self.classical_composer_hierarchy = enabled;
         self.build_tree();
+    }
+
+    // Step 4-3: メモリ使用量最適化
+    pub fn optimize_memory(&mut self) {
+        self.tracks.shrink_to_fit();
+        Self::optimize_tree_memory(&mut self.tree);
+        Self::optimize_tree_memory(&mut self.original_tree);
+    }
+
+    fn optimize_tree_memory(tree: &mut Vec<MusicTreeNode>) {
+        for node in &mut *tree {
+            node.children.shrink_to_fit();
+            Self::optimize_tree_memory(&mut node.children);
+        }
+        tree.shrink_to_fit();
+    }
+
+    pub fn get_track_count(&self) -> usize {
+        self.tracks.len()
     }
 
     fn collect_tracks_recursive(&mut self, path: &Path) {

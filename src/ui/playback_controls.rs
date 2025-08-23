@@ -26,7 +26,7 @@ impl PlaybackControlsUI {
     ) {
         
         if queue.is_empty() {
-            ui.label("キューは空です");
+            ui.label("プレイリストは空です");
         } else {
             for (index, track) in queue.iter().enumerate() {
                 let is_selected = selected_indices.contains(&index);
@@ -244,7 +244,7 @@ impl PlaybackControlsUI {
         on_next: &mut dyn FnMut(),
     ) {
         // Clear button
-        if ui.button("🗑 キューをクリア").clicked() {
+        if ui.button("🗑 プレイリストをクリア").clicked() {
             on_clear_queue();
         }
         
@@ -309,7 +309,7 @@ impl PlaybackControlsUI {
     ) {
         // Queue header
         ui.horizontal(|ui| {
-            ui.label("再生キュー:");
+            ui.label("プレイリスト:");
             ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
                 if ui.button("🗑 クリア").clicked() {
                     on_clear_queue();
@@ -327,7 +327,7 @@ impl PlaybackControlsUI {
             .scroll_bar_visibility(egui::scroll_area::ScrollBarVisibility::VisibleWhenNeeded)
             .show(ui, |ui| {
                 if queue.is_empty() {
-                    ui.label("キューは空です");
+                    ui.label("プレイリストは空です");
                 } else {
                     for (index, track) in queue.iter().enumerate() {
                         let is_current = current_index == Some(index);
@@ -371,9 +371,9 @@ impl PlaybackControlsUI {
                                 
                                 // Delete option
                                 let delete_text = if selected_count == 1 {
-                                    "キューから削除".to_string()
+                                    "プレイリストから削除".to_string()
                                 } else {
-                                    format!("選択中の{}曲をキューから削除", selected_count)
+                                    format!("選択中の{}曲をプレイリストから削除", selected_count)
                                 };
                                 
                                 if ui.button(delete_text).clicked() {

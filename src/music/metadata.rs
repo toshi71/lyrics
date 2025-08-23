@@ -14,6 +14,17 @@ pub struct TrackInfo {
 }
 
 pub fn get_flac_metadata(path: &Path) -> Option<TrackInfo> {
+    // Step 4-2: ファイル存在確認とエラーハンドリング強化
+    if !path.exists() {
+        eprintln!("Warning: Audio file not found: {}", path.display());
+        return None;
+    }
+
+    if !is_flac_file(path) {
+        eprintln!("Warning: File is not a FLAC file: {}", path.display());
+        return None;
+    }
+
     match metaflac::Tag::read_from_path(path) {
         Ok(tag) => {
             let title = tag.get_vorbis("TITLE")
@@ -70,7 +81,10 @@ pub fn get_flac_metadata(path: &Path) -> Option<TrackInfo> {
                 path: path.to_path_buf(),
             })
         },
-        Err(_) => None,
+        Err(e) => {
+            eprintln!("Warning: Failed to read FLAC metadata from '{}': {}", path.display(), e);
+            None
+        }
     }
 }
 

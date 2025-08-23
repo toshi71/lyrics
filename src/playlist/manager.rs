@@ -95,12 +95,86 @@ impl PlaylistManager {
         }
     }
 
+    // Step 4-1: 設定と連携したコンストラクタ
+    pub fn new_with_settings(last_playlist_id: Option<&str>, playlist_order: &[String]) -> Self {
+        let default_playlist = Playlist::new("default".to_string(), "デフォルト".to_string());
+        
+        // 最後に使用したプレイリストがあればそれを使用、なければデフォルト
+        let active_playlist_id = last_playlist_id
+            .unwrap_or("default")
+            .to_string();
+        
+        let mut manager = Self {
+            playlists: vec![default_playlist],
+            active_playlist_id,
+            selected_indices: HashSet::new(),
+            current_playing_index: None,
+            current_playing_playlist_id: None,
+        };
+
+        // プレイリストの表示順序を適用（永続化されたプレイリストが読み込まれた後に呼び出される）
+        manager.apply_display_order(playlist_order);
+        
+        manager
+    }
+
     // プレイリスト管理
     pub fn create_playlist(&mut self, name: String) -> String {
+        // Step 4-2: プレイリスト名の検証
+        let validated_name = Self::validate_playlist_name(&name, &self.playlists, None);
+        
         let id = format!("playlist_{}", self.playlists.len());
-        let playlist = Playlist::new(id.clone(), name);
+        let playlist = Playlist::new(id.clone(), validated_name);
         self.playlists.push(playlist);
         id
+    }
+
+    // Step 4-2: プレイリスト名の検証機能
+    pub fn validate_playlist_name(name: &str, existing_playlists: &[Playlist], excluding_id: Option<&str>) -> String {
+        // 空文字・空白のみの名前をチェック
+        let trimmed_name = name.trim();
+        if trimmed_name.is_empty() {
+            return "新しいプレイリスト".to_string();
+        }
+
+        // 不正文字をチェック（ファイルシステムで問題となる文字）
+        let invalid_chars = ['/', '\\', ':', '*', '?', '"', '<', '>', '|'];
+        let cleaned_name = trimmed_name.chars()
+            .map(|c| if invalid_chars.contains(&c) { '_' } else { c })
+            .collect::<String>();
+
+        // 長すぎる名前を制限（最大100文字）
+        let truncated_name = if cleaned_name.len() > 100 {
+            format!("{}...", &cleaned_name[..97])
+        } else {
+            cleaned_name
+        };
+
+        // 重複チェック
+        let mut unique_name = truncated_name.clone();
+        let mut counter = 1;
+        
+        while existing_playlists.iter().any(|p| {
+            if let Some(exclude_id) = excluding_id {
+                p.id != exclude_id && p.name == unique_name
+            } else {
+                p.name == unique_name
+            }
+        }) {
+            counter += 1;
+            unique_name = if counter == 2 {
+                format!("{} ({})", truncated_name, counter)
+            } else {
+                // 既存の番号を置き換え
+                if let Some(pos) = truncated_name.rfind(" (") {
+                    format!("{} ({})", &truncated_name[..pos], counter)
+                } else {
+                    format!("{} ({})", truncated_name, counter)
+                }
+            };
+        }
+
+        unique_name
     }
 
     pub fn delete_playlist(&mut self, id: &str) -> bool {
@@ -133,8 +207,11 @@ impl PlaylistManager {
             return false; // デフォルトプレイリストは名前変更不可
         }
         
+        // Step 4-2: 名前変更時にも検証を実行（借用の競合を回避）
+        let validated_name = Self::validate_playlist_name(&new_name, &self.playlists, Some(id));
+        
         if let Some(playlist) = self.playlists.iter_mut().find(|p| p.id == id) {
-            playlist.name = new_name;
+            playlist.name = validated_name;
             playlist.modified_at = SystemTime::now();
             true
         } else {
@@ -498,5 +575,114 @@ impl PlaylistManager {
 
     pub fn get_tracks(&self) -> Option<&Vec<TrackInfo>> {
         self.get_active_tracks()
+    }
+
+    // Step 4-1: 設定管理メソッド
+    pub fn get_current_active_playlist_id(&self) -> &str {
+        &self.active_playlist_id
+    }
+
+    pub fn get_ordered_playlist_ids(&self) -> Vec<String> {
+        self.playlists.iter().map(|p| p.id.clone()).collect()
+    }
+
+    pub fn apply_display_order(&mut self, order: &[String]) {
+        // 指定された順序でプレイリストを並び替え
+        let mut ordered_playlists = Vec::new();
+        let mut remaining_playlists = self.playlists.clone();
+
+        // 順序指定されたプレイリストから追加
+        for id in order {
+            if let Some(pos) = remaining_playlists.iter().position(|p| p.id == *id) {
+                ordered_playlists.push(remaining_playlists.remove(pos));
+            }
+        }
+
+        // 順序指定されていないプレイリストを末尾に追加
+        ordered_playlists.extend(remaining_playlists);
+
+        self.playlists = ordered_playlists;
+    }
+
+    pub fn reorder_playlist(&mut self, from_index: usize, to_index: usize) -> bool {
+        if from_index < self.playlists.len() && to_index < self.playlists.len() && from_index != to_index {
+            let playlist = self.playlists.remove(from_index);
+            self.playlists.insert(to_index, playlist);
+            true
+        } else {
+            false
+        }
+    }
+
+    // デフォルトプレイリスト設定の適用
+    pub fn apply_default_playlist_settings(&mut self, settings: &crate::settings::DefaultPlaylistSettings) {
+        if let Some(default_playlist) = self.playlists.iter_mut().find(|p| p.id == "default") {
+            // 起動時クリア設定
+            if settings.clear_on_startup {
+                default_playlist.clear();
+            }
+
+            // 最大曲数制限
+            if let Some(max_tracks) = settings.max_tracks {
+                while default_playlist.tracks.len() > max_tracks {
+                    default_playlist.tracks.remove(0);
+                }
+            }
+        }
+    }
+
+    // Step 4-3: パフォーマンス最適化メソッド
+    
+    /// 遅延ファイル存在チェック（大量プレイリスト用）
+    pub fn validate_tracks_lazy(&mut self, playlist_id: &str) -> Result<usize, String> {
+        let removed_count = if let Some(playlist) = self.get_playlist_mut(playlist_id) {
+            let original_count = playlist.tracks.len();
+            
+            playlist.tracks.retain(|track| track.path.exists());
+            
+            let removed_count = original_count - playlist.tracks.len();
+            if removed_count > 0 {
+                playlist.modified_at = SystemTime::now();
+                eprintln!("Info: Validated playlist '{}': removed {} missing track(s)", 
+                         playlist.name, removed_count);
+            }
+            
+            removed_count
+        } else {
+            return Err("Playlist not found".to_string());
+        };
+        
+        Ok(removed_count)
+    }
+
+    /// プレイリストのメモリ使用量最適化（大量楽曲用）
+    pub fn optimize_memory(&mut self) {
+        for playlist in &mut self.playlists {
+            // 楽曲ベクターの容量を実際のサイズに最適化
+            playlist.tracks.shrink_to_fit();
+        }
+        
+        // プレイリストベクターの容量も最適化
+        self.playlists.shrink_to_fit();
+    }
+
+    /// 高速プレイリスト統計（メタデータ無し）
+    pub fn get_quick_stats(&self) -> (usize, usize) {
+        let total_playlists = self.playlists.len();
+        let total_tracks: usize = self.playlists.iter().map(|p| p.tracks.len()).sum();
+        (total_playlists, total_tracks)
+    }
+
+    /// 大量プレイリストでの効率的な楽曲検索
+    pub fn find_track_in_playlists(&self, track_path: &std::path::Path) -> Vec<String> {
+        let mut found_in = Vec::new();
+        
+        for playlist in &self.playlists {
+            if playlist.tracks.iter().any(|t| t.path == track_path) {
+                found_in.push(playlist.id.clone());
+            }
+        }
+        
+        found_in
     }
 }

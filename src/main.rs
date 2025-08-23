@@ -113,7 +113,19 @@ impl MyApp {
             selected_tracks: std::collections::HashSet::new(),
             last_selected_path: None,
             audio_player: AudioPlayer::new(),
-            playlist_manager: PlaylistManager::auto_load().unwrap_or_else(|_| PlaylistManager::new()),
+            playlist_manager: {
+                let mut manager = PlaylistManager::auto_load().unwrap_or_else(|_| {
+                    PlaylistManager::new_with_settings(
+                        settings.get_last_used_playlist_id(),
+                        settings.get_playlist_display_order()
+                    )
+                });
+                
+                // デフォルトプレイリスト設定を適用
+                manager.apply_default_playlist_settings(&settings.default_playlist_settings);
+                
+                manager
+            },
             editing_playlist_id: None,
             editing_playlist_name: String::new(),
             settings,
@@ -122,7 +134,14 @@ impl MyApp {
         app
     }
 
-    fn save_settings(&self) {
+    fn save_settings(&mut self) {
+        // Step 4-1: プレイリスト関連設定を保存前に更新
+        self.settings.set_last_used_playlist(self.playlist_manager.get_current_active_playlist_id().to_string());
+        self.settings.update_playlist_display_order(self.playlist_manager.get_ordered_playlist_ids());
+        
+        // Step 4-3: 保存時にメモリ最適化も実行
+        self.playlist_manager.optimize_memory();
+        
         let _ = self.settings.save();
         let _ = self.playlist_manager.auto_save();
     }
@@ -130,8 +149,22 @@ impl MyApp {
     fn refresh_music_library(&mut self) {
         if !self.settings.target_directory.is_empty() {
             let target_path = std::path::PathBuf::from(&self.settings.target_directory);
+            
+            // Step 4-3: UI応答性向上のため、大量ファイル時の処理を改善
+            eprintln!("Info: Scanning music directory: {}", target_path.display());
+            let start_time = std::time::Instant::now();
+            
             self.music_library.scan_directory(&target_path);
             self.apply_search_filter();
+            
+            let duration = start_time.elapsed();
+            let track_count = self.music_library.get_track_count();
+            eprintln!("Info: Scanned {} tracks in {:.2}s", track_count, duration.as_secs_f64());
+            
+            // 大量楽曲時は統計情報を表示
+            if track_count > 1000 {
+                eprintln!("Info: Large library detected. Consider using search filters for better performance.");
+            }
         }
     }
 
@@ -176,10 +209,10 @@ impl MyApp {
             self.handle_add_artist_to_playlist(node, playlist_id);
         }
         
-        // TODO: Implement queue addition on double-click
+        // TODO: Implement playlist addition on double-click
         // For now, double-click does nothing
         if let Some(_track) = double_clicked_track {
-            // Double-click functionality will be implemented later as "add to queue"
+            // Double-click functionality will be implemented later as "add to playlist"
         }
     }
 
@@ -499,7 +532,7 @@ impl MyApp {
     }
 
     fn show_playlist_tabs(&mut self, ui: &mut egui::Ui) {
-        
+        // Step 4-3: UI応答性向上 - プレイリストタブの表示最適化
         ui.allocate_ui_with_layout(
             egui::Vec2::new(ui.available_width(), ui.spacing().button_padding.y * 2.0 + ui.text_style_height(&egui::TextStyle::Button)),
             egui::Layout::top_down(egui::Align::LEFT),
@@ -552,10 +585,8 @@ impl MyApp {
                             
                             // Enter/Escapeキーの処理
                             if response.lost_focus() || ui.input(|i| i.key_pressed(egui::Key::Enter)) {
-                                let new_name = self.editing_playlist_name.trim();
-                                if !new_name.is_empty() && self.is_playlist_name_unique(new_name, &playlist.id) {
-                                    playlist_rename_result = Some((playlist.id.clone(), new_name.to_string()));
-                                }
+                                // Step 4-2: 常に新しい名前を検証して適用
+                                playlist_rename_result = Some((playlist.id.clone(), self.editing_playlist_name.clone()));
                                 cancel_editing = true;
                             }
                             
@@ -608,11 +639,17 @@ impl MyApp {
                     // アクション実行（借用チェッカー対応）
                     if let Some(id) = playlist_to_activate {
                         self.playlist_manager.set_active_playlist(&id);
+                        // Step 4-1: プレイリスト切り替え時に設定を保存
+                        self.save_settings();
                     }
                     if let Some(id) = playlist_to_delete {
                         if self.playlist_manager.delete_playlist(&id) {
+                            // Step 4-1: 削除時に表示順序からも削除
+                            self.settings.remove_from_display_order(&id);
+                            
                             // 削除成功時に自動保存
                             let _ = self.playlist_manager.auto_save();
+                            self.save_settings();
                         }
                     }
                     if let Some((id, name)) = playlist_to_start_editing {
@@ -643,8 +680,12 @@ impl MyApp {
                         let new_id = self.playlist_manager.create_playlist(new_name);
                         self.playlist_manager.set_active_playlist(&new_id);
                         
+                        // Step 4-1: 新プレイリスト作成時に表示順序に追加
+                        self.settings.add_to_display_order(new_id);
+                        
                         // 作成成功時に自動保存
                         let _ = self.playlist_manager.auto_save();
+                        self.save_settings();
                     }
                 });
             }
@@ -811,10 +852,15 @@ impl MyApp {
     }
 
     fn show_playlist_list(&mut self, ui: &mut egui::Ui) {
-        // Store data needed for UI
+        // Step 4-3: 大量楽曲表示の最適化
         let queue_tracks = self.playlist_manager.get_tracks().cloned().unwrap_or_default();
         let current_index = self.playlist_manager.get_current_index();
         let selected_indices: Vec<usize> = self.playlist_manager.get_selected_indices().iter().cloned().collect();
+        
+        // 大量楽曲時の警告表示
+        if queue_tracks.len() > 5000 {
+            ui.label(format!("⚠ 大量楽曲 ({} 曲) - 表示に時間がかかる場合があります", queue_tracks.len()));
+        }
         let playlists = self.playlist_manager.get_playlists().clone();
         let current_playlist_id = self.playlist_manager.get_active_playlist_id().to_string();
         
@@ -948,14 +994,82 @@ impl MyApp {
                 self.save_settings();
             }
         });
+        
+        ui.add_space(20.0);
+        ui.separator();
+        ui.heading("プレイリスト設定");
+        ui.add_space(10.0);
+        
+        // Step 4-1: デフォルトプレイリスト設定
+        ui.heading("デフォルトプレイリスト");
+        
+        let mut settings_changed = false;
+        
+        ui.horizontal(|ui| {
+            let response = ui.checkbox(&mut self.settings.default_playlist_settings.clear_on_startup, 
+                "起動時にデフォルトプレイリストをクリアする");
+            if response.changed() {
+                settings_changed = true;
+            }
+        });
+        
+        ui.horizontal(|ui| {
+            ui.label("最大曲数制限:");
+            let mut has_limit = self.settings.default_playlist_settings.max_tracks.is_some();
+            let response = ui.checkbox(&mut has_limit, "有効");
+            if response.changed() {
+                if has_limit {
+                    self.settings.default_playlist_settings.max_tracks = Some(100);
+                } else {
+                    self.settings.default_playlist_settings.max_tracks = None;
+                }
+                settings_changed = true;
+            }
+            
+            if let Some(ref mut max_tracks) = self.settings.default_playlist_settings.max_tracks {
+                ui.add_space(10.0);
+                let response = ui.add(egui::DragValue::new(max_tracks).range(1..=10000).suffix("曲"));
+                if response.changed() {
+                    settings_changed = true;
+                }
+            }
+        });
+        
+        if settings_changed {
+            self.save_settings();
+        }
+
+        // Step 4-3: システム統計の表示
+        ui.add_space(20.0);
+        ui.separator();
+        ui.heading("システム統計");
+        ui.add_space(10.0);
+
+        let (total_playlists, total_tracks) = self.playlist_manager.get_quick_stats();
+        let library_tracks = self.music_library.get_track_count();
+
+        ui.horizontal(|ui| {
+            ui.label("ライブラリ楽曲数:");
+            ui.label(format!("{} 曲", library_tracks));
+        });
+
+        ui.horizontal(|ui| {
+            ui.label("プレイリスト数:");
+            ui.label(format!("{} 個", total_playlists));
+        });
+
+        ui.horizontal(|ui| {
+            ui.label("プレイリスト総楽曲数:");
+            ui.label(format!("{} 曲", total_tracks));
+        });
+
+        if ui.button("📊 メモリ最適化を実行").clicked() {
+            self.music_library.optimize_memory();
+            self.playlist_manager.optimize_memory();
+        }
     }
 
-    // プレイリスト名の重複チェック
-    fn is_playlist_name_unique(&self, name: &str, excluding_id: &str) -> bool {
-        !self.playlist_manager.get_playlists()
-            .iter()
-            .any(|p| p.id != excluding_id && p.name == name)
-    }
+    // Step 4-2: プレイリスト名の重複チェック（PlaylistManager::validate_playlist_nameを使用）
 
     // プレイリストに楽曲を追加
     fn handle_add_to_playlist(&mut self, track: TrackInfo, playlist_id: String) {

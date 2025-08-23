@@ -1,0 +1,456 @@
+{
+  "playlists": [
+    {
+      "id": "default",
+      "name": "デフォルト",
+      "tracks": [],
+      "created_at": {
+        "secs_since_epoch": 1755948757,
+        "nanos_since_epoch": 931205100
+      },
+      "modified_at": {
+        "secs_since_epoch": 1755985625,
+        "nanos_since_epoch": 760763400
+      }
+    },
+    {
+      "id": "playlist_1",
+      "name": "新しいプレイリスト1",
+      "tracks": [
+        {
+          "title": "Over Drive",
+          "artist": "JUDY AND MARY",
+          "album": "The Great Escape: COMPLETE BEST",
+          "composer": null,
+          "genre": "Pop",
+          "track_number": 1,
+          "disc_number": 1,
+          "path": "D:\\foobar2000\\JUDY AND MARY\\The Great Escape COMPLETE BEST\\01-01-Over Drive.flac"
+        },
+        {
+          "title": "ラッキープール",
+          "artist": "JUDY AND MARY",
+          "album": "The Great Escape: COMPLETE BEST",
+          "composer": null,
+          "genre": "Pop",
+          "track_number": 2,
+          "disc_number": 1,
+          "path": "D:\\foobar2000\\JUDY AND MARY\\The Great Escape COMPLETE BEST\\01-02-ラッキープール.flac"
+        },
+        {
+          "title": "クラシック",
+          "artist": "JUDY AND MARY",
+          "album": "The Great Escape: COMPLETE BEST",
+          "composer": null,
+          "genre": "Pop",
+          "track_number": 3,
+          "disc_number": 1,
+          "path": "D:\\foobar2000\\JUDY AND MARY\\The Great Escape COMPLETE BEST\\01-03-クラシック.flac"
+        },
+        {
+          "title": "mottö",
+          "artist": "JUDY AND MARY",
+          "album": "The Great Escape: COMPLETE BEST",
+          "composer": null,
+          "genre": "Pop",
+          "track_number": 4,
+          "disc_number": 1,
+          "path": "D:\\foobar2000\\JUDY AND MARY\\The Great Escape COMPLETE BEST\\01-04-mottö.flac"
+        },
+        {
+          "title": "くじら12号",
+          "artist": "JUDY AND MARY",
+          "album": "The Great Escape: COMPLETE BEST",
+          "composer": null,
+          "genre": "Pop",
+          "track_number": 5,
+          "disc_number": 1,
+          "path": "D:\\foobar2000\\JUDY AND MARY\\The Great Escape COMPLETE BEST\\01-05-くじら12号.flac"
+        },
+        {
+          "title": "KYOTO",
+          "artist": "JUDY AND MARY",
+          "album": "The Great Escape: COMPLETE BEST",
+          "composer": null,
+          "genre": "Pop",
+          "track_number": 6,
+          "disc_number": 1,
+          "path": "D:\\foobar2000\\JUDY AND MARY\\The Great Escape COMPLETE BEST\\01-06-KYOTO.flac"
+        },
+        {
+          "title": "夕暮れ",
+          "artist": "JUDY AND MARY",
+          "album": "The Great Escape: COMPLETE BEST",
+          "composer": null,
+          "genre": "Pop",
+          "track_number": 7,
+          "disc_number": 1,
+          "path": "D:\\foobar2000\\JUDY AND MARY\\The Great Escape COMPLETE BEST\\01-07-夕暮れ.flac"
+        },
+        {
+          "title": "RADIO",
+          "artist": "JUDY AND MARY",
+          "album": "The Great Escape: COMPLETE BEST",
+          "composer": null,
+          "genre": "Pop",
+          "track_number": 8,
+          "disc_number": 1,
+          "path": "D:\\foobar2000\\JUDY AND MARY\\The Great Escape COMPLETE BEST\\01-08-RADIO.flac"
+        },
+        {
+          "title": "Hello! Orange Sunshine",
+          "artist": "JUDY AND MARY",
+          "album": "The Great Escape: COMPLETE BEST",
+          "composer": null,
+          "genre": "Pop",
+          "track_number": 9,
+          "disc_number": 1,
+          "path": "D:\\foobar2000\\JUDY AND MARY\\The Great Escape COMPLETE BEST\\01-09-Hello! Orange Sunshine.flac"
+        },
+        {
+          "title": "手紙をかくよ",
+          "artist": "JUDY AND MARY",
+          "album": "The Great Escape: COMPLETE BEST",
+          "composer": null,
+          "genre": "Pop",
+          "track_number": 10,
+          "disc_number": 1,
+          "path": "D:\\foobar2000\\JUDY AND MARY\\The Great Escape COMPLETE BEST\\01-10-手紙をかくよ.flac"
+        },
+        {
+          "title": "イロトリドリノ セカイ",
+          "artist": "JUDY AND MARY",
+          "album": "The Great Escape: COMPLETE BEST",
+          "composer": null,
+          "genre": "Pop",
+          "track_number": 11,
+          "disc_number": 1,
+          "path": "D:\\foobar2000\\JUDY AND MARY\\The Great Escape COMPLETE BEST\\01-11-イロトリドリノ セカイ.flac"
+        },
+        {
+          "title": "Cheese “PIZZA”",
+          "artist": "JUDY AND MARY",
+          "album": "The Great Escape: COMPLETE BEST",
+          "composer": null,
+          "genre": "Pop",
+          "track_number": 12,
+          "disc_number": 1,
+          "path": "D:\\foobar2000\\JUDY AND MARY\\The Great Escape COMPLETE BEST\\01-12-Cheese “PIZZA”.flac"
+        },
+        {
+          "title": "ラブリーベイベー",
+          "artist": "JUDY AND MARY",
+          "album": "The Great Escape: COMPLETE BEST",
+          "composer": null,
+          "genre": "Pop",
+          "track_number": 13,
+          "disc_number": 1,
+          "path": "D:\\foobar2000\\JUDY AND MARY\\The Great Escape COMPLETE BEST\\01-13-ラブリーベイベー.flac"
+        },
+        {
+          "title": "おめでとう",
+          "artist": "JUDY AND MARY",
+          "album": "The Great Escape: COMPLETE BEST",
+          "composer": null,
+          "genre": "Pop",
+          "track_number": 14,
+          "disc_number": 1,
+          "path": "D:\\foobar2000\\JUDY AND MARY\\The Great Escape COMPLETE BEST\\01-14-おめでとう.flac"
+        },
+        {
+          "title": "ステレオ全開",
+          "artist": "JUDY AND MARY",
+          "album": "The Great Escape: COMPLETE BEST",
+          "composer": null,
+          "genre": "Pop",
+          "track_number": 15,
+          "disc_number": 1,
+          "path": "D:\\foobar2000\\JUDY AND MARY\\The Great Escape COMPLETE BEST\\01-15-ステレオ全開.flac"
+        },
+        {
+          "title": "そばかす",
+          "artist": "JUDY AND MARY",
+          "album": "The Great Escape: COMPLETE BEST",
+          "composer": null,
+          "genre": "Pop",
+          "track_number": 1,
+          "disc_number": 2,
+          "path": "D:\\foobar2000\\JUDY AND MARY\\The Great Escape COMPLETE BEST\\02-01-そばかす.flac"
+        },
+        {
+          "title": "小さな頃から",
+          "artist": "JUDY AND MARY",
+          "album": "The Great Escape: COMPLETE BEST",
+          "composer": null,
+          "genre": "Pop",
+          "track_number": 2,
+          "disc_number": 2,
+          "path": "D:\\foobar2000\\JUDY AND MARY\\The Great Escape COMPLETE BEST\\02-02-小さな頃から.flac"
+        },
+        {
+          "title": "散歩道",
+          "artist": "JUDY AND MARY",
+          "album": "The Great Escape: COMPLETE BEST",
+          "composer": null,
+          "genre": "Pop",
+          "track_number": 3,
+          "disc_number": 2,
+          "path": "D:\\foobar2000\\JUDY AND MARY\\The Great Escape COMPLETE BEST\\02-03-散歩道.flac"
+        },
+        {
+          "title": "LOVER SOUL",
+          "artist": "JUDY AND MARY",
+          "album": "The Great Escape: COMPLETE BEST",
+          "composer": null,
+          "genre": "Pop",
+          "track_number": 4,
+          "disc_number": 2,
+          "path": "D:\\foobar2000\\JUDY AND MARY\\The Great Escape COMPLETE BEST\\02-04-LOVER SOUL.flac"
+        },
+        {
+          "title": "BLUE TEARS",
+          "artist": "JUDY AND MARY",
+          "album": "The Great Escape: COMPLETE BEST",
+          "composer": null,
+          "genre": "Pop",
+          "track_number": 5,
+          "disc_number": 2,
+          "path": "D:\\foobar2000\\JUDY AND MARY\\The Great Escape COMPLETE BEST\\02-05-BLUE TEARS.flac"
+        },
+        {
+          "title": "ジーザス! ジーザス!",
+          "artist": "JUDY AND MARY",
+          "album": "The Great Escape: COMPLETE BEST",
+          "composer": null,
+          "genre": "Pop",
+          "track_number": 6,
+          "disc_number": 2,
+          "path": "D:\\foobar2000\\JUDY AND MARY\\The Great Escape COMPLETE BEST\\02-06-ジーザス! ジーザス!.flac"
+        },
+        {
+          "title": "クリスマス",
+          "artist": "JUDY AND MARY",
+          "album": "The Great Escape: COMPLETE BEST",
+          "composer": null,
+          "genre": "Pop",
+          "track_number": 7,
+          "disc_number": 2,
+          "path": "D:\\foobar2000\\JUDY AND MARY\\The Great Escape COMPLETE BEST\\02-07-クリスマス.flac"
+        },
+        {
+          "title": "ドキドキ",
+          "artist": "JUDY AND MARY",
+          "album": "The Great Escape: COMPLETE BEST",
+          "composer": null,
+          "genre": "Pop",
+          "track_number": 8,
+          "disc_number": 2,
+          "path": "D:\\foobar2000\\JUDY AND MARY\\The Great Escape COMPLETE BEST\\02-08-ドキドキ.flac"
+        },
+        {
+          "title": "BATHROOM",
+          "artist": "JUDY AND MARY",
+          "album": "The Great Escape: COMPLETE BEST",
+          "composer": null,
+          "genre": "Pop",
+          "track_number": 9,
+          "disc_number": 2,
+          "path": "D:\\foobar2000\\JUDY AND MARY\\The Great Escape COMPLETE BEST\\02-09-BATHROOM.flac"
+        },
+        {
+          "title": "風に吹かれて",
+          "artist": "JUDY AND MARY",
+          "album": "The Great Escape: COMPLETE BEST",
+          "composer": null,
+          "genre": "Pop",
+          "track_number": 10,
+          "disc_number": 2,
+          "path": "D:\\foobar2000\\JUDY AND MARY\\The Great Escape COMPLETE BEST\\02-10-風に吹かれて.flac"
+        },
+        {
+          "title": "DAYDREAM",
+          "artist": "JUDY AND MARY",
+          "album": "The Great Escape: COMPLETE BEST",
+          "composer": null,
+          "genre": "Pop",
+          "track_number": 11,
+          "disc_number": 2,
+          "path": "D:\\foobar2000\\JUDY AND MARY\\The Great Escape COMPLETE BEST\\02-11-DAYDREAM.flac"
+        },
+        {
+          "title": "あたしをみつけて",
+          "artist": "JUDY AND MARY",
+          "album": "The Great Escape: COMPLETE BEST",
+          "composer": null,
+          "genre": "Pop",
+          "track_number": 12,
+          "disc_number": 2,
+          "path": "D:\\foobar2000\\JUDY AND MARY\\The Great Escape COMPLETE BEST\\02-12-あたしをみつけて.flac"
+        },
+        {
+          "title": "自転車",
+          "artist": "JUDY AND MARY",
+          "album": "The Great Escape: COMPLETE BEST",
+          "composer": null,
+          "genre": "Pop",
+          "track_number": 13,
+          "disc_number": 2,
+          "path": "D:\\foobar2000\\JUDY AND MARY\\The Great Escape COMPLETE BEST\\02-13-自転車.flac"
+        },
+        {
+          "title": "Brand New Wave Upper Ground",
+          "artist": "JUDY AND MARY",
+          "album": "The Great Escape: COMPLETE BEST",
+          "composer": null,
+          "genre": "Pop",
+          "track_number": 14,
+          "disc_number": 2,
+          "path": "D:\\foobar2000\\JUDY AND MARY\\The Great Escape COMPLETE BEST\\02-14-Brand New Wave Upper Ground.flac"
+        },
+        {
+          "title": "エゴイスト・・・?",
+          "artist": "JUDY AND MARY",
+          "album": "The Great Escape: COMPLETE BEST",
+          "composer": null,
+          "genre": "Pop",
+          "track_number": 15,
+          "disc_number": 2,
+          "path": "D:\\foobar2000\\JUDY AND MARY\\The Great Escape COMPLETE BEST\\02-15-エゴイスト・・・.flac"
+        }
+      ],
+      "created_at": {
+        "secs_since_epoch": 1755949154,
+        "nanos_since_epoch": 990836700
+      },
+      "modified_at": {
+        "secs_since_epoch": 1755949167,
+        "nanos_since_epoch": 470591700
+      }
+    },
+    {
+      "id": "playlist_2",
+      "name": "新しいプレイリスト2",
+      "tracks": [
+        {
+          "title": "기적 (Destiny)",
+          "artist": "BoA",
+          "album": "Miracle",
+          "composer": null,
+          "genre": "Pop",
+          "track_number": 1,
+          "disc_number": null,
+          "path": "D:\\foobar2000\\BoA\\Miracle\\01-기적 (Destiny).flac"
+        },
+        {
+          "title": "Every Heart",
+          "artist": "BoA",
+          "album": "Miracle",
+          "composer": null,
+          "genre": "Pop",
+          "track_number": 2,
+          "disc_number": null,
+          "path": "D:\\foobar2000\\BoA\\Miracle\\02-Every Heart.flac"
+        },
+        {
+          "title": "Valenti",
+          "artist": "BoA",
+          "album": "Miracle",
+          "composer": null,
+          "genre": "Pop",
+          "track_number": 3,
+          "disc_number": null,
+          "path": "D:\\foobar2000\\BoA\\Miracle\\03-Valenti.flac"
+        },
+        {
+          "title": "Feelings Deep Inside (마음은 전해진다)",
+          "artist": "BoA",
+          "album": "Miracle",
+          "composer": null,
+          "genre": "Pop",
+          "track_number": 4,
+          "disc_number": null,
+          "path": "D:\\foobar2000\\BoA\\Miracle\\04-Feelings Deep Inside (마음은 전해진다).flac"
+        },
+        {
+          "title": "Share Your Heart (With Me)",
+          "artist": "BoA",
+          "album": "Miracle",
+          "composer": null,
+          "genre": "Pop",
+          "track_number": 5,
+          "disc_number": null,
+          "path": "D:\\foobar2000\\BoA\\Miracle\\05-Share Your Heart (With Me).flac"
+        },
+        {
+          "title": "Happiness",
+          "artist": "BoA",
+          "album": "Miracle",
+          "composer": null,
+          "genre": "Pop",
+          "track_number": 6,
+          "disc_number": null,
+          "path": "D:\\foobar2000\\BoA\\Miracle\\06-Happiness.flac"
+        },
+        {
+          "title": "Show White",
+          "artist": "BoA",
+          "album": "Miracle",
+          "composer": null,
+          "genre": "Pop",
+          "track_number": 7,
+          "disc_number": null,
+          "path": "D:\\foobar2000\\BoA\\Miracle\\07-Show White.flac"
+        },
+        {
+          "title": "Nobody But You",
+          "artist": "BoA",
+          "album": "Miracle",
+          "composer": null,
+          "genre": "Pop",
+          "track_number": 8,
+          "disc_number": null,
+          "path": "D:\\foobar2000\\BoA\\Miracle\\08-Nobody But You.flac"
+        },
+        {
+          "title": "Next Step",
+          "artist": "BoA",
+          "album": "Miracle",
+          "composer": null,
+          "genre": "Pop",
+          "track_number": 9,
+          "disc_number": null,
+          "path": "D:\\foobar2000\\BoA\\Miracle\\09-Next Step.flac"
+        },
+        {
+          "title": "Nothing's Gonna Chage",
+          "artist": "BoA",
+          "album": "Miracle",
+          "composer": null,
+          "genre": "Pop",
+          "track_number": 10,
+          "disc_number": null,
+          "path": "D:\\foobar2000\\BoA\\Miracle\\10-Nothing's Gonna Chage.flac"
+        },
+        {
+          "title": "Listen To My Heart",
+          "artist": "BoA",
+          "album": "Miracle",
+          "composer": null,
+          "genre": "Pop",
+          "track_number": 11,
+          "disc_number": null,
+          "path": "D:\\foobar2000\\BoA\\Miracle\\11-Listen To My Heart.flac"
+        }
+      ],
+      "created_at": {
+        "secs_since_epoch": 1755949228,
+        "nanos_since_epoch": 814613200
+      },
+      "modified_at": {
+        "secs_since_epoch": 1755949237,
+        "nanos_since_epoch": 966695600
+      }
+    }
+  ],
+  "active_playlist_id": "playlist_1"
+}
