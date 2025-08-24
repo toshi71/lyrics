@@ -73,6 +73,7 @@ impl MusicLibrary {
         self.tracks.len()
     }
 
+
     fn collect_tracks_recursive(&mut self, path: &Path) {
         if let Ok(entries) = fs::read_dir(path) {
             for entry in entries.filter_map(|e| e.ok()) {

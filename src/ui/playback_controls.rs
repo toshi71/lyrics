@@ -237,18 +237,11 @@ impl PlaybackControlsUI {
     pub fn show_controls_only(
         ui: &mut egui::Ui,
         playback_state: &PlaybackState,
-        on_clear_queue: &mut dyn FnMut(),
         on_previous: &mut dyn FnMut(),
         on_play_pause: &mut dyn FnMut(),
         on_stop: &mut dyn FnMut(),
         on_next: &mut dyn FnMut(),
     ) {
-        // Clear button
-        if ui.button("🗑 プレイリストをクリア").clicked() {
-            on_clear_queue();
-        }
-        
-        ui.add_space(10.0);
 
         // Playback control buttons
         ui.horizontal(|ui| {

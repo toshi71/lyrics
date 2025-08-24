@@ -11,6 +11,9 @@ pub struct Settings {
     pub last_used_playlist_id: Option<String>,
     pub playlist_display_order: Vec<String>,
     pub default_playlist_settings: DefaultPlaylistSettings,
+    
+    // フォント設定
+    pub selected_font: String,
 }
 
 #[derive(Serialize, Deserialize, Clone)]
@@ -28,6 +31,7 @@ impl Default for Settings {
             last_used_playlist_id: None,
             playlist_display_order: vec!["default".to_string()],
             default_playlist_settings: DefaultPlaylistSettings::default(),
+            selected_font: "Meiryo".to_string(),
         }
     }
 }
@@ -103,5 +107,77 @@ impl Settings {
 
     pub fn remove_from_display_order(&mut self, playlist_id: &str) {
         self.playlist_display_order.retain(|id| id != playlist_id);
+    }
+
+    // フォント設定メソッド
+    pub fn set_selected_font(&mut self, font_name: String) {
+        self.selected_font = font_name;
+    }
+
+    pub fn get_available_fonts() -> Vec<String> {
+        use font_kit::source::SystemSource;
+        use font_kit::family_name::FamilyName;
+        use font_kit::properties::Properties;
+        
+        let system_source = SystemSource::new();
+        let mut available_fonts = Vec::new();
+        
+        // よく使われるCJK対応フォントのリスト（優先して表示）
+        let preferred_fonts = vec![
+            "Meiryo",
+            "Yu Gothic UI",
+            "Yu Gothic",
+            "MS UI Gothic",
+            "MS Gothic",
+            "Microsoft YaHei UI",
+            "Microsoft YaHei",
+            "Malgun Gothic",
+            "Noto Sans CJK JP",
+            "Noto Sans CJK",
+            "Source Han Sans",
+            "Source Han Sans JP",
+        ];
+        
+        // 優先フォントから利用可能なものを追加
+        for font_name in &preferred_fonts {
+            if let Ok(_) = system_source.select_best_match(&[FamilyName::Title(font_name.to_string())], &Properties::new()) {
+                if !available_fonts.contains(&font_name.to_string()) {
+                    available_fonts.push(font_name.to_string());
+                }
+            }
+        }
+        
+        // システムの全フォントファミリーを取得してCJK関連を追加
+        if let Ok(families) = system_source.all_families() {
+            for family in families {
+                let family_str = family.to_string();
+                
+                // CJK関連のキーワードを含むフォントを優先
+                if family_str.contains("CJK") || 
+                   family_str.contains("Japanese") || 
+                   family_str.contains("Korean") || 
+                   family_str.contains("Chinese") ||
+                   family_str.contains("Sans") ||
+                   family_str.contains("Serif") ||
+                   family_str.contains("Gothic") ||
+                   family_str.contains("Mincho") ||
+                   family_str.contains("Noto") ||
+                   family_str.contains("Source") {
+                    if !available_fonts.contains(&family_str) {
+                        available_fonts.push(family_str);
+                    }
+                }
+            }
+        }
+        
+        // フォント名でソート
+        available_fonts.sort();
+        
+        // 利用できるフォントが見つからない場合は最低限のフォントを提供
+        if available_fonts.is_empty() {
+            available_fonts.push("Meiryo".to_string());
+        }
+        
+        available_fonts
     }
 }

@@ -3,14 +3,125 @@
     {
       "id": "default",
       "name": "デフォルト",
-      "tracks": [],
+      "tracks": [
+        {
+          "title": "기적 (Destiny)",
+          "artist": "BoA",
+          "album": "Miracle",
+          "composer": null,
+          "genre": "Pop",
+          "track_number": 1,
+          "disc_number": null,
+          "path": "D:\\foobar2000\\BoA\\Miracle\\01-기적 (Destiny).flac"
+        },
+        {
+          "title": "Every Heart",
+          "artist": "BoA",
+          "album": "Miracle",
+          "composer": null,
+          "genre": "Pop",
+          "track_number": 2,
+          "disc_number": null,
+          "path": "D:\\foobar2000\\BoA\\Miracle\\02-Every Heart.flac"
+        },
+        {
+          "title": "Valenti",
+          "artist": "BoA",
+          "album": "Miracle",
+          "composer": null,
+          "genre": "Pop",
+          "track_number": 3,
+          "disc_number": null,
+          "path": "D:\\foobar2000\\BoA\\Miracle\\03-Valenti.flac"
+        },
+        {
+          "title": "Feelings Deep Inside (마음은 전해진다)",
+          "artist": "BoA",
+          "album": "Miracle",
+          "composer": null,
+          "genre": "Pop",
+          "track_number": 4,
+          "disc_number": null,
+          "path": "D:\\foobar2000\\BoA\\Miracle\\04-Feelings Deep Inside (마음은 전해진다).flac"
+        },
+        {
+          "title": "Share Your Heart (With Me)",
+          "artist": "BoA",
+          "album": "Miracle",
+          "composer": null,
+          "genre": "Pop",
+          "track_number": 5,
+          "disc_number": null,
+          "path": "D:\\foobar2000\\BoA\\Miracle\\05-Share Your Heart (With Me).flac"
+        },
+        {
+          "title": "Happiness",
+          "artist": "BoA",
+          "album": "Miracle",
+          "composer": null,
+          "genre": "Pop",
+          "track_number": 6,
+          "disc_number": null,
+          "path": "D:\\foobar2000\\BoA\\Miracle\\06-Happiness.flac"
+        },
+        {
+          "title": "Show White",
+          "artist": "BoA",
+          "album": "Miracle",
+          "composer": null,
+          "genre": "Pop",
+          "track_number": 7,
+          "disc_number": null,
+          "path": "D:\\foobar2000\\BoA\\Miracle\\07-Show White.flac"
+        },
+        {
+          "title": "Nobody But You",
+          "artist": "BoA",
+          "album": "Miracle",
+          "composer": null,
+          "genre": "Pop",
+          "track_number": 8,
+          "disc_number": null,
+          "path": "D:\\foobar2000\\BoA\\Miracle\\08-Nobody But You.flac"
+        },
+        {
+          "title": "Next Step",
+          "artist": "BoA",
+          "album": "Miracle",
+          "composer": null,
+          "genre": "Pop",
+          "track_number": 9,
+          "disc_number": null,
+          "path": "D:\\foobar2000\\BoA\\Miracle\\09-Next Step.flac"
+        },
+        {
+          "title": "Nothing's Gonna Chage",
+          "artist": "BoA",
+          "album": "Miracle",
+          "composer": null,
+          "genre": "Pop",
+          "track_number": 10,
+          "disc_number": null,
+          "path": "D:\\foobar2000\\BoA\\Miracle\\10-Nothing's Gonna Chage.flac"
+        },
+        {
+          "title": "Listen To My Heart",
+          "artist": "BoA",
+          "album": "Miracle",
+          "composer": null,
+          "genre": "Pop",
+          "track_number": 11,
+          "disc_number": null,
+          "path": "D:\\foobar2000\\BoA\\Miracle\\11-Listen To My Heart.flac"
+        }
+      ],
       "created_at": {
         "secs_since_epoch": 1755948757,
         "nanos_since_epoch": 931205100
       },
       "modified_at": {
-        "secs_since_epoch": 1755985625,
-        "nanos_since_epoch": 760763400
+        "secs_since_epoch": 1756029935,
+        "nanos_since_epoch": 74335600
       }
     },
     {
@@ -319,12 +430,12 @@
         }
       ],
       "created_at": {
-        "secs_since_epoch": 1755949154,
-        "nanos_since_epoch": 990836700
+        "secs_since_epoch": 1755989344,
+        "nanos_since_epoch": 282208700
       },
       "modified_at": {
-        "secs_since_epoch": 1755949167,
-        "nanos_since_epoch": 470591700
+        "secs_since_epoch": 1755989349,
+        "nanos_since_epoch": 242274500
       }
     },
     {
@@ -332,123 +443,133 @@
       "name": "新しいプレイリスト2",
       "tracks": [
         {
-          "title": "기적 (Destiny)",
-          "artist": "BoA",
-          "album": "Miracle",
+          "title": "Guys",
+          "artist": "CHAGE and ASKA",
+          "album": "GUYS",
           "composer": null,
           "genre": "Pop",
           "track_number": 1,
           "disc_number": null,
-          "path": "D:\\foobar2000\\BoA\\Miracle\\01-기적 (Destiny).flac"
+          "path": "D:\\foobar2000\\CHAGE and ASKA\\GUYS\\01-Guys.flac"
         },
         {
-          "title": "Every Heart",
-          "artist": "BoA",
-          "album": "Miracle",
+          "title": "野いちごがゆれるように",
+          "artist": "CHAGE and ASKA",
+          "album": "GUYS",
           "composer": null,
           "genre": "Pop",
           "track_number": 2,
           "disc_number": null,
-          "path": "D:\\foobar2000\\BoA\\Miracle\\02-Every Heart.flac"
+          "path": "D:\\foobar2000\\CHAGE and ASKA\\GUYS\\02-野いちごがゆれるように.flac"
         },
         {
-          "title": "Valenti",
-          "artist": "BoA",
-          "album": "Miracle",
+          "title": "If",
+          "artist": "CHAGE and ASKA",
+          "album": "GUYS",
           "composer": null,
           "genre": "Pop",
           "track_number": 3,
           "disc_number": null,
-          "path": "D:\\foobar2000\\BoA\\Miracle\\03-Valenti.flac"
+          "path": "D:\\foobar2000\\CHAGE and ASKA\\GUYS\\03-If.flac"
         },
         {
-          "title": "Feelings Deep Inside (마음은 전해진다)",
-          "artist": "BoA",
-          "album": "Miracle",
+          "title": "光と影",
+          "artist": "CHAGE and ASKA",
+          "album": "GUYS",
           "composer": null,
           "genre": "Pop",
           "track_number": 4,
           "disc_number": null,
-          "path": "D:\\foobar2000\\BoA\\Miracle\\04-Feelings Deep Inside (마음은 전해진다).flac"
+          "path": "D:\\foobar2000\\CHAGE and ASKA\\GUYS\\04-光と影.flac"
         },
         {
-          "title": "Share Your Heart (With Me)",
-          "artist": "BoA",
-          "album": "Miracle",
+          "title": "Hang up the Phone",
+          "artist": "CHAGE and ASKA",
+          "album": "GUYS",
           "composer": null,
           "genre": "Pop",
           "track_number": 5,
           "disc_number": null,
-          "path": "D:\\foobar2000\\BoA\\Miracle\\05-Share Your Heart (With Me).flac"
+          "path": "D:\\foobar2000\\CHAGE and ASKA\\GUYS\\05-Hang up the Phone.flac"
         },
         {
-          "title": "Happiness",
-          "artist": "BoA",
-          "album": "Miracle",
+          "title": "だから…",
+          "artist": "CHAGE and ASKA",
+          "album": "GUYS",
           "composer": null,
           "genre": "Pop",
           "track_number": 6,
           "disc_number": null,
-          "path": "D:\\foobar2000\\BoA\\Miracle\\06-Happiness.flac"
+          "path": "D:\\foobar2000\\CHAGE and ASKA\\GUYS\\06-だから….flac"
         },
         {
-          "title": "Show White",
-          "artist": "BoA",
-          "album": "Miracle",
+          "title": "WHY",
+          "artist": "CHAGE and ASKA",
+          "album": "GUYS",
           "composer": null,
           "genre": "Pop",
           "track_number": 7,
           "disc_number": null,
-          "path": "D:\\foobar2000\\BoA\\Miracle\\07-Show White.flac"
+          "path": "D:\\foobar2000\\CHAGE and ASKA\\GUYS\\07-WHY.flac"
         },
         {
-          "title": "Nobody But You",
-          "artist": "BoA",
-          "album": "Miracle",
+          "title": "今日は…こんなに元気です",
+          "artist": "CHAGE and ASKA",
+          "album": "GUYS",
           "composer": null,
           "genre": "Pop",
           "track_number": 8,
           "disc_number": null,
-          "path": "D:\\foobar2000\\BoA\\Miracle\\08-Nobody But You.flac"
+          "path": "D:\\foobar2000\\CHAGE and ASKA\\GUYS\\08-今日は…こんなに元気です.flac"
         },
         {
-          "title": "Next Step",
-          "artist": "BoA",
-          "album": "Miracle",
+          "title": "夢",
+          "artist": "CHAGE and ASKA",
+          "album": "GUYS",
           "composer": null,
           "genre": "Pop",
           "track_number": 9,
           "disc_number": null,
-          "path": "D:\\foobar2000\\BoA\\Miracle\\09-Next Step.flac"
+          "path": "D:\\foobar2000\\CHAGE and ASKA\\GUYS\\09-夢.flac"
         },
         {
-          "title": "Nothing's Gonna Chage",
-          "artist": "BoA",
-          "album": "Miracle",
+          "title": "CRIMSON",
+          "artist": "CHAGE and ASKA",
+          "album": "GUYS",
           "composer": null,
           "genre": "Pop",
           "track_number": 10,
           "disc_number": null,
-          "path": "D:\\foobar2000\\BoA\\Miracle\\10-Nothing's Gonna Chage.flac"
+          "path": "D:\\foobar2000\\CHAGE and ASKA\\GUYS\\10-CRIMSON.flac"
         },
         {
-          "title": "Listen To My Heart",
-          "artist": "BoA",
-          "album": "Miracle",
+          "title": "no no darlin’",
+          "artist": "CHAGE and ASKA",
+          "album": "GUYS",
           "composer": null,
           "genre": "Pop",
           "track_number": 11,
           "disc_number": null,
-          "path": "D:\\foobar2000\\BoA\\Miracle\\11-Listen To My Heart.flac"
+          "path": "D:\\foobar2000\\CHAGE and ASKA\\GUYS\\11-no no darlin’.flac"
+        },
+        {
+          "title": "世界にMerry X’mas",
+          "artist": "CHAGE and ASKA",
+          "album": "GUYS",
+          "composer": null,
+          "genre": "Pop",
+          "track_number": 12,
+          "disc_number": null,
+          "path": "D:\\foobar2000\\CHAGE and ASKA\\GUYS\\12-世界にMerry X’mas.flac"
         }
       ],
       "created_at": {
-        "secs_since_epoch": 1755949228,
-        "nanos_since_epoch": 814613200
+        "secs_since_epoch": 1755989365,
+        "nanos_since_epoch": 601901600
       },
       "modified_at": {
-        "secs_since_epoch": 1755949237,
-        "nanos_since_epoch": 966695600
+        "secs_since_epoch": 1755989374,
+        "nanos_since_epoch": 778403500
       }
     }
   ],
