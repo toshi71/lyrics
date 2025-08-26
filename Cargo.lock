@@ -1080,6 +1080,20 @@ dependencies = [
 ]
 
 [[package]]
+name = "flac-music-player"
+version = "0.1.0"
+dependencies = [
+ "eframe",
+ "egui",
+ "font-kit",
+ "metaflac",
+ "rfd",
+ "rodio",
+ "serde",
+ "serde_json",
+]
+
+[[package]]
 name = "flate2"
 version = "1.1.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1366,20 +1380,6 @@ name = "hashbrown"
 version = "0.15.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "9229cfe53dfd69f0609a49f65461bd93001ea1ef889cd5529dd176593f5338a1"
-
-[[package]]
-name = "hello-world-gui"
-version = "0.1.0"
-dependencies = [
- "eframe",
- "egui",
- "font-kit",
- "metaflac",
- "rfd",
- "rodio",
- "serde",
- "serde_json",
-]
 
 [[package]]
 name = "hermit-abi"
