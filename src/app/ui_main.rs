@@ -67,21 +67,50 @@ impl MyApp {
         let available_rect = ui.available_rect_before_wrap();
         let available_width = available_rect.width();
         let available_height = available_rect.height();
+        
+        // リサイズ可能な水平分割線
+        let separator_id = ui.id().with("main_horizontal_separator");
+        let separator_response = ui.allocate_response(
+            egui::Vec2::new(available_width, available_height),
+            egui::Sense::hover()
+        );
+        
+        // マウスドラッグによる分割位置の更新
+        let left_width = available_width * self.splitter_position;
+        let separator_x = available_rect.min.x + left_width;
+        let separator_rect = egui::Rect::from_min_size(
+            egui::Pos2::new(separator_x - 2.0, available_rect.min.y),
+            egui::Vec2::new(4.0, available_height)
+        );
+        
+        let separator_response = ui.interact(separator_rect, separator_id, egui::Sense::drag());
+        if separator_response.dragged() {
+            if let Some(pointer_pos) = ui.ctx().pointer_interact_pos() {
+                let new_left_width = (pointer_pos.x - available_rect.min.x).max(50.0).min(available_width - 50.0);
+                self.splitter_position = new_left_width / available_width;
+            }
+        }
+        
+        // カーソル変更
+        if separator_response.hovered() {
+            ui.ctx().set_cursor_icon(egui::CursorIcon::ResizeHorizontal);
+        }
+        
         let left_width = available_width * self.splitter_position;
         
         // Left pane
         let left_rect = egui::Rect::from_min_size(
             available_rect.min,
-            egui::Vec2::new(left_width - 1.0, available_height)
+            egui::Vec2::new(left_width - 2.0, available_height)
         );
         let mut left_ui = ui.child_ui(left_rect, egui::Layout::top_down(egui::Align::LEFT), None);
         left_ui.set_clip_rect(left_rect);
         
         self.show_left_pane(&mut left_ui);
         
-        // Separator
+        // Separator visualization
         let separator_rect = egui::Rect::from_min_size(
-            egui::Pos2::new(available_rect.min.x + left_width, available_rect.min.y),
+            egui::Pos2::new(available_rect.min.x + left_width - 1.0, available_rect.min.y),
             egui::Vec2::new(2.0, available_height)
         );
         ui.allocate_ui_at_rect(separator_rect, |ui| {
@@ -90,8 +119,8 @@ impl MyApp {
         
         // Right pane
         let right_rect = egui::Rect::from_min_size(
-            egui::Pos2::new(available_rect.min.x + left_width + 2.0, available_rect.min.y),
-            egui::Vec2::new(available_width - left_width - 2.0, available_height)
+            egui::Pos2::new(available_rect.min.x + left_width + 1.0, available_rect.min.y),
+            egui::Vec2::new(available_width - left_width - 1.0, available_height)
         );
         let mut right_ui = ui.child_ui(right_rect, egui::Layout::top_down(egui::Align::LEFT), None);
         right_ui.set_clip_rect(right_rect);

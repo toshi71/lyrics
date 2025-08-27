@@ -4,68 +4,158 @@ use eframe::egui;
 
 impl MyApp {
     pub fn show_right_pane(&mut self, ui: &mut egui::Ui) {
-        ui.vertical(|ui| {
-            // 1. プレイリストタブを最上部に表示
+        let available_rect = ui.available_rect_before_wrap();
+        let available_height = available_rect.height();
+        
+        // 1. 再生コントロール（上部）の高さを計算
+        let controls_height = available_height * self.right_top_bottom_position;
+        
+        // リサイズ可能な上下分割線
+        let top_bottom_separator_id = ui.id().with("right_top_bottom_separator");
+        let top_bottom_separator_y = available_rect.min.y + controls_height;
+        let top_bottom_separator_rect = egui::Rect::from_min_size(
+            egui::Pos2::new(available_rect.min.x, top_bottom_separator_y - 2.0),
+            egui::Vec2::new(available_rect.width(), 4.0)
+        );
+        
+        let top_bottom_separator_response = ui.interact(top_bottom_separator_rect, top_bottom_separator_id, egui::Sense::drag());
+        if top_bottom_separator_response.dragged() {
+            if let Some(pointer_pos) = ui.ctx().pointer_interact_pos() {
+                let new_controls_height = (pointer_pos.y - available_rect.min.y).max(50.0).min(available_height - 100.0);
+                self.right_top_bottom_position = new_controls_height / available_height;
+            }
+        }
+        
+        // カーソル変更
+        if top_bottom_separator_response.hovered() {
+            ui.ctx().set_cursor_icon(egui::CursorIcon::ResizeVertical);
+        }
+        
+        let controls_height = available_height * self.right_top_bottom_position;
+        
+        // 上部：再生コントロール
+        let top_rect = egui::Rect::from_min_size(
+            available_rect.min,
+            egui::Vec2::new(available_rect.width(), controls_height - 2.0)
+        );
+        let mut top_ui = ui.child_ui(top_rect, egui::Layout::top_down(egui::Align::LEFT), None);
+        top_ui.set_clip_rect(top_rect);
+        
+        top_ui.vertical(|ui| {
+            self.show_playback_controls_only(ui);
+        });
+        
+        // 上下分割線の描画
+        let separator_rect = egui::Rect::from_min_size(
+            egui::Pos2::new(available_rect.min.x, available_rect.min.y + controls_height - 1.0),
+            egui::Vec2::new(available_rect.width(), 2.0)
+        );
+        ui.allocate_ui_at_rect(separator_rect, |ui| {
+            ui.separator();
+        });
+        
+        // 下部のサイズ計算
+        let bottom_height = available_height - controls_height - 2.0;
+        let bottom_rect = egui::Rect::from_min_size(
+            egui::Pos2::new(available_rect.min.x, available_rect.min.y + controls_height + 1.0),
+            egui::Vec2::new(available_rect.width(), bottom_height)
+        );
+        let mut bottom_ui = ui.child_ui(bottom_rect, egui::Layout::top_down(egui::Align::LEFT), None);
+        bottom_ui.set_clip_rect(bottom_rect);
+        
+        // 下部の左右分割
+        let bottom_left_width = bottom_rect.width() * self.right_bottom_left_right_position;
+        
+        // リサイズ可能な左右分割線
+        let left_right_separator_id = bottom_ui.id().with("right_bottom_left_right_separator");
+        let left_right_separator_x = bottom_rect.min.x + bottom_left_width;
+        let left_right_separator_rect = egui::Rect::from_min_size(
+            egui::Pos2::new(left_right_separator_x - 2.0, bottom_rect.min.y),
+            egui::Vec2::new(4.0, bottom_rect.height())
+        );
+        
+        let left_right_separator_response = bottom_ui.interact(left_right_separator_rect, left_right_separator_id, egui::Sense::drag());
+        if left_right_separator_response.dragged() {
+            if let Some(pointer_pos) = bottom_ui.ctx().pointer_interact_pos() {
+                let new_left_width = (pointer_pos.x - bottom_rect.min.x).max(50.0).min(bottom_rect.width() - 100.0);
+                self.right_bottom_left_right_position = new_left_width / bottom_rect.width();
+            }
+        }
+        
+        // カーソル変更
+        if left_right_separator_response.hovered() {
+            bottom_ui.ctx().set_cursor_icon(egui::CursorIcon::ResizeHorizontal);
+        }
+        
+        let bottom_left_width = bottom_rect.width() * self.right_bottom_left_right_position;
+        
+        // 下部左側：プレイリスト関連
+        let bottom_left_rect = egui::Rect::from_min_size(
+            bottom_rect.min,
+            egui::Vec2::new(bottom_left_width - 2.0, bottom_rect.height())
+        );
+        let mut bottom_left_ui = bottom_ui.child_ui(bottom_left_rect, egui::Layout::top_down(egui::Align::LEFT), None);
+        bottom_left_ui.set_clip_rect(bottom_left_rect);
+        
+        bottom_left_ui.vertical(|ui| {
+            // プレイリストタブ
             self.show_playlist_tabs(ui);
             ui.separator();
             
-            // 2. プレイリスト楽曲表示（固定高さ、10曲分、スクロール対応）
-            ui.heading("プレイリスト");
-            let playlist_height = (ui.text_style_height(&egui::TextStyle::Body) + ui.spacing().item_spacing.y) * 10.0 + 40.0; // 10曲分の高さ + マージン
-            
-            egui::ScrollArea::vertical()
+            // プレイリスト楽曲表示（残りのスペースを使用）
+            egui::ScrollArea::both()
                 .id_source("playlist_scroll")
                 .auto_shrink([false, false])
-                .max_height(playlist_height)
+                .hscroll(true)
+                .vscroll(true)
                 .show(ui, |ui| {
                     self.show_playlist_list(ui);
                 });
+        });
+        
+        // 左右分割線の描画
+        let lr_separator_rect = egui::Rect::from_min_size(
+            egui::Pos2::new(bottom_rect.min.x + bottom_left_width - 1.0, bottom_rect.min.y),
+            egui::Vec2::new(2.0, bottom_rect.height())
+        );
+        bottom_ui.allocate_ui_at_rect(lr_separator_rect, |ui| {
+            ui.separator();
+        });
+        
+        // 下部右側：情報・LRCタブ
+        let bottom_right_rect = egui::Rect::from_min_size(
+            egui::Pos2::new(bottom_rect.min.x + bottom_left_width + 1.0, bottom_rect.min.y),
+            egui::Vec2::new(bottom_rect.width() - bottom_left_width - 1.0, bottom_rect.height())
+        );
+        let mut bottom_right_ui = bottom_ui.child_ui(bottom_right_rect, egui::Layout::top_down(egui::Align::LEFT), None);
+        bottom_right_ui.set_clip_rect(bottom_right_rect);
+        
+        bottom_right_ui.vertical(|ui| {
+            // 情報・LRCタブ切り替え
+            ui.horizontal(|ui| {
+                ui.selectable_value(&mut self.right_pane_tab, super::RightTab::Info, "情報");
+                ui.selectable_value(&mut self.right_pane_tab, super::RightTab::Lrc, "LRC");
+            });
             
             ui.separator();
             
-            // 3. 下部を左右に分割
-            ui.horizontal(|ui| {
-                // 左側：再生コントロール
-                ui.vertical(|ui| {
-                    ui.set_width(ui.available_width() * 0.4);
-                    ui.heading("再生コントロール");
-                    ui.separator();
-                    self.show_playback_controls_only(ui);
+            // タブのコンテンツを表示
+            egui::ScrollArea::both()
+                .id_source("info_lrc_scroll")
+                .auto_shrink([false, false])
+                .show(ui, |ui| {
+                    match self.right_pane_tab {
+                        super::RightTab::Playback => {
+                            ui.label("プレイリスト表示（左側で表示）");
+                        },
+                        super::RightTab::Info => {
+                            self.show_track_info(ui);
+                        },
+                        super::RightTab::Lrc => {
+                            ui.label("LRC歌詞表示機能は未実装です");
+                        },
+                    }
                 });
-                
-                ui.separator();
-                
-                // 右側：情報・LRCタブ
-                ui.vertical(|ui| {
-                    ui.set_width(ui.available_width());
-                    
-                    // 情報・LRCタブ切り替え
-                    ui.horizontal(|ui| {
-                        ui.selectable_value(&mut self.right_pane_tab, super::RightTab::Info, "情報");
-                        ui.selectable_value(&mut self.right_pane_tab, super::RightTab::Lrc, "LRC");
-                    });
-                    
-                    ui.separator();
-                    
-                    // タブのコンテンツを表示
-                    egui::ScrollArea::both()
-                        .id_source("info_lrc_scroll")
-                        .auto_shrink([false, false])
-                        .show(ui, |ui| {
-                            match self.right_pane_tab {
-                                super::RightTab::Playback => {
-                                    ui.label("プレイリスト表示（上部で表示）");
-                                },
-                                super::RightTab::Info => {
-                                    self.show_track_info(ui);
-                                },
-                                super::RightTab::Lrc => {
-                                    ui.label("LRC歌詞表示機能は未実装です");
-                                },
-                            }
-                        });
-                });
-            });
         });
     }
 
@@ -142,7 +232,14 @@ impl MyApp {
             egui::Layout::top_down(egui::Align::LEFT),
             |ui| {
                 ui.add_space(2.0);
-                ui.horizontal(|ui| {
+                let scroll_area_response = egui::ScrollArea::horizontal()
+                    .id_source("playlist_tabs_scroll")
+                    .auto_shrink([false, true])
+                    .scroll_bar_visibility(egui::scroll_area::ScrollBarVisibility::VisibleWhenNeeded)
+                    .hscroll(true)
+                    .vscroll(false)
+                    .show(ui, |ui| {
+                        ui.horizontal(|ui| {
                     ui.add_space(4.0);
                     
                     // Action collection variables
@@ -330,7 +427,9 @@ impl MyApp {
                             self.save_settings();
                         }
                     }
-                });
+                        });
+                    });
+                
             }
         );
     }

@@ -33,7 +33,9 @@ pub struct MyApp {
     pub music_library: MusicLibrary,
     pub search_query: String,
     pub focus_search: bool,
-    pub splitter_position: f32,
+    pub splitter_position: f32,           // 左 vs 右ペイン（下位互換性のため残す）
+    pub right_top_bottom_position: f32,   // 右ペイン上部 vs 下部
+    pub right_bottom_left_right_position: f32, // 右ペイン下部：左 vs 右
     pub right_pane_tab: RightTab,
     pub selected_track: Option<TrackInfo>,
     pub selected_tracks: std::collections::HashSet<std::path::PathBuf>,
@@ -53,7 +55,9 @@ impl MyApp {
             music_library: MusicLibrary::new(settings.classical_composer_hierarchy),
             search_query: String::new(),
             focus_search: false,
-            splitter_position: 0.33,
+            splitter_position: settings.main_splitter_position,
+            right_top_bottom_position: settings.right_top_bottom_position,
+            right_bottom_left_right_position: settings.right_bottom_left_right_position,
             right_pane_tab: RightTab::Playback,
             selected_track: None,
             selected_tracks: std::collections::HashSet::new(),
@@ -81,6 +85,11 @@ impl MyApp {
     pub fn save_settings(&mut self) {
         self.settings.set_last_used_playlist(self.playlist_manager.get_current_active_playlist_id().to_string());
         self.settings.update_playlist_display_order(self.playlist_manager.get_ordered_playlist_ids());
+        
+        // 分割比率を保存
+        self.settings.main_splitter_position = self.splitter_position;
+        self.settings.right_top_bottom_position = self.right_top_bottom_position;
+        self.settings.right_bottom_left_right_position = self.right_bottom_left_right_position;
         
         self.playlist_manager.optimize_memory();
         

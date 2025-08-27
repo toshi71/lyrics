@@ -53,6 +53,8 @@ impl PlaybackControlsUI {
                     };
                 
                 ui.horizontal(|ui| {
+                    ui.set_max_width(2000.0); // 水平スクロールを有効にするため（十分に大きな値）
+                    
                     // Current track indicator
                     if is_current_playing_track {
                         ui.label("🎵");
@@ -327,6 +329,8 @@ impl PlaybackControlsUI {
                         let is_selected = selected_indices.contains(&index);
                         
                         ui.horizontal(|ui| {
+                            ui.set_max_width(2000.0); // 水平スクロールを有効にするため（十分に大きな値）
+                            
                             // Current track indicator
                             if is_current {
                                 ui.label("🎵");

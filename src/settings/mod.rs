@@ -14,6 +14,11 @@ pub struct Settings {
     
     // フォント設定
     pub selected_font: String,
+    
+    // 分割位置設定
+    pub main_splitter_position: f32,       // 左ペイン vs 右ペイン
+    pub right_top_bottom_position: f32,    // 右ペイン上部 vs 下部
+    pub right_bottom_left_right_position: f32, // 右ペイン下部：左 vs 右
 }
 
 #[derive(Serialize, Deserialize, Clone)]
@@ -32,6 +37,9 @@ impl Default for Settings {
             playlist_display_order: vec!["default".to_string()],
             default_playlist_settings: DefaultPlaylistSettings::default(),
             selected_font: "Meiryo".to_string(),
+            main_splitter_position: 0.33,
+            right_top_bottom_position: 0.4,
+            right_bottom_left_right_position: 0.3,
         }
     }
 }
