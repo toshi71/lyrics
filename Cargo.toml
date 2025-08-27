@@ -11,5 +11,5 @@ rfd = "0.15"
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
 metaflac = "0.2"
-rodio = "0.18"
+kira = { version = "0.9", features = ["cpal"] }
 image = "0.24"

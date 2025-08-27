@@ -1,7 +1,10 @@
 use crate::music::TrackInfo;
-use rodio::{Decoder, OutputStream, Sink};
-use std::sync::Arc;
-use std::time::{Duration, Instant};
+use kira::manager::{AudioManager, AudioManagerSettings, backend::cpal::CpalBackend};
+use kira::sound::streaming::{StreamingSoundData, StreamingSoundHandle};
+use kira::sound::{PlaybackState as KiraPlaybackState, FromFileError};
+use kira::clock::{ClockHandle, ClockSpeed};
+use kira::tween::Tween;
+use std::time::Duration;
 
 #[derive(PartialEq, Clone)]
 pub enum PlaybackState {
@@ -11,75 +14,63 @@ pub enum PlaybackState {
 }
 
 pub struct AudioPlayer {
-    _stream: Option<OutputStream>,
-    sink: Option<Arc<Sink>>,
+    manager: Option<AudioManager<CpalBackend>>,
+    current_sound: Option<StreamingSoundHandle<FromFileError>>,
     current_track: Option<TrackInfo>,
     state: PlaybackState,
-    start_time: Option<Instant>,
-    paused_duration: Duration,
+    clock: Option<ClockHandle>,
 }
 
 impl AudioPlayer {
     pub fn new() -> Self {
+        let mut manager = AudioManager::<CpalBackend>::new(AudioManagerSettings::default()).ok();
+        let clock = manager.as_mut().and_then(|m| m.add_clock(ClockSpeed::TicksPerSecond(44100.0)).ok());
+        
         Self {
-            _stream: None,
-            sink: None,
+            manager,
+            current_sound: None,
             current_track: None,
             state: PlaybackState::Stopped,
-            start_time: None,
-            paused_duration: Duration::new(0, 0),
+            clock,
         }
     }
 
     pub fn play(&mut self, track: TrackInfo) -> Result<(), Box<dyn std::error::Error>> {
         self.stop();
 
-        let (_stream, stream_handle) = OutputStream::try_default()?;
-        let sink = Arc::new(Sink::try_new(&stream_handle)?);
-
-        let file = std::fs::File::open(&track.path)?;
-        let source = Decoder::new(std::io::BufReader::new(file))?;
-        sink.append(source);
-
-        self._stream = Some(_stream);
-        self.sink = Some(sink);
-        self.current_track = Some(track);
-        self.state = PlaybackState::Playing;
-        self.start_time = Some(Instant::now());
-        self.paused_duration = Duration::new(0, 0);
+        if let Some(manager) = &mut self.manager {
+            let sound_data = StreamingSoundData::from_file(&track.path)?;
+            let sound_handle = manager.play(sound_data)?;
+            
+            self.current_sound = Some(sound_handle);
+            self.current_track = Some(track);
+            self.state = PlaybackState::Playing;
+        }
 
         Ok(())
     }
 
     pub fn pause(&mut self) {
-        if let Some(ref sink) = self.sink {
-            if let Some(start_time) = self.start_time {
-                let elapsed = start_time.elapsed();
-                self.paused_duration = self.paused_duration + elapsed;
-            }
-            sink.pause();
+        if let Some(ref mut sound) = self.current_sound {
+            let _ = sound.pause(Tween::default());
             self.state = PlaybackState::Paused;
         }
     }
 
     pub fn resume(&mut self) {
-        if let Some(ref sink) = self.sink {
-            sink.play();
+        if let Some(ref mut sound) = self.current_sound {
+            let _ = sound.resume(Tween::default());
             self.state = PlaybackState::Playing;
-            self.start_time = Some(Instant::now());
         }
     }
 
     pub fn stop(&mut self) {
-        if let Some(ref sink) = self.sink {
-            sink.stop();
+        if let Some(ref mut sound) = self.current_sound {
+            let _ = sound.stop(Tween::default());
         }
-        self._stream = None;
-        self.sink = None;
+        self.current_sound = None;
         self.current_track = None;
         self.state = PlaybackState::Stopped;
-        self.start_time = None;
-        self.paused_duration = Duration::new(0, 0);
     }
 
     pub fn toggle_play_pause(&mut self) {
@@ -101,14 +92,10 @@ impl AudioPlayer {
     }
 
     pub fn get_playback_position(&self) -> Duration {
-        if let Some(start_time) = self.start_time {
-            if self.state == PlaybackState::Playing {
-                self.paused_duration + start_time.elapsed()
-            } else {
-                self.paused_duration
-            }
+        if let Some(sound) = &self.current_sound {
+            Duration::from_secs_f64(sound.position())
         } else {
-            Duration::new(0, 0)
+            Duration::from_secs(0)
         }
     }
 
@@ -120,8 +107,8 @@ impl AudioPlayer {
     }
 
     pub fn is_finished(&self) -> bool {
-        if let Some(ref sink) = self.sink {
-            sink.empty()
+        if let Some(sound) = &self.current_sound {
+            matches!(sound.state(), KiraPlaybackState::Stopped)
         } else {
             true
         }

@@ -386,32 +386,6 @@
         "secs_since_epoch": 1756294610,
         "nanos_since_epoch": 853620000
       }
-    },
-    {
-      "id": "playlist_2",
-      "name": "新しいプレイリスト2",
-      "tracks": [],
-      "created_at": {
-        "secs_since_epoch": 1756294613,
-        "nanos_since_epoch": 645664800
-      },
-      "modified_at": {
-        "secs_since_epoch": 1756294613,
-        "nanos_since_epoch": 645664800
-      }
-    },
-    {
-      "id": "playlist_3",
-      "name": "新しいプレイリスト3",
-      "tracks": [],
-      "created_at": {
-        "secs_since_epoch": 1756297454,
-        "nanos_since_epoch": 180934800
-      },
-      "modified_at": {
-        "secs_since_epoch": 1756297454,
-        "nanos_since_epoch": 180934800
-      }
     }
   ],
   "active_playlist_id": "default"
