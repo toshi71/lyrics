@@ -517,9 +517,20 @@ impl MyApp {
         let mut stop_clicked = false;
         let mut next_clicked = false;
         
-        PlaybackControlsUI::show_controls_only(
+        // 再生位置と総再生時間を取得
+        let current_position = self.audio_player.get_playback_position();
+        let total_duration = self.audio_player.get_total_duration();
+        
+        // 再生中の場合はUIを継続的に更新
+        if playback_state == crate::player::PlaybackState::Playing {
+            ui.ctx().request_repaint();
+        }
+        
+        PlaybackControlsUI::show_controls_with_seek_bar(
             ui,
             &playback_state,
+            current_position,
+            total_duration,
             &mut || previous_clicked = true,
             &mut || play_pause_clicked = true,
             &mut || stop_clicked = true,

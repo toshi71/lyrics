@@ -236,6 +236,59 @@ impl PlaybackControlsUI {
         }
     }
 
+    pub fn show_controls_with_seek_bar(
+        ui: &mut egui::Ui,
+        playback_state: &PlaybackState,
+        current_position: std::time::Duration,
+        total_duration: Option<std::time::Duration>,
+        on_previous: &mut dyn FnMut(),
+        on_play_pause: &mut dyn FnMut(),
+        on_stop: &mut dyn FnMut(),
+        on_next: &mut dyn FnMut(),
+    ) {
+        // シークバーを最初に表示（横幅全体を使用）
+        Self::show_seek_bar(ui, current_position, total_duration);
+        
+        ui.add_space(10.0);
+
+        // Playback control buttons
+        ui.horizontal(|ui| {
+            ui.add_space(5.0);
+            
+            let button_size = [48.0, 48.0];
+            
+            // Previous button
+            if ui.add_sized(button_size, egui::Button::new("⏮")).clicked() {
+                on_previous();
+            }
+            
+            ui.add_space(10.0);
+            
+            // Play/pause button
+            let play_pause_text = match playback_state {
+                PlaybackState::Playing => "⏸",
+                _ => "▶",
+            };
+            if ui.add_sized(button_size, egui::Button::new(play_pause_text)).clicked() {
+                on_play_pause();
+            }
+            
+            ui.add_space(10.0);
+            
+            // Stop button
+            if ui.add_sized(button_size, egui::Button::new("⏹")).clicked() {
+                on_stop();
+            }
+            
+            ui.add_space(10.0);
+            
+            // Next button
+            if ui.add_sized(button_size, egui::Button::new("⏭")).clicked() {
+                on_next();
+            }
+        });
+    }
+
     pub fn show_controls_only(
         ui: &mut egui::Ui,
         playback_state: &PlaybackState,
@@ -476,5 +529,63 @@ impl PlaybackControlsUI {
                 on_next();
             }
         });
+    }
+
+    fn show_seek_bar(
+        ui: &mut egui::Ui,
+        current_position: std::time::Duration,
+        total_duration: Option<std::time::Duration>,
+    ) {
+        ui.horizontal(|ui| {
+            // 現在の再生時間を表示
+            let current_text = Self::format_duration(current_position);
+            ui.label(current_text);
+            
+            ui.add_space(10.0);
+            
+            // シークバー
+            if let Some(total) = total_duration {
+                let progress = if total.as_secs() > 0 {
+                    current_position.as_secs_f64() / total.as_secs_f64()
+                } else {
+                    0.0
+                };
+                
+                let available_width = ui.available_width() - 80.0; // 時間表示分を差し引く
+                let seek_bar_response = ui.add_sized(
+                    [available_width, 20.0],
+                    egui::ProgressBar::new(progress as f32)
+                        .animate(false)
+                );
+                
+                // 今はクリック操作は無効（将来のシーク機能用に準備）
+                if seek_bar_response.clicked() {
+                    // TODO: 将来的にここでシーク処理を実装
+                }
+            } else {
+                // 総再生時間が不明な場合
+                let available_width = ui.available_width() - 80.0;
+                ui.add_sized(
+                    [available_width, 20.0],
+                    egui::ProgressBar::new(0.0)
+                        .animate(false)
+                );
+            }
+            
+            ui.add_space(10.0);
+            
+            // 総再生時間を表示
+            let total_text = total_duration
+                .map(Self::format_duration)
+                .unwrap_or_else(|| "--:--".to_string());
+            ui.label(total_text);
+        });
+    }
+    
+    fn format_duration(duration: std::time::Duration) -> String {
+        let total_seconds = duration.as_secs();
+        let minutes = total_seconds / 60;
+        let seconds = total_seconds % 60;
+        format!("{:02}:{:02}", minutes, seconds)
     }
 }
