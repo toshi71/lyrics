@@ -126,6 +126,25 @@ impl MyApp {
     pub fn apply_search_filter(&mut self) {
         self.music_library.apply_search_filter(&self.search_query);
     }
+
+    pub fn check_playback_finished(&mut self) {
+        // 楽曲が終了したかチェック
+        if *self.audio_player.get_state() == PlaybackState::Playing && self.audio_player.is_finished() {
+            // 現在の楽曲が終了した場合、次の楽曲を自動再生
+            let was_playing = true; // 現在再生中だったので次の曲も再生状態にする
+            
+            if let Some(next_track) = self.playlist_manager.move_to_next() {
+                if let Err(_) = self.audio_player.play(next_track) {
+                    // エラーの場合は停止状態にする
+                    self.audio_player.stop();
+                }
+            } else {
+                // 次の楽曲がない場合は停止
+                self.audio_player.stop();
+                self.playlist_manager.set_current_playing_index(None);
+            }
+        }
+    }
 }
 
 impl eframe::App for MyApp {
@@ -135,6 +154,7 @@ impl eframe::App for MyApp {
     
     fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
         self.handle_keyboard_shortcuts(ctx);
+        self.check_playback_finished(); // 楽曲終了チェック
         self.show_menu_bar(ctx);
         self.show_tab_bar(ctx);
         self.show_central_panel(ctx);
