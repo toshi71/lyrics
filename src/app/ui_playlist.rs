@@ -513,8 +513,10 @@ impl MyApp {
         
         // Collect actions (removed clear_queue)
         let mut previous_clicked = false;
+        let mut seek_backward_clicked = false;
         let mut play_pause_clicked = false;
         let mut stop_clicked = false;
+        let mut seek_forward_clicked = false;
         let mut next_clicked = false;
         
         // 再生位置と総再生時間を取得
@@ -532,8 +534,10 @@ impl MyApp {
             current_position,
             total_duration,
             &mut || previous_clicked = true,
+            &mut || seek_backward_clicked = true,
             &mut || play_pause_clicked = true,
             &mut || stop_clicked = true,
+            &mut || seek_forward_clicked = true,
             &mut || next_clicked = true,
         );
         
@@ -541,11 +545,17 @@ impl MyApp {
         if previous_clicked {
             self.handle_previous_button();
         }
+        if seek_backward_clicked {
+            self.handle_seek_backward();
+        }
         if play_pause_clicked {
             self.handle_play_pause();
         }
         if stop_clicked {
             self.handle_stop();
+        }
+        if seek_forward_clicked {
+            self.handle_seek_forward();
         }
         if next_clicked {
             self.handle_next();

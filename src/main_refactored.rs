@@ -378,11 +378,21 @@ impl MyApp {
                             self.playback_queue.get_tracks(),
                             self.playback_queue.get_current_index(),
                             self.audio_player.get_state(),
+                            &[], // selected_indices placeholder
                             &mut || self.clear_playback_queue(),
                             &mut || self.handle_previous_button(),
+                            &mut || self.handle_seek_backward(),
                             &mut || self.handle_play_pause(),
                             &mut || self.handle_stop(),
+                            &mut || self.handle_seek_forward(),
                             &mut || self.handle_next(),
+                            &mut |_, _, _| {}, // on_queue_item_selected placeholder
+                            &mut |_| {}, // on_queue_item_double_clicked placeholder
+                            &mut || {}, // on_move_selected_up placeholder
+                            &mut || {}, // on_move_selected_down placeholder
+                            &mut || {}, // on_move_selected_to_top placeholder
+                            &mut || {}, // on_move_selected_to_bottom placeholder
+                            &mut || {}, // on_remove_selected placeholder
                         );
                     },
                     RightTab::Info => {

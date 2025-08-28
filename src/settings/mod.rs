@@ -19,6 +19,9 @@ pub struct Settings {
     pub main_splitter_position: f32,       // 左ペイン vs 右ペイン
     pub right_top_bottom_position: f32,    // 右ペイン上部 vs 下部
     pub right_bottom_left_right_position: f32, // 右ペイン下部：左 vs 右
+    
+    // シーク機能設定
+    pub seek_seconds: u32,                  // シーク秒数（1-60）
 }
 
 #[derive(Serialize, Deserialize, Clone)]
@@ -40,6 +43,7 @@ impl Default for Settings {
             main_splitter_position: 0.33,
             right_top_bottom_position: 0.4,
             right_bottom_left_right_position: 0.3,
+            seek_seconds: 10,
         }
     }
 }
@@ -187,5 +191,14 @@ impl Settings {
         }
         
         available_fonts
+    }
+
+    // シーク設定メソッド
+    pub fn set_seek_seconds(&mut self, seconds: u32) {
+        self.seek_seconds = seconds.clamp(1, 60);
+    }
+
+    pub fn get_seek_seconds(&self) -> u32 {
+        self.seek_seconds
     }
 }

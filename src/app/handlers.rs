@@ -243,4 +243,18 @@ impl MyApp {
         
         selected_tracks
     }
+
+    pub fn handle_seek_backward(&mut self) {
+        let seek_seconds = self.settings.get_seek_seconds();
+        if let Err(_) = self.audio_player.seek_backward(seek_seconds) {
+            // Handle error silently
+        }
+    }
+
+    pub fn handle_seek_forward(&mut self) {
+        let seek_seconds = self.settings.get_seek_seconds();
+        if let Err(_) = self.audio_player.seek_forward(seek_seconds) {
+            // Handle error silently
+        }
+    }
 }

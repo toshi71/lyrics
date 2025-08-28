@@ -242,8 +242,10 @@ impl PlaybackControlsUI {
         current_position: std::time::Duration,
         total_duration: Option<std::time::Duration>,
         on_previous: &mut dyn FnMut(),
+        on_seek_backward: &mut dyn FnMut(),
         on_play_pause: &mut dyn FnMut(),
         on_stop: &mut dyn FnMut(),
+        on_seek_forward: &mut dyn FnMut(),
         on_next: &mut dyn FnMut(),
     ) {
         // シークバーを最初に表示（横幅全体を使用）
@@ -258,8 +260,23 @@ impl PlaybackControlsUI {
             let button_size = [48.0, 48.0];
             
             // Previous button
-            if ui.add_sized(button_size, egui::Button::new("⏮")).clicked() {
+            if ui.add_sized(button_size, 
+                egui::Button::new(
+                    egui::RichText::new("⏮").size(24.0)
+                )
+            ).clicked() {
                 on_previous();
+            }
+            
+            ui.add_space(5.0);
+            
+            // Seek backward button (n秒前へ)
+            if ui.add_sized(button_size, 
+                egui::Button::new(
+                    egui::RichText::new("↶").size(24.0)
+                )
+            ).clicked() {
+                on_seek_backward();
             }
             
             ui.add_space(10.0);
@@ -269,21 +286,44 @@ impl PlaybackControlsUI {
                 PlaybackState::Playing => "⏸",
                 _ => "▶",
             };
-            if ui.add_sized(button_size, egui::Button::new(play_pause_text)).clicked() {
+            if ui.add_sized(button_size, 
+                egui::Button::new(
+                    egui::RichText::new(play_pause_text).size(24.0)
+                )
+            ).clicked() {
                 on_play_pause();
             }
             
             ui.add_space(10.0);
             
             // Stop button
-            if ui.add_sized(button_size, egui::Button::new("⏹")).clicked() {
+            if ui.add_sized(button_size, 
+                egui::Button::new(
+                    egui::RichText::new("⏹").size(24.0)
+                )
+            ).clicked() {
                 on_stop();
+            }
+            
+            ui.add_space(5.0);
+            
+            // Seek forward button (n秒後ろへ)
+            if ui.add_sized(button_size, 
+                egui::Button::new(
+                    egui::RichText::new("↷").size(24.0)
+                )
+            ).clicked() {
+                on_seek_forward();
             }
             
             ui.add_space(10.0);
             
             // Next button
-            if ui.add_sized(button_size, egui::Button::new("⏭")).clicked() {
+            if ui.add_sized(button_size, 
+                egui::Button::new(
+                    egui::RichText::new("⏭").size(24.0)
+                )
+            ).clicked() {
                 on_next();
             }
         });
@@ -293,8 +333,10 @@ impl PlaybackControlsUI {
         ui: &mut egui::Ui,
         playback_state: &PlaybackState,
         on_previous: &mut dyn FnMut(),
+        on_seek_backward: &mut dyn FnMut(),
         on_play_pause: &mut dyn FnMut(),
         on_stop: &mut dyn FnMut(),
+        on_seek_forward: &mut dyn FnMut(),
         on_next: &mut dyn FnMut(),
     ) {
 
@@ -305,8 +347,23 @@ impl PlaybackControlsUI {
             let button_size = [48.0, 48.0];
             
             // Previous button
-            if ui.add_sized(button_size, egui::Button::new("⏮")).clicked() {
+            if ui.add_sized(button_size, 
+                egui::Button::new(
+                    egui::RichText::new("⏮").size(24.0)
+                )
+            ).clicked() {
                 on_previous();
+            }
+            
+            ui.add_space(5.0);
+            
+            // Seek backward button (n秒前へ)
+            if ui.add_sized(button_size, 
+                egui::Button::new(
+                    egui::RichText::new("↶").size(24.0)
+                )
+            ).clicked() {
+                on_seek_backward();
             }
             
             ui.add_space(10.0);
@@ -316,21 +373,44 @@ impl PlaybackControlsUI {
                 PlaybackState::Playing => "⏸",
                 _ => "▶",
             };
-            if ui.add_sized(button_size, egui::Button::new(play_pause_text)).clicked() {
+            if ui.add_sized(button_size, 
+                egui::Button::new(
+                    egui::RichText::new(play_pause_text).size(24.0)
+                )
+            ).clicked() {
                 on_play_pause();
             }
             
             ui.add_space(10.0);
             
             // Stop button
-            if ui.add_sized(button_size, egui::Button::new("⏹")).clicked() {
+            if ui.add_sized(button_size, 
+                egui::Button::new(
+                    egui::RichText::new("⏹").size(24.0)
+                )
+            ).clicked() {
                 on_stop();
+            }
+            
+            ui.add_space(5.0);
+            
+            // Seek forward button (n秒後ろへ)
+            if ui.add_sized(button_size, 
+                egui::Button::new(
+                    egui::RichText::new("↷").size(24.0)
+                )
+            ).clicked() {
+                on_seek_forward();
             }
             
             ui.add_space(10.0);
             
             // Next button
-            if ui.add_sized(button_size, egui::Button::new("⏭")).clicked() {
+            if ui.add_sized(button_size, 
+                egui::Button::new(
+                    egui::RichText::new("⏭").size(24.0)
+                )
+            ).clicked() {
                 on_next();
             }
         });
@@ -344,8 +424,10 @@ impl PlaybackControlsUI {
         selected_indices: &[usize],
         on_clear_queue: &mut dyn FnMut(),
         on_previous: &mut dyn FnMut(),
+        on_seek_backward: &mut dyn FnMut(),
         on_play_pause: &mut dyn FnMut(),
         on_stop: &mut dyn FnMut(),
+        on_seek_forward: &mut dyn FnMut(),
         on_next: &mut dyn FnMut(),
         on_queue_item_selected: &mut dyn FnMut(usize, bool, bool), // index, ctrl_held, shift_held
         on_queue_item_double_clicked: &mut dyn FnMut(usize), // index
@@ -500,8 +582,23 @@ impl PlaybackControlsUI {
             let button_size = [48.0, 48.0];
             
             // Previous button
-            if ui.add_sized(button_size, egui::Button::new("⏮")).clicked() {
+            if ui.add_sized(button_size, 
+                egui::Button::new(
+                    egui::RichText::new("⏮").size(24.0)
+                )
+            ).clicked() {
                 on_previous();
+            }
+            
+            ui.add_space(5.0);
+            
+            // Seek backward button (n秒前へ)
+            if ui.add_sized(button_size, 
+                egui::Button::new(
+                    egui::RichText::new("↶").size(24.0)
+                )
+            ).clicked() {
+                on_seek_backward();
             }
             
             ui.add_space(10.0);
@@ -511,21 +608,44 @@ impl PlaybackControlsUI {
                 PlaybackState::Playing => "⏸",
                 _ => "▶",
             };
-            if ui.add_sized(button_size, egui::Button::new(play_pause_text)).clicked() {
+            if ui.add_sized(button_size, 
+                egui::Button::new(
+                    egui::RichText::new(play_pause_text).size(24.0)
+                )
+            ).clicked() {
                 on_play_pause();
             }
             
             ui.add_space(10.0);
             
             // Stop button
-            if ui.add_sized(button_size, egui::Button::new("⏹")).clicked() {
+            if ui.add_sized(button_size, 
+                egui::Button::new(
+                    egui::RichText::new("⏹").size(24.0)
+                )
+            ).clicked() {
                 on_stop();
+            }
+            
+            ui.add_space(5.0);
+            
+            // Seek forward button (n秒後ろへ)
+            if ui.add_sized(button_size, 
+                egui::Button::new(
+                    egui::RichText::new("↷").size(24.0)
+                )
+            ).clicked() {
+                on_seek_forward();
             }
             
             ui.add_space(10.0);
             
             // Next button
-            if ui.add_sized(button_size, egui::Button::new("⏭")).clicked() {
+            if ui.add_sized(button_size, 
+                egui::Button::new(
+                    egui::RichText::new("⏭").size(24.0)
+                )
+            ).clicked() {
                 on_next();
             }
         });

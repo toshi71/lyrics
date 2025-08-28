@@ -150,6 +150,66 @@ impl AudioPlayer {
         self.total_duration
     }
 
+    pub fn seek_backward(&mut self, seconds: u32) -> Result<(), Box<dyn std::error::Error>> {
+        if let Some(ref mut sound) = self.current_sound {
+            let current_position = sound.position();
+            let seek_seconds = seconds as f64;
+            
+            // 新しい位置を計算（0秒未満にならないように）
+            let new_position = if current_position > seek_seconds {
+                current_position - seek_seconds
+            } else {
+                0.0
+            };
+            
+            sound.seek_to(new_position);
+            
+            // 内部状態を更新
+            self.paused_duration = Duration::from_secs_f64(new_position);
+            if matches!(self.state, PlaybackState::Playing) {
+                self.play_start_time = Some(Instant::now());
+            }
+        }
+        Ok(())
+    }
+
+    pub fn seek_forward(&mut self, seconds: u32) -> Result<(), Box<dyn std::error::Error>> {
+        if let Some(ref mut sound) = self.current_sound {
+            let current_position = sound.position();
+            let seek_seconds = seconds as f64;
+            
+            // 新しい位置を計算（総時間を超えないように）
+            let new_position = if let Some(total) = self.total_duration {
+                let target_position = current_position + seek_seconds;
+                let total_seconds = total.as_secs_f64();
+                if target_position < total_seconds {
+                    target_position
+                } else {
+                    // 最後まで行く
+                    self.stop();
+                    return Ok(());
+                }
+            } else {
+                current_position + seek_seconds
+            };
+            
+            sound.seek_to(new_position);
+            
+            // 内部状態を更新
+            self.paused_duration = Duration::from_secs_f64(new_position);
+            if matches!(self.state, PlaybackState::Playing) {
+                self.play_start_time = Some(Instant::now());
+            }
+        }
+        Ok(())
+    }
+
+    fn seek_to_end(&mut self) -> Result<(), Box<dyn std::error::Error>> {
+        // 曲の最後に到達した場合の処理
+        self.stop();
+        Ok(())
+    }
+
     fn get_flac_duration_static(path: &std::path::Path) -> Option<Duration> {
         if path.extension()?.to_str()? == "flac" {
             let tag = Tag::read_from_path(path).ok()?;

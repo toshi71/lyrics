@@ -66,6 +66,30 @@ impl MyApp {
         
         ui.add_space(20.0);
         ui.separator();
+        ui.heading("プレイバック設定");
+        ui.add_space(10.0);
+        
+        // シーク秒数設定
+        ui.horizontal(|ui| {
+            ui.label("シーク秒数:");
+            ui.add_space(10.0);
+            
+            let mut seek_seconds = self.settings.seek_seconds as i32;
+            let response = ui.add(egui::DragValue::new(&mut seek_seconds)
+                .range(1..=60)
+                .suffix("秒"));
+            
+            if response.changed() {
+                self.settings.set_seek_seconds(seek_seconds as u32);
+                self.save_settings();
+            }
+            
+            ui.add_space(10.0);
+            ui.label("(↶/↷ ボタンで前後にジャンプする秒数)");
+        });
+        
+        ui.add_space(20.0);
+        ui.separator();
         ui.heading("プレイリスト設定");
         ui.add_space(10.0);
         
