@@ -111,11 +111,15 @@ impl MyApp {
 
     pub fn handle_previous_button(&mut self) {
         let position = self.audio_player.get_playback_position();
+        let was_playing = *self.audio_player.get_state() == PlaybackState::Playing;
         
         if position.as_secs() <= 3 {
             if let Some(prev_track) = self.playlist_manager.move_to_previous() {
                 if let Err(_) = self.audio_player.play(prev_track) {
                     // Handle error silently
+                } else if !was_playing {
+                    // If it was paused before, pause the new track
+                    self.audio_player.pause();
                 }
             }
         } else {
@@ -178,9 +182,14 @@ impl MyApp {
     }
 
     pub fn handle_next(&mut self) {
+        let was_playing = *self.audio_player.get_state() == PlaybackState::Playing;
+        
         if let Some(next_track) = self.playlist_manager.move_to_next() {
             if let Err(_) = self.audio_player.play(next_track) {
                 // Handle error silently
+            } else if !was_playing {
+                // If it was paused before, pause the new track
+                self.audio_player.pause();
             }
         }
     }
@@ -302,22 +311,58 @@ impl MyApp {
     }
 
     pub fn handle_seek_backward(&mut self) {
+        let was_paused = *self.audio_player.get_state() == PlaybackState::Paused;
         let seek_seconds = self.settings.get_seek_seconds();
+        
+        if was_paused {
+            // If paused, temporarily resume for seek operation
+            self.audio_player.resume();
+        }
+        
         if let Err(_) = self.audio_player.seek_backward(seek_seconds) {
             // Handle error silently
+        }
+        
+        if was_paused {
+            // Restore paused state after seek
+            self.audio_player.pause();
         }
     }
 
     pub fn handle_seek_forward(&mut self) {
+        let was_paused = *self.audio_player.get_state() == PlaybackState::Paused;
         let seek_seconds = self.settings.get_seek_seconds();
+        
+        if was_paused {
+            // If paused, temporarily resume for seek operation
+            self.audio_player.resume();
+        }
+        
         if let Err(_) = self.audio_player.seek_forward(seek_seconds) {
             // Handle error silently
+        }
+        
+        if was_paused {
+            // Restore paused state after seek
+            self.audio_player.pause();
         }
     }
 
     pub fn handle_seek_to_position(&mut self, position: std::time::Duration) {
+        let was_paused = *self.audio_player.get_state() == PlaybackState::Paused;
+        
+        if was_paused {
+            // If paused, temporarily resume for seek operation
+            self.audio_player.resume();
+        }
+        
         if let Err(_) = self.audio_player.seek_to_position(position) {
             // Handle error silently
+        }
+        
+        if was_paused {
+            // Restore paused state after seek
+            self.audio_player.pause();
         }
     }
 
