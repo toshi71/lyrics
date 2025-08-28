@@ -522,6 +522,9 @@ impl MyApp {
         let mut seek_started = false;
         let mut seek_ended = false;
         
+        // Auto focus disabled
+        let auto_focus = false;
+        
         // 再生位置と総再生時間を取得
         let current_position = self.audio_player.get_playback_position();
         let total_duration = self.audio_player.get_total_duration();
@@ -545,6 +548,7 @@ impl MyApp {
             &mut |position| seek_position = Some(position),
             &mut || seek_started = true,
             &mut || seek_ended = true,
+            auto_focus,
         );
         
         // Handle actions after UI (removed clear_queue handling)
@@ -575,5 +579,7 @@ impl MyApp {
         if seek_ended {
             self.handle_seek_end();
         }
+        
+        // Focus flag reset removed - auto focus disabled
     }
 }

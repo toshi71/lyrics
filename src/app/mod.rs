@@ -45,6 +45,7 @@ pub struct MyApp {
     pub editing_playlist_id: Option<String>,
     pub editing_playlist_name: String,
     pub seek_drag_state: Option<PlaybackState>,
+    pub should_focus_controls: bool,
 }
 
 impl MyApp {
@@ -78,6 +79,7 @@ impl MyApp {
             editing_playlist_id: None,
             editing_playlist_name: String::new(),
             seek_drag_state: None,
+            should_focus_controls: false,
             settings,
         };
         app.refresh_music_library();

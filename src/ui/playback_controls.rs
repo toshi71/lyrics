@@ -250,6 +250,7 @@ impl PlaybackControlsUI {
         on_seek: &mut dyn FnMut(std::time::Duration),
         on_seek_start: &mut dyn FnMut(),
         on_seek_end: &mut dyn FnMut(),
+        auto_focus: bool,
     ) {
         // 再生コントロール領域全体をフォーカス可能にする
         let available_rect = ui.available_rect_before_wrap();
@@ -264,6 +265,11 @@ impl PlaybackControlsUI {
             control_response.request_focus();
         }
         
+        // 自動フォーカス処理
+        if auto_focus {
+            control_response.request_focus();
+        }
+        
         // フォーカス状態を視覚的に表示
         if control_response.has_focus() {
             let focus_rect = control_rect.expand(2.0);
@@ -274,36 +280,7 @@ impl PlaybackControlsUI {
             );
         }
         
-        // フォーカスがある場合のショートカットキー処理
-        if control_response.has_focus() {
-            ui.input(|i| {
-                // スペースキー: 再生/一時停止
-                if i.key_pressed(egui::Key::Space) {
-                    on_play_pause();
-                }
-                
-                // ←/→: 前の曲/次の曲
-                if i.key_pressed(egui::Key::ArrowLeft) && !i.modifiers.shift {
-                    on_previous();
-                }
-                if i.key_pressed(egui::Key::ArrowRight) && !i.modifiers.shift {
-                    on_next();
-                }
-                
-                // Shift+←/→: シーク戻し/シーク進み
-                if i.key_pressed(egui::Key::ArrowLeft) && i.modifiers.shift {
-                    on_seek_backward();
-                }
-                if i.key_pressed(egui::Key::ArrowRight) && i.modifiers.shift {
-                    on_seek_forward();
-                }
-                
-                // S: 停止
-                if i.key_pressed(egui::Key::S) {
-                    on_stop();
-                }
-            });
-        }
+        // Focus-based shortcut handling removed - shortcuts are now global
         
         // 子UIでコントロール要素を表示
         let mut child_ui = ui.child_ui(control_rect, *ui.layout(), None);
