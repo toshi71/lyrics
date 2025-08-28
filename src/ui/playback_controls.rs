@@ -248,9 +248,11 @@ impl PlaybackControlsUI {
         on_seek_forward: &mut dyn FnMut(),
         on_next: &mut dyn FnMut(),
         on_seek: &mut dyn FnMut(std::time::Duration),
+        on_seek_start: &mut dyn FnMut(),
+        on_seek_end: &mut dyn FnMut(),
     ) {
         // シークバーを最初に表示（横幅全体を使用）
-        Self::show_seek_bar(ui, current_position, total_duration, on_seek);
+        Self::show_seek_bar(ui, current_position, total_duration, on_seek, on_seek_start, on_seek_end);
         
         ui.add_space(10.0);
 
@@ -657,6 +659,8 @@ impl PlaybackControlsUI {
         current_position: std::time::Duration,
         total_duration: Option<std::time::Duration>,
         on_seek: &mut dyn FnMut(std::time::Duration),
+        on_seek_start: &mut dyn FnMut(),
+        on_seek_end: &mut dyn FnMut(),
     ) {
         ui.horizontal(|ui| {
             // 現在の再生時間を表示
@@ -675,9 +679,9 @@ impl PlaybackControlsUI {
                 
                 let available_width = ui.available_width() - 80.0; // 時間表示分を差し引く
                 
-                // カスタムのクリック可能なプログレスバーを作成
+                // カスタムのクリック・ドラッグ可能なプログレスバーを作成
                 let desired_size = egui::vec2(available_width, 20.0);
-                let (rect, response) = ui.allocate_exact_size(desired_size, egui::Sense::click());
+                let (rect, response) = ui.allocate_exact_size(desired_size, egui::Sense::click_and_drag());
                 
                 // プログレスバーの背景を描画
                 let bg_color = ui.style().visuals.extreme_bg_color;
@@ -695,11 +699,24 @@ impl PlaybackControlsUI {
                     ui.painter().rect_filled(progress_rect, 4.0, fill_color);
                 }
                 
+                // 現在の再生位置を赤い線で表示
+                if progress > 0.0 {
+                    let position_x = rect.left() + rect.width() * progress as f32;
+                    let line_start = egui::pos2(position_x, rect.top());
+                    let line_end = egui::pos2(position_x, rect.bottom());
+                    ui.painter().line_segment([line_start, line_end], egui::Stroke::new(2.0, egui::Color32::RED));
+                }
+                
                 // 枠線を描画
                 ui.painter().rect_stroke(rect, 4.0, ui.style().visuals.widgets.inactive.bg_stroke);
                 
-                // クリック処理
-                if response.clicked() {
+                // ドラッグ開始時の処理
+                if response.drag_started() {
+                    on_seek_start();
+                }
+                
+                // ドラッグ中またはクリック時の処理
+                if response.dragged() || response.clicked() {
                     if let Some(pointer_pos) = ui.input(|i| i.pointer.interact_pos()) {
                         let bar_left = rect.left();
                         let bar_width = rect.width();
@@ -715,6 +732,11 @@ impl PlaybackControlsUI {
                         
                         on_seek(seek_position);
                     }
+                }
+                
+                // ドラッグ終了時の処理
+                if response.drag_stopped() {
+                    on_seek_end();
                 }
             } else {
                 // 総再生時間が不明な場合

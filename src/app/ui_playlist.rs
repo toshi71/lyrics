@@ -519,6 +519,8 @@ impl MyApp {
         let mut seek_forward_clicked = false;
         let mut next_clicked = false;
         let mut seek_position: Option<std::time::Duration> = None;
+        let mut seek_started = false;
+        let mut seek_ended = false;
         
         // 再生位置と総再生時間を取得
         let current_position = self.audio_player.get_playback_position();
@@ -541,6 +543,8 @@ impl MyApp {
             &mut || seek_forward_clicked = true,
             &mut || next_clicked = true,
             &mut |position| seek_position = Some(position),
+            &mut || seek_started = true,
+            &mut || seek_ended = true,
         );
         
         // Handle actions after UI (removed clear_queue handling)
@@ -564,6 +568,12 @@ impl MyApp {
         }
         if let Some(position) = seek_position {
             self.handle_seek_to_position(position);
+        }
+        if seek_started {
+            self.handle_seek_start();
+        }
+        if seek_ended {
+            self.handle_seek_end();
         }
     }
 }
