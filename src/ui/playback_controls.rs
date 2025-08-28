@@ -247,9 +247,10 @@ impl PlaybackControlsUI {
         on_stop: &mut dyn FnMut(),
         on_seek_forward: &mut dyn FnMut(),
         on_next: &mut dyn FnMut(),
+        on_seek: &mut dyn FnMut(std::time::Duration),
     ) {
         // シークバーを最初に表示（横幅全体を使用）
-        Self::show_seek_bar(ui, current_position, total_duration);
+        Self::show_seek_bar(ui, current_position, total_duration, on_seek);
         
         ui.add_space(10.0);
 
@@ -655,6 +656,7 @@ impl PlaybackControlsUI {
         ui: &mut egui::Ui,
         current_position: std::time::Duration,
         total_duration: Option<std::time::Duration>,
+        on_seek: &mut dyn FnMut(std::time::Duration),
     ) {
         ui.horizontal(|ui| {
             // 現在の再生時間を表示
@@ -672,15 +674,47 @@ impl PlaybackControlsUI {
                 };
                 
                 let available_width = ui.available_width() - 80.0; // 時間表示分を差し引く
-                let seek_bar_response = ui.add_sized(
-                    [available_width, 20.0],
-                    egui::ProgressBar::new(progress as f32)
-                        .animate(false)
-                );
                 
-                // 今はクリック操作は無効（将来のシーク機能用に準備）
-                if seek_bar_response.clicked() {
-                    // TODO: 将来的にここでシーク処理を実装
+                // カスタムのクリック可能なプログレスバーを作成
+                let desired_size = egui::vec2(available_width, 20.0);
+                let (rect, response) = ui.allocate_exact_size(desired_size, egui::Sense::click());
+                
+                // プログレスバーの背景を描画
+                let bg_color = ui.style().visuals.extreme_bg_color;
+                let fill_color = ui.style().visuals.selection.bg_fill;
+                
+                ui.painter().rect_filled(rect, 4.0, bg_color);
+                
+                // プログレス部分を描画
+                if progress > 0.0 {
+                    let progress_width = rect.width() * progress as f32;
+                    let progress_rect = egui::Rect::from_min_size(
+                        rect.min,
+                        egui::vec2(progress_width, rect.height())
+                    );
+                    ui.painter().rect_filled(progress_rect, 4.0, fill_color);
+                }
+                
+                // 枠線を描画
+                ui.painter().rect_stroke(rect, 4.0, ui.style().visuals.widgets.inactive.bg_stroke);
+                
+                // クリック処理
+                if response.clicked() {
+                    if let Some(pointer_pos) = ui.input(|i| i.pointer.interact_pos()) {
+                        let bar_left = rect.left();
+                        let bar_width = rect.width();
+                        let click_x = pointer_pos.x - bar_left;
+                        
+                        // クリック位置を0.0-1.0の範囲に正規化
+                        let click_progress = (click_x / bar_width).clamp(0.0, 1.0);
+                        
+                        // シーク位置を計算
+                        let seek_position = std::time::Duration::from_secs_f64(
+                            total.as_secs_f64() * click_progress as f64
+                        );
+                        
+                        on_seek(seek_position);
+                    }
                 }
             } else {
                 // 総再生時間が不明な場合

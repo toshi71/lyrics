@@ -257,4 +257,10 @@ impl MyApp {
             // Handle error silently
         }
     }
+
+    pub fn handle_seek_to_position(&mut self, position: std::time::Duration) {
+        if let Err(_) = self.audio_player.seek_to_position(position) {
+            // Handle error silently
+        }
+    }
 }
