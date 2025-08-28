@@ -62,7 +62,7 @@ impl MyApp {
             splitter_position: settings.main_splitter_position,
             right_top_bottom_position: settings.right_top_bottom_position,
             right_bottom_left_right_position: settings.right_bottom_left_right_position,
-            right_pane_tab: RightTab::Playback,
+            right_pane_tab: RightTab::Info,
             selected_track: None,
             selected_tracks: std::collections::HashSet::new(),
             last_selected_path: None,

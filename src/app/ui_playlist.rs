@@ -98,6 +98,9 @@ impl MyApp {
         bottom_left_ui.set_clip_rect(bottom_left_rect);
         
         bottom_left_ui.vertical(|ui| {
+            // Add 3px top padding for playlist tab area
+            ui.add_space(3.0);
+            
             // プレイリストタブ
             self.show_playlist_tabs(ui);
             ui.separator();
@@ -131,37 +134,51 @@ impl MyApp {
         bottom_right_ui.set_clip_rect(bottom_right_rect);
         
         bottom_right_ui.vertical(|ui| {
-            // 情報・LRCタブ切り替え
+            // Add 5px top padding for info/LRC tab area
+            ui.add_space(5.0);
+            
+            // Add 5px left padding for tab header
             ui.horizontal(|ui| {
+                ui.add_space(5.0); // Left padding
+                // 情報・LRCタブ切り替え
                 ui.selectable_value(&mut self.right_pane_tab, super::RightTab::Info, "情報");
                 ui.selectable_value(&mut self.right_pane_tab, super::RightTab::Lrc, "LRC");
             });
             
             ui.separator();
             
-            // タブのコンテンツを表示
+            // タブのコンテンツを表示（残りのスペースを使用） - same structure as playlist area
             egui::ScrollArea::both()
                 .id_source("info_lrc_scroll")
                 .auto_shrink([false, false])
                 .show(ui, |ui| {
-                    match self.right_pane_tab {
-                        super::RightTab::Playback => {
-                            ui.label("プレイリスト表示（左側で表示）");
-                        },
-                        super::RightTab::Info => {
-                            self.show_track_info(ui);
-                        },
-                        super::RightTab::Lrc => {
-                            ui.label("LRC歌詞表示機能は未実装です");
-                        },
-                    }
+                    // Add 5px left padding inside scroll area
+                    ui.horizontal(|ui| {
+                        ui.add_space(5.0);
+                        ui.vertical(|ui| {
+                            match self.right_pane_tab {
+                                super::RightTab::Playback => {
+                                    ui.label("プレイリスト表示（左側で表示）");
+                                },
+                                super::RightTab::Info => {
+                                    self.show_track_info(ui);
+                                },
+                                super::RightTab::Lrc => {
+                                    ui.label("LRC歌詞表示機能は未実装です");
+                                },
+                            }
+                        });
+                    });
                 });
         });
     }
 
     pub fn show_track_info(&mut self, ui: &mut egui::Ui) {
-        // 現在再生中の楽曲情報を優先表示
-        if let Some(current_track) = self.playlist_manager.get_current_track() {
+        // 選択中の楽曲を優先表示、なければ再生中の楽曲を表示
+        if let Some(track) = &self.selected_track {
+            ui.heading("📋 選択中の楽曲");
+            self.show_track_details(ui, track);
+        } else if let Some(current_track) = self.playlist_manager.get_current_track() {
             ui.heading("🎵 現在再生中");
             if let Some(playing_playlist_id) = self.playlist_manager.get_current_playing_playlist_id() {
                 if let Some(playlist) = self.playlist_manager.get_playlist(playing_playlist_id) {
@@ -171,16 +188,7 @@ impl MyApp {
             ui.separator();
             
             self.show_track_details(ui, current_track);
-            
-            ui.add_space(20.0);
-            ui.separator();
-            ui.add_space(10.0);
-        }
-        
-        if let Some(track) = &self.selected_track {
-            ui.heading("選択中の楽曲");
-            self.show_track_details(ui, track);
-        } else if self.playlist_manager.get_current_track().is_none() {
+        } else {
             ui.label("楽曲を選択するか、再生を開始してください");
         }
     }
@@ -263,6 +271,7 @@ impl MyApp {
                     let default_response = ui.selectable_label(is_default_active, default_label);
                     if default_response.clicked() {
                         self.playlist_manager.set_active_playlist("default");
+                        self.selected_track = None; // Reset selected track when changing playlist
                         self.save_settings();
                     }
                     
@@ -377,6 +386,7 @@ impl MyApp {
                         let new_name = format!("新しいプレイリスト{}", user_playlist_count + 1);
                         let new_id = self.playlist_manager.create_playlist(new_name);
                         self.playlist_manager.set_active_playlist(&new_id);
+                        self.selected_track = None; // Reset selected track when changing playlist
                         
                         self.settings.add_to_display_order(new_id);
                         
@@ -387,6 +397,7 @@ impl MyApp {
                     // アクション実行（借用チェッカー対応）
                     if let Some(id) = playlist_to_activate {
                         self.playlist_manager.set_active_playlist(&id);
+                        self.selected_track = None; // Reset selected track when changing playlist
                         self.save_settings();
                     }
                     if let Some(id) = playlist_to_delete {
@@ -481,6 +492,13 @@ impl MyApp {
         // Handle actions after UI
         if let Some((index, ctrl_held, shift_held)) = queue_item_selection {
             self.playlist_manager.handle_item_selection(index, ctrl_held, shift_held);
+            
+            // Update selected_track for info display
+            if let Some(tracks) = self.playlist_manager.get_tracks() {
+                if index < tracks.len() {
+                    self.selected_track = Some(tracks[index].clone());
+                }
+            }
         }
         if let Some(index) = queue_item_double_clicked {
             self.handle_queue_item_double_clicked(index);
