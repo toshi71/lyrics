@@ -146,12 +146,15 @@ impl MyApp {
                     
                     // Search UI
                     let mut search_changed = false;
-                    SearchUI::show(
+                    let search_has_focus = SearchUI::show(
                         ui,
                         &mut self.search_query,
                         &mut self.focus_search,
                         &mut || search_changed = true,
                     );
+                    
+                    // Store search focus state for global shortcut handling
+                    self.search_has_focus = search_has_focus;
                     
                     if search_changed {
                         self.apply_search_filter();

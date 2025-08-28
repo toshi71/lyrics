@@ -33,6 +33,7 @@ pub struct MyApp {
     pub music_library: MusicLibrary,
     pub search_query: String,
     pub focus_search: bool,
+    pub search_has_focus: bool,
     pub splitter_position: f32,           // 左 vs 右ペイン（下位互換性のため残す）
     pub right_top_bottom_position: f32,   // 右ペイン上部 vs 下部
     pub right_bottom_left_right_position: f32, // 右ペイン下部：左 vs 右
@@ -57,6 +58,7 @@ impl MyApp {
             music_library: MusicLibrary::new(settings.classical_composer_hierarchy),
             search_query: String::new(),
             focus_search: false,
+            search_has_focus: false,
             splitter_position: settings.main_splitter_position,
             right_top_bottom_position: settings.right_top_bottom_position,
             right_bottom_left_right_position: settings.right_bottom_left_right_position,

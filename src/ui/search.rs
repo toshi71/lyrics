@@ -8,7 +8,8 @@ impl SearchUI {
         search_query: &mut String,
         focus_request: &mut bool,
         on_search_changed: &mut dyn FnMut(),
-    ) {
+    ) -> bool {
+        let mut has_focus = false;
         ui.horizontal(|ui| {
             ui.label("検索:");
             
@@ -17,6 +18,8 @@ impl SearchUI {
                 [available_width, 20.0],
                 egui::TextEdit::singleline(search_query)
             );
+            
+            has_focus = response.has_focus();
             
             if *focus_request {
                 response.request_focus();
@@ -32,5 +35,6 @@ impl SearchUI {
                 on_search_changed();
             }
         });
+        has_focus
     }
 }

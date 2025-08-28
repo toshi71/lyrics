@@ -14,6 +14,34 @@ impl MyApp {
         if ctx.input(|i| i.key_pressed(eframe::egui::Key::Q) && i.modifiers.ctrl) {
             ctx.send_viewport_cmd(eframe::egui::ViewportCommand::Close);
         }
+        
+        // Global playback shortcuts (disabled when search has focus)
+        if !self.search_has_focus {
+            // Space: Play/Pause
+            if ctx.input(|i| i.key_pressed(eframe::egui::Key::Space)) {
+                self.handle_play_pause();
+            }
+            
+            // Ctrl+B: Previous track
+            if ctx.input(|i| i.key_pressed(eframe::egui::Key::B) && i.modifiers.ctrl) {
+                self.handle_previous_button();
+            }
+            
+            // Ctrl+P: Next track
+            if ctx.input(|i| i.key_pressed(eframe::egui::Key::P) && i.modifiers.ctrl) {
+                self.handle_next();
+            }
+            
+            // Shift+B: Seek backward
+            if ctx.input(|i| i.key_pressed(eframe::egui::Key::B) && i.modifiers.shift) {
+                self.handle_seek_backward();
+            }
+            
+            // Shift+P: Seek forward
+            if ctx.input(|i| i.key_pressed(eframe::egui::Key::P) && i.modifiers.shift) {
+                self.handle_seek_forward();
+            }
+        }
     }
 
     pub fn handle_track_selection(&mut self, track: TrackInfo, ctrl_held: bool, shift_held: bool) {
@@ -106,12 +134,41 @@ impl MyApp {
                 self.audio_player.resume();
             },
             PlaybackState::Stopped => {
+                // Try to get current track, if none exists, start from selected or first track
                 if let Some(track) = self.playlist_manager.get_current_track() {
                     if let Err(_) = self.audio_player.play(track.clone()) {
                         // Handle error silently for now
                     }
+                } else {
+                    // No current track, try to start from selected or first track in active playlist
+                    self.start_playback_from_playlist();
                 }
             },
+        }
+    }
+    
+    pub fn start_playback_from_playlist(&mut self) {
+        if let Some(tracks) = self.playlist_manager.get_active_tracks() {
+            if tracks.is_empty() {
+                return; // No tracks in playlist, do nothing
+            }
+            
+            let selected_indices = self.playlist_manager.get_selected_indices();
+            let target_index = if !selected_indices.is_empty() {
+                // Use the first selected track
+                *selected_indices.iter().next().unwrap()
+            } else {
+                // No selection, use first track
+                0
+            };
+            
+            // Set the target index as current and start playback
+            self.playlist_manager.set_current_index(target_index);
+            if let Some(track) = self.playlist_manager.get_current_track() {
+                if let Err(_) = self.audio_player.play(track.clone()) {
+                    // Handle error silently
+                }
+            }
         }
     }
 
