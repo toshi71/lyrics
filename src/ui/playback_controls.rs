@@ -310,7 +310,7 @@ impl PlaybackControlsUI {
             // Seek backward button (n秒前へ)
             if ui.add_sized(button_size, 
                 egui::Button::new(
-                    egui::RichText::new("↶").size(24.0)
+                    egui::RichText::new("↩").size(24.0)
                 )
             ).clicked() {
                 on_seek_backward();
@@ -347,7 +347,7 @@ impl PlaybackControlsUI {
             // Seek forward button (n秒後ろへ)
             if ui.add_sized(button_size, 
                 egui::Button::new(
-                    egui::RichText::new("↷").size(24.0)
+                    egui::RichText::new("↪").size(24.0)
                 )
             ).clicked() {
                 on_seek_forward();
@@ -397,7 +397,7 @@ impl PlaybackControlsUI {
             // Seek backward button (n秒前へ)
             if ui.add_sized(button_size, 
                 egui::Button::new(
-                    egui::RichText::new("↶").size(24.0)
+                    egui::RichText::new("↩").size(24.0)
                 )
             ).clicked() {
                 on_seek_backward();
@@ -434,7 +434,7 @@ impl PlaybackControlsUI {
             // Seek forward button (n秒後ろへ)
             if ui.add_sized(button_size, 
                 egui::Button::new(
-                    egui::RichText::new("↷").size(24.0)
+                    egui::RichText::new("↪").size(24.0)
                 )
             ).clicked() {
                 on_seek_forward();
@@ -632,7 +632,7 @@ impl PlaybackControlsUI {
             // Seek backward button (n秒前へ)
             if ui.add_sized(button_size, 
                 egui::Button::new(
-                    egui::RichText::new("↶").size(24.0)
+                    egui::RichText::new("↩").size(24.0)
                 )
             ).clicked() {
                 on_seek_backward();
@@ -669,7 +669,7 @@ impl PlaybackControlsUI {
             // Seek forward button (n秒後ろへ)
             if ui.add_sized(button_size, 
                 egui::Button::new(
-                    egui::RichText::new("↷").size(24.0)
+                    egui::RichText::new("↪").size(24.0)
                 )
             ).clicked() {
                 on_seek_forward();

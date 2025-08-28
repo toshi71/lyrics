@@ -5,294 +5,114 @@
       "name": "デフォルト",
       "tracks": [
         {
-          "title": "メンデルスゾーン-交響曲第4番「イタリア」-第1楽章",
-          "artist": "バーンスタイン, イスラエルフィル",
-          "album": "メンデルスゾーン-交響曲第4番「イタリア」-バーンスタイン-1978",
-          "composer": "メンデルスゾーン",
-          "genre": "Classical",
+          "title": "기적 (Destiny)",
+          "artist": "BoA",
+          "album": "Miracle",
+          "composer": null,
+          "genre": "Pop",
           "track_number": 1,
           "disc_number": null,
-          "path": "C:\\Users\\toshi\\Music\\foobar2000\\バーンスタイン, イスラエルフィル\\メンデルスゾーン-交響曲第4番「イタリア」-バーンスタイン-1978\\メンデルスゾーン-交響曲第4番「イタリア」-第1楽章-バーンスタイン-1979.flac"
+          "path": "D:\\foobar2000\\BoA\\Miracle\\01-기적 (Destiny).flac"
         },
         {
-          "title": "メンデルスゾーン-交響曲第4番「イタリア」-第2楽章",
-          "artist": "バーンスタイン, イスラエルフィル",
-          "album": "メンデルスゾーン-交響曲第4番「イタリア」-バーンスタイン-1978",
-          "composer": "メンデルスゾーン",
-          "genre": "Classical",
+          "title": "Every Heart",
+          "artist": "BoA",
+          "album": "Miracle",
+          "composer": null,
+          "genre": "Pop",
           "track_number": 2,
           "disc_number": null,
-          "path": "C:\\Users\\toshi\\Music\\foobar2000\\バーンスタイン, イスラエルフィル\\メンデルスゾーン-交響曲第4番「イタリア」-バーンスタイン-1978\\メンデルスゾーン-交響曲第4番「イタリア」-第2楽章-バーンスタイン-1979.flac"
+          "path": "D:\\foobar2000\\BoA\\Miracle\\02-Every Heart.flac"
         },
         {
-          "title": "メンデルスゾーン-交響曲第4番「イタリア」-第3楽章",
-          "artist": "バーンスタイン, イスラエルフィル",
-          "album": "メンデルスゾーン-交響曲第4番「イタリア」-バーンスタイン-1978",
-          "composer": "メンデルスゾーン",
-          "genre": "Classical",
+          "title": "Valenti",
+          "artist": "BoA",
+          "album": "Miracle",
+          "composer": null,
+          "genre": "Pop",
           "track_number": 3,
           "disc_number": null,
-          "path": "C:\\Users\\toshi\\Music\\foobar2000\\バーンスタイン, イスラエルフィル\\メンデルスゾーン-交響曲第4番「イタリア」-バーンスタイン-1978\\メンデルスゾーン-交響曲第4番「イタリア」-第3楽章-バーンスタイン-1979.flac"
+          "path": "D:\\foobar2000\\BoA\\Miracle\\03-Valenti.flac"
         },
         {
-          "title": "メンデルスゾーン-交響曲第4番「イタリア」-第4楽章",
-          "artist": "バーンスタイン, イスラエルフィル",
-          "album": "メンデルスゾーン-交響曲第4番「イタリア」-バーンスタイン-1978",
-          "composer": "メンデルスゾーン",
-          "genre": "Classical",
+          "title": "Feelings Deep Inside (마음은 전해진다)",
+          "artist": "BoA",
+          "album": "Miracle",
+          "composer": null,
+          "genre": "Pop",
           "track_number": 4,
           "disc_number": null,
-          "path": "C:\\Users\\toshi\\Music\\foobar2000\\バーンスタイン, イスラエルフィル\\メンデルスゾーン-交響曲第4番「イタリア」-バーンスタイン-1978\\メンデルスゾーン-交響曲第4番「イタリア」-第4楽章-バーンスタイン-1979.flac"
+          "path": "D:\\foobar2000\\BoA\\Miracle\\04-Feelings Deep Inside (마음은 전해진다).flac"
         },
         {
-          "title": "オルフ-カルミナ・ブラーナ-01-おお、運の女神よ",
-          "artist": "レヴァイン, シカゴ交響楽団",
-          "album": "オルフ-カルミナ・ブラーナ-レヴァイン-1984",
-          "composer": "オルフ",
-          "genre": "Rock",
-          "track_number": 1,
-          "disc_number": null,
-          "path": "C:\\Users\\toshi\\Music\\foobar2000\\レヴァイン, シカゴ交響楽団\\オルフ-カルミナ・ブラーナ-レヴァイン-1984\\オルフ-カルミナ・ブラーナ-01-レヴァイン-1984.flac"
-        },
-        {
-          "title": "オルフ-カルミナ・ブラーナ-02-運の女神の傷手を",
-          "artist": "レヴァイン, シカゴ交響楽団",
-          "album": "オルフ-カルミナ・ブラーナ-レヴァイン-1984",
-          "composer": "オルフ",
-          "genre": "Rock",
-          "track_number": 2,
-          "disc_number": null,
-          "path": "C:\\Users\\toshi\\Music\\foobar2000\\レヴァイン, シカゴ交響楽団\\オルフ-カルミナ・ブラーナ-レヴァイン-1984\\オルフ-カルミナ・ブラーナ-02-レヴァイン-1984.flac"
-        },
-        {
-          "title": "オルフ-カルミナ・ブラーナ-03-春の愉しい面ざしが",
-          "artist": "レヴァイン, シカゴ交響楽団",
-          "album": "オルフ-カルミナ・ブラーナ-レヴァイン-1984",
-          "composer": "オルフ",
-          "genre": "Rock",
-          "track_number": 3,
-          "disc_number": null,
-          "path": "C:\\Users\\toshi\\Music\\foobar2000\\レヴァイン, シカゴ交響楽団\\オルフ-カルミナ・ブラーナ-レヴァイン-1984\\オルフ-カルミナ・ブラーナ-03-レヴァイン-1984.flac"
-        },
-        {
-          "title": "オルフ-カルミナ・ブラーナ-04-万物を太陽は整えおさめる",
-          "artist": "レヴァイン, シカゴ交響楽団",
-          "album": "オルフ-カルミナ・ブラーナ-レヴァイン-1984",
-          "composer": "オルフ",
-          "genre": "Rock",
-          "track_number": 4,
-          "disc_number": null,
-          "path": "C:\\Users\\toshi\\Music\\foobar2000\\レヴァイン, シカゴ交響楽団\\オルフ-カルミナ・ブラーナ-レヴァイン-1984\\オルフ-カルミナ・ブラーナ-04-レヴァイン-1984.flac"
-        },
-        {
-          "title": "オルフ-カルミナ・ブラーナ-05-見よ、今や楽しい",
-          "artist": "レヴァイン, シカゴ交響楽団",
-          "album": "オルフ-カルミナ・ブラーナ-レヴァイン-1984",
-          "composer": "オルフ",
-          "genre": "Rock",
+          "title": "Share Your Heart (With Me)",
+          "artist": "BoA",
+          "album": "Miracle",
+          "composer": null,
+          "genre": "Pop",
           "track_number": 5,
           "disc_number": null,
-          "path": "C:\\Users\\toshi\\Music\\foobar2000\\レヴァイン, シカゴ交響楽団\\オルフ-カルミナ・ブラーナ-レヴァイン-1984\\オルフ-カルミナ・ブラーナ-05-レヴァイン-1984.flac"
+          "path": "D:\\foobar2000\\BoA\\Miracle\\05-Share Your Heart (With Me).flac"
         },
         {
-          "title": "オルフ-カルミナ・ブラーナ-06-おどり",
-          "artist": "レヴァイン, シカゴ交響楽団",
-          "album": "オルフ-カルミナ・ブラーナ-レヴァイン-1984",
-          "composer": "オルフ",
-          "genre": "Rock",
+          "title": "Happiness",
+          "artist": "BoA",
+          "album": "Miracle",
+          "composer": null,
+          "genre": "Pop",
           "track_number": 6,
           "disc_number": null,
-          "path": "C:\\Users\\toshi\\Music\\foobar2000\\レヴァイン, シカゴ交響楽団\\オルフ-カルミナ・ブラーナ-レヴァイン-1984\\オルフ-カルミナ・ブラーナ-06-レヴァイン-1984.flac"
+          "path": "D:\\foobar2000\\BoA\\Miracle\\06-Happiness.flac"
         },
         {
-          "title": "オルフ-カルミナ・ブラーナ-07-森は花さき繁る",
-          "artist": "レヴァイン, シカゴ交響楽団",
-          "album": "オルフ-カルミナ・ブラーナ-レヴァイン-1984",
-          "composer": "オルフ",
-          "genre": "Rock",
+          "title": "Show White",
+          "artist": "BoA",
+          "album": "Miracle",
+          "composer": null,
+          "genre": "Pop",
           "track_number": 7,
           "disc_number": null,
-          "path": "C:\\Users\\toshi\\Music\\foobar2000\\レヴァイン, シカゴ交響楽団\\オルフ-カルミナ・ブラーナ-レヴァイン-1984\\オルフ-カルミナ・ブラーナ-07-レヴァイン-1984.flac"
+          "path": "D:\\foobar2000\\BoA\\Miracle\\07-Show White.flac"
         },
         {
-          "title": "オルフ-カルミナ・ブラーナ-08-小間物屋さん、色紅を下さい",
-          "artist": "レヴァイン, シカゴ交響楽団",
-          "album": "オルフ-カルミナ・ブラーナ-レヴァイン-1984",
-          "composer": "オルフ",
-          "genre": "Rock",
+          "title": "Nobody But You",
+          "artist": "BoA",
+          "album": "Miracle",
+          "composer": null,
+          "genre": "Pop",
           "track_number": 8,
           "disc_number": null,
-          "path": "C:\\Users\\toshi\\Music\\foobar2000\\レヴァイン, シカゴ交響楽団\\オルフ-カルミナ・ブラーナ-レヴァイン-1984\\オルフ-カルミナ・ブラーナ-08-レヴァイン-1984.flac"
+          "path": "D:\\foobar2000\\BoA\\Miracle\\08-Nobody But You.flac"
         },
         {
-          "title": "オルフ-カルミナ・ブラーナ-09-円舞曲",
-          "artist": "レヴァイン, シカゴ交響楽団",
-          "album": "オルフ-カルミナ・ブラーナ-レヴァイン-1984",
-          "composer": "オルフ",
-          "genre": "Rock",
+          "title": "Next Step",
+          "artist": "BoA",
+          "album": "Miracle",
+          "composer": null,
+          "genre": "Pop",
           "track_number": 9,
           "disc_number": null,
-          "path": "C:\\Users\\toshi\\Music\\foobar2000\\レヴァイン, シカゴ交響楽団\\オルフ-カルミナ・ブラーナ-レヴァイン-1984\\オルフ-カルミナ・ブラーナ-09-レヴァイン-1984.flac"
+          "path": "D:\\foobar2000\\BoA\\Miracle\\09-Next Step.flac"
         },
         {
-          "title": "オルフ-カルミナ・ブラーナ-10-たとえこの世界がみな",
-          "artist": "レヴァイン, シカゴ交響楽団",
-          "album": "オルフ-カルミナ・ブラーナ-レヴァイン-1984",
-          "composer": "オルフ",
-          "genre": "Rock",
+          "title": "Nothing's Gonna Chage",
+          "artist": "BoA",
+          "album": "Miracle",
+          "composer": null,
+          "genre": "Pop",
           "track_number": 10,
           "disc_number": null,
-          "path": "C:\\Users\\toshi\\Music\\foobar2000\\レヴァイン, シカゴ交響楽団\\オルフ-カルミナ・ブラーナ-レヴァイン-1984\\オルフ-カルミナ・ブラーナ-10-レヴァイン-1984.flac"
+          "path": "D:\\foobar2000\\BoA\\Miracle\\10-Nothing's Gonna Chage.flac"
         },
         {
-          "title": "オルフ-カルミナ・ブラーナ-11-胸のうちは、抑えようもない",
-          "artist": "レヴァイン, シカゴ交響楽団",
-          "album": "オルフ-カルミナ・ブラーナ-レヴァイン-1984",
-          "composer": "オルフ",
-          "genre": "Rock",
+          "title": "Listen To My Heart",
+          "artist": "BoA",
+          "album": "Miracle",
+          "composer": null,
+          "genre": "Pop",
           "track_number": 11,
           "disc_number": null,
-          "path": "C:\\Users\\toshi\\Music\\foobar2000\\レヴァイン, シカゴ交響楽団\\オルフ-カルミナ・ブラーナ-レヴァイン-1984\\オルフ-カルミナ・ブラーナ-11-レヴァイン-1984.flac"
-        },
-        {
-          "title": "オルフ-カルミナ・ブラーナ-12-むかしは湖に住まっていた",
-          "artist": "レヴァイン, シカゴ交響楽団",
-          "album": "オルフ-カルミナ・ブラーナ-レヴァイン-1984",
-          "composer": "オルフ",
-          "genre": "Rock",
-          "track_number": 12,
-          "disc_number": null,
-          "path": "C:\\Users\\toshi\\Music\\foobar2000\\レヴァイン, シカゴ交響楽団\\オルフ-カルミナ・ブラーナ-レヴァイン-1984\\オルフ-カルミナ・ブラーナ-12-レヴァイン-1984.flac"
-        },
-        {
-          "title": "オルフ-カルミナ・ブラーナ-13-わしは院長さまだぞ",
-          "artist": "レヴァイン, シカゴ交響楽団",
-          "album": "オルフ-カルミナ・ブラーナ-レヴァイン-1984",
-          "composer": "オルフ",
-          "genre": "Rock",
-          "track_number": 13,
-          "disc_number": null,
-          "path": "C:\\Users\\toshi\\Music\\foobar2000\\レヴァイン, シカゴ交響楽団\\オルフ-カルミナ・ブラーナ-レヴァイン-1984\\オルフ-カルミナ・ブラーナ-13-レヴァイン-1984.flac"
-        },
-        {
-          "title": "オルフ-カルミナ・ブラーナ-14-酒場に私が居るときにゃ",
-          "artist": "レヴァイン, シカゴ交響楽団",
-          "album": "オルフ-カルミナ・ブラーナ-レヴァイン-1984",
-          "composer": "オルフ",
-          "genre": "Rock",
-          "track_number": 14,
-          "disc_number": null,
-          "path": "C:\\Users\\toshi\\Music\\foobar2000\\レヴァイン, シカゴ交響楽団\\オルフ-カルミナ・ブラーナ-レヴァイン-1984\\オルフ-カルミナ・ブラーナ-14-レヴァイン-1984.flac"
-        },
-        {
-          "title": "オルフ-カルミナ・ブラーナ-15-愛神はどこもかしこも飛び廻る",
-          "artist": "レヴァイン, シカゴ交響楽団",
-          "album": "オルフ-カルミナ・ブラーナ-レヴァイン-1984",
-          "composer": "オルフ",
-          "genre": "Rock",
-          "track_number": 15,
-          "disc_number": null,
-          "path": "C:\\Users\\toshi\\Music\\foobar2000\\レヴァイン, シカゴ交響楽団\\オルフ-カルミナ・ブラーナ-レヴァイン-1984\\オルフ-カルミナ・ブラーナ-15-レヴァイン-1984.flac"
-        },
-        {
-          "title": "オルフ-カルミナ・ブラーナ-16-昼間も夜も、何もかもが",
-          "artist": "レヴァイン, シカゴ交響楽団",
-          "album": "オルフ-カルミナ・ブラーナ-レヴァイン-1984",
-          "composer": "オルフ",
-          "genre": "Rock",
-          "track_number": 16,
-          "disc_number": null,
-          "path": "C:\\Users\\toshi\\Music\\foobar2000\\レヴァイン, シカゴ交響楽団\\オルフ-カルミナ・ブラーナ-レヴァイン-1984\\オルフ-カルミナ・ブラーナ-16-レヴァイン-1984.flac"
-        },
-        {
-          "title": "オルフ-カルミナ・ブラーナ-17-少女が立っていた",
-          "artist": "レヴァイン, シカゴ交響楽団",
-          "album": "オルフ-カルミナ・ブラーナ-レヴァイン-1984",
-          "composer": "オルフ",
-          "genre": "Rock",
-          "track_number": 17,
-          "disc_number": null,
-          "path": "C:\\Users\\toshi\\Music\\foobar2000\\レヴァイン, シカゴ交響楽団\\オルフ-カルミナ・ブラーナ-レヴァイン-1984\\オルフ-カルミナ・ブラーナ-17-レヴァイン-1984.flac"
-        },
-        {
-          "title": "オルフ-カルミナ・ブラーナ-18-私の胸をめぐっては",
-          "artist": "レヴァイン, シカゴ交響楽団",
-          "album": "オルフ-カルミナ・ブラーナ-レヴァイン-1984",
-          "composer": "オルフ",
-          "genre": "Rock",
-          "track_number": 18,
-          "disc_number": null,
-          "path": "C:\\Users\\toshi\\Music\\foobar2000\\レヴァイン, シカゴ交響楽団\\オルフ-カルミナ・ブラーナ-レヴァイン-1984\\オルフ-カルミナ・ブラーナ-18-レヴァイン-1984.flac"
-        },
-        {
-          "title": "オルフ-カルミナ・ブラーナ-19-もし若者が乙女と一緒に",
-          "artist": "レヴァイン, シカゴ交響楽団",
-          "album": "オルフ-カルミナ・ブラーナ-レヴァイン-1984",
-          "composer": "オルフ",
-          "genre": "Rock",
-          "track_number": 19,
-          "disc_number": null,
-          "path": "C:\\Users\\toshi\\Music\\foobar2000\\レヴァイン, シカゴ交響楽団\\オルフ-カルミナ・ブラーナ-レヴァイン-1984\\オルフ-カルミナ・ブラーナ-19-レヴァイン-1984.flac"
-        },
-        {
-          "title": "オルフ-カルミナ・ブラーナ-20-おいで、おいで、さあ来ておくれ",
-          "artist": "レヴァイン, シカゴ交響楽団",
-          "album": "オルフ-カルミナ・ブラーナ-レヴァイン-1984",
-          "composer": "オルフ",
-          "genre": "Rock",
-          "track_number": 20,
-          "disc_number": null,
-          "path": "C:\\Users\\toshi\\Music\\foobar2000\\レヴァイン, シカゴ交響楽団\\オルフ-カルミナ・ブラーナ-レヴァイン-1984\\オルフ-カルミナ・ブラーナ-20-レヴァイン-1984.flac"
-        },
-        {
-          "title": "オルフ-カルミナ・ブラーナ-21-天秤棒に心をかけて",
-          "artist": "レヴァイン, シカゴ交響楽団",
-          "album": "オルフ-カルミナ・ブラーナ-レヴァイン-1984",
-          "composer": "オルフ",
-          "genre": "Rock",
-          "track_number": 21,
-          "disc_number": null,
-          "path": "C:\\Users\\toshi\\Music\\foobar2000\\レヴァイン, シカゴ交響楽団\\オルフ-カルミナ・ブラーナ-レヴァイン-1984\\オルフ-カルミナ・ブラーナ-21-レヴァイン-1984.flac"
-        },
-        {
-          "title": "オルフ-カルミナ・ブラーナ-22-今こそ愉悦の季節",
-          "artist": "レヴァイン, シカゴ交響楽団",
-          "album": "オルフ-カルミナ・ブラーナ-レヴァイン-1984",
-          "composer": "オルフ",
-          "genre": "Rock",
-          "track_number": 22,
-          "disc_number": null,
-          "path": "C:\\Users\\toshi\\Music\\foobar2000\\レヴァイン, シカゴ交響楽団\\オルフ-カルミナ・ブラーナ-レヴァイン-1984\\オルフ-カルミナ・ブラーナ-22-レヴァイン-1984.flac"
-        },
-        {
-          "title": "オルフ-カルミナ・ブラーナ-23-とても、いとしい方",
-          "artist": "レヴァイン, シカゴ交響楽団",
-          "album": "オルフ-カルミナ・ブラーナ-レヴァイン-1984",
-          "composer": "オルフ",
-          "genre": "Rock",
-          "track_number": 23,
-          "disc_number": null,
-          "path": "C:\\Users\\toshi\\Music\\foobar2000\\レヴァイン, シカゴ交響楽団\\オルフ-カルミナ・ブラーナ-レヴァイン-1984\\オルフ-カルミナ・ブラーナ-23-レヴァイン-1984.flac"
-        },
-        {
-          "title": "オルフ-カルミナ・ブラーナ-24-アヴェ",
-          "artist": "レヴァイン, シカゴ交響楽団",
-          "album": "オルフ-カルミナ・ブラーナ-レヴァイン-1984",
-          "composer": "オルフ",
-          "genre": "Rock",
-          "track_number": 24,
-          "disc_number": null,
-          "path": "C:\\Users\\toshi\\Music\\foobar2000\\レヴァイン, シカゴ交響楽団\\オルフ-カルミナ・ブラーナ-レヴァイン-1984\\オルフ-カルミナ・ブラーナ-24-レヴァイン-1984.flac"
-        },
-        {
-          "title": "オルフ-カルミナ・ブラーナ-25-おお、運の女神よ",
-          "artist": "レヴァイン, シカゴ交響楽団",
-          "album": "オルフ-カルミナ・ブラーナ-レヴァイン-1984",
-          "composer": "オルフ",
-          "genre": "Rock",
-          "track_number": 25,
-          "disc_number": null,
-          "path": "C:\\Users\\toshi\\Music\\foobar2000\\レヴァイン, シカゴ交響楽団\\オルフ-カルミナ・ブラーナ-レヴァイン-1984\\オルフ-カルミナ・ブラーナ-25-レヴァイン-1984.flac"
+          "path": "D:\\foobar2000\\BoA\\Miracle\\11-Listen To My Heart.flac"
         }
       ],
       "created_at": {
@@ -300,8 +120,8 @@
         "nanos_since_epoch": 931205100
       },
       "modified_at": {
-        "secs_since_epoch": 1756373526,
-        "nanos_since_epoch": 852769400
+        "secs_since_epoch": 1756387694,
+        "nanos_since_epoch": 122590300
       }
     },
     {
@@ -309,12 +129,12 @@
       "name": "新しいプレイリスト1",
       "tracks": [],
       "created_at": {
-        "secs_since_epoch": 1756294610,
-        "nanos_since_epoch": 853620000
+        "secs_since_epoch": 1756388471,
+        "nanos_since_epoch": 25295000
       },
       "modified_at": {
-        "secs_since_epoch": 1756294610,
-        "nanos_since_epoch": 853620000
+        "secs_since_epoch": 1756388471,
+        "nanos_since_epoch": 25295000
       }
     }
   ],
