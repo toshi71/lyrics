@@ -21,6 +21,30 @@ impl MyApp {
                         ctx.send_viewport_cmd(egui::ViewportCommand::Close);
                     }
                 });
+                
+                ui.menu_button("再生", |ui| {
+                    if ui.add(egui::Button::new("再生/一時停止").shortcut_text("Space")).clicked() {
+                        self.handle_play_pause();
+                        ui.close_menu();
+                    }
+                    if ui.add(egui::Button::new("前の曲").shortcut_text("Ctrl+B")).clicked() {
+                        self.handle_previous_button();
+                        ui.close_menu();
+                    }
+                    if ui.add(egui::Button::new("次の曲").shortcut_text("Ctrl+P")).clicked() {
+                        self.handle_next();
+                        ui.close_menu();
+                    }
+                    let seek_seconds = self.settings.get_seek_seconds();
+                    if ui.add(egui::Button::new(format!("シーク（{}秒戻る）", seek_seconds)).shortcut_text("Shift+B")).clicked() {
+                        self.handle_seek_backward();
+                        ui.close_menu();
+                    }
+                    if ui.add(egui::Button::new(format!("シーク（{}秒進む）", seek_seconds)).shortcut_text("Shift+P")).clicked() {
+                        self.handle_seek_forward();
+                        ui.close_menu();
+                    }
+                });
             });
         });
     }
