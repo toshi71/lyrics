@@ -49,7 +49,7 @@ pub fn get_flac_metadata(path: &Path) -> Option<TrackInfo> {
             let artist = tag.get_vorbis("ARTIST")
                 .and_then(|mut iter| iter.next())
                 .map(|s| s.to_string())
-                .unwrap_or_else(|| "Unknown Artist".to_string());
+                .unwrap_or_else(|| String::new());
             
             let album = tag.get_vorbis("ALBUM")
                 .and_then(|mut iter| iter.next())

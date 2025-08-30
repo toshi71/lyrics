@@ -65,7 +65,8 @@ impl PlaybackControlsUI {
                         ui.label("   ");
                     }
                     
-                    let display_text = format!("{} - {}", track.artist, track.title);
+                    let artist_display = track.album_artist.as_deref().unwrap_or(&track.artist);
+                    let display_text = format!("{} - {}", artist_display, track.title);
                     
                     // Make the row selectable
                     let response = ui.selectable_label(is_selected, display_text);
@@ -546,7 +547,8 @@ impl PlaybackControlsUI {
                                 ui.label("   ");
                             }
                             
-                            let display_text = format!("{} - {}", track.artist, track.title);
+                            let artist_display = track.album_artist.as_deref().unwrap_or(&track.artist);
+                            let display_text = format!("{} - {}", artist_display, track.title);
                             
                             // Make the row selectable
                             let response = ui.selectable_label(is_selected, display_text);
