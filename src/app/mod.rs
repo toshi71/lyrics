@@ -155,6 +155,13 @@ impl eframe::App for MyApp {
     }
     
     fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
+        // テーマの適用
+        if self.settings.is_dark_mode() {
+            ctx.set_visuals(egui::Visuals::dark());
+        } else {
+            ctx.set_visuals(egui::Visuals::light());
+        }
+        
         self.handle_keyboard_shortcuts(ctx);
         self.check_playback_finished(); // 楽曲終了チェック
         self.show_menu_bar(ctx);

@@ -65,6 +65,37 @@ impl MyApp {
         });
         
         ui.add_space(20.0);
+        
+        // テーマ設定
+        ui.horizontal(|ui| {
+            ui.label("テーマ:");
+            ui.add_space(10.0);
+            
+            let mut theme_changed = false;
+            let current_dark_mode = self.settings.is_dark_mode();
+            
+            let mut selected_theme = if current_dark_mode { 1 } else { 0 };
+            
+            egui::ComboBox::from_id_source("theme_selector")
+                .selected_text(if current_dark_mode { "ダーク" } else { "ライト" })
+                .show_ui(ui, |ui| {
+                    if ui.selectable_value(&mut selected_theme, 0, "ライト").changed() {
+                        theme_changed = true;
+                    }
+                    if ui.selectable_value(&mut selected_theme, 1, "ダーク").changed() {
+                        theme_changed = true;
+                    }
+                });
+            
+            if theme_changed {
+                let new_dark_mode = selected_theme == 1;
+                self.settings.set_dark_mode(new_dark_mode);
+                self.save_settings();
+                ui.ctx().request_repaint();
+            }
+        });
+        
+        ui.add_space(20.0);
         ui.separator();
         ui.heading("プレイバック設定");
         ui.add_space(10.0);
@@ -85,7 +116,7 @@ impl MyApp {
             }
             
             ui.add_space(10.0);
-            ui.label("(↶/↷ ボタンで前後にジャンプする秒数)");
+            ui.label("(↩/↪ ボタンで前後にジャンプする秒数)");
         });
         
         ui.add_space(20.0);

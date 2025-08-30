@@ -22,6 +22,9 @@ pub struct Settings {
     
     // シーク機能設定
     pub seek_seconds: u32,                  // シーク秒数（1-60）
+    
+    // テーマ設定
+    pub dark_mode: bool,                    // ダークモード（デフォルト: false）
 }
 
 #[derive(Serialize, Deserialize, Clone)]
@@ -44,6 +47,7 @@ impl Default for Settings {
             right_top_bottom_position: 0.4,
             right_bottom_left_right_position: 0.3,
             seek_seconds: 10,
+            dark_mode: false,
         }
     }
 }
@@ -200,5 +204,14 @@ impl Settings {
 
     pub fn get_seek_seconds(&self) -> u32 {
         self.seek_seconds
+    }
+
+    // テーマ設定メソッド
+    pub fn set_dark_mode(&mut self, dark_mode: bool) {
+        self.dark_mode = dark_mode;
+    }
+
+    pub fn is_dark_mode(&self) -> bool {
+        self.dark_mode
     }
 }
