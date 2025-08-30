@@ -82,6 +82,7 @@ pub struct PlaylistManager {
     pub(crate) current_playing_playlist_id: Option<String>, // 現在再生中の楽曲があるプレイリスト
     shuffle_order: Vec<usize>, // シャッフル時の再生順序
     shuffle_position: Option<usize>, // シャッフル順序内での現在位置
+    last_selected_index: Option<usize>, // 範囲選択用の最後に選択されたインデックス
 }
 
 impl PlaylistManager {
@@ -97,6 +98,7 @@ impl PlaylistManager {
             current_playing_playlist_id: None,
             shuffle_order: Vec::new(),
             shuffle_position: None,
+            last_selected_index: None,
         }
     }
 
@@ -117,6 +119,7 @@ impl PlaylistManager {
             current_playing_playlist_id: None,
             shuffle_order: Vec::new(),
             shuffle_position: None,
+            last_selected_index: None,
         };
 
         // プレイリストの表示順序を適用（永続化されたプレイリストが読み込まれた後に呼び出される）
@@ -196,6 +199,7 @@ impl PlaylistManager {
             if self.active_playlist_id == id {
                 self.active_playlist_id = "default".to_string();
                 self.selected_indices.clear();
+        self.last_selected_index = None;
             }
             
             // 現在再生中のプレイリストが削除された場合は再生状態をリセット
@@ -243,6 +247,7 @@ impl PlaylistManager {
         if self.playlists.iter().any(|p| p.id == id) {
             self.active_playlist_id = id.to_string();
             self.selected_indices.clear();
+        self.last_selected_index = None;
             
             // 重要：プレイリスト切り替え時は再生状態を保持する
             // current_playing_index と current_playing_playlist_id は現在再生中の楽曲の管理情報であり、
@@ -334,6 +339,7 @@ impl PlaylistManager {
                 
                 // 選択状態の更新（簡略化のため一旦クリア）
                 self.selected_indices.clear();
+        self.last_selected_index = None;
                 true
             } else {
                 false
@@ -349,6 +355,7 @@ impl PlaylistManager {
             playlist.clear();
         }
         self.selected_indices.clear();
+        self.last_selected_index = None;
         
         // アクティブプレイリストが現在再生中のプレイリストの場合、再生状態もリセット
         if self.current_playing_playlist_id.as_deref() == Some(&active_id) {
@@ -372,6 +379,8 @@ impl PlaylistManager {
 
     pub fn clear_selection(&mut self) {
         self.selected_indices.clear();
+        self.last_selected_index = None;
+        self.last_selected_index = None;
     }
 
     pub fn is_selected(&self, index: usize) -> bool {
@@ -489,15 +498,19 @@ impl PlaylistManager {
     // PlaybackQueueの選択操作との互換性
     pub fn handle_item_selection(&mut self, index: usize, ctrl_held: bool, shift_held: bool) {
         if shift_held {
-            // 範囲選択（簡単な実装）
-            self.selected_indices.clear();
-            if let Some(last_selected) = self.selected_indices.iter().max() {
-                let start = (*last_selected).min(index);
-                let end = (*last_selected).max(index);
+            // 範囲選択
+            if let Some(last_selected) = self.last_selected_index {
+                self.selected_indices.clear();
+        self.last_selected_index = None;
+                let start = last_selected.min(index);
+                let end = last_selected.max(index);
                 for i in start..=end {
                     self.selected_indices.insert(i);
                 }
             } else {
+                // 最後の選択がない場合は通常の選択
+                self.selected_indices.clear();
+        self.last_selected_index = None;
                 self.selected_indices.insert(index);
             }
         } else if ctrl_held {
@@ -510,7 +523,13 @@ impl PlaylistManager {
         } else {
             // 単一選択
             self.selected_indices.clear();
+        self.last_selected_index = None;
             self.selected_indices.insert(index);
+        }
+        
+        // 最後に選択されたインデックスを更新（範囲選択時以外）
+        if !shift_held {
+            self.last_selected_index = Some(index);
         }
     }
 
@@ -522,6 +541,7 @@ impl PlaylistManager {
             self.remove_track(index);
         }
         self.selected_indices.clear();
+        self.last_selected_index = None;
     }
 
     // プレイリスト内での移動操作
@@ -559,6 +579,7 @@ impl PlaylistManager {
         indices.sort();
 
         self.selected_indices.clear();
+        self.last_selected_index = None;
         for (new_pos, index) in indices.into_iter().enumerate() {
             self.move_track(index - new_pos, new_pos);
             self.selected_indices.insert(new_pos);
@@ -571,6 +592,7 @@ impl PlaylistManager {
 
         let track_count = self.get_active_track_count();
         self.selected_indices.clear();
+        self.last_selected_index = None;
         
         for (offset, index) in indices.into_iter().enumerate() {
             let new_pos = track_count - 1 - offset;
