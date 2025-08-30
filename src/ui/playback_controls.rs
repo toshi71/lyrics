@@ -1,5 +1,6 @@
 use crate::player::PlaybackState;
 use crate::music::TrackInfo;
+use crate::settings::RepeatMode;
 use eframe::egui;
 
 pub struct PlaybackControlsUI;
@@ -252,47 +253,18 @@ impl PlaybackControlsUI {
         on_seek_start: &mut dyn FnMut(),
         on_seek_end: &mut dyn FnMut(),
         auto_focus: bool,
+        repeat_mode: &RepeatMode,
+        shuffle_enabled: bool,
+        on_repeat_mode_change: &mut dyn FnMut(RepeatMode),
+        on_shuffle_change: &mut dyn FnMut(bool),
     ) {
-        // 再生コントロール領域全体をフォーカス可能にする
-        let available_rect = ui.available_rect_before_wrap();
-        let (control_rect, control_response) = ui.allocate_exact_size(
-            available_rect.size(),
-            egui::Sense::click()
-        );
-        
-        // フォーカスを取得可能にする
-        let control_response = control_response.on_hover_cursor(egui::CursorIcon::PointingHand);
-        if control_response.clicked() {
-            control_response.request_focus();
-        }
-        
-        // 自動フォーカス処理
-        if auto_focus {
-            control_response.request_focus();
-        }
-        
-        // フォーカス状態を視覚的に表示
-        if control_response.has_focus() {
-            let focus_rect = control_rect.expand(2.0);
-            ui.painter().rect_stroke(
-                focus_rect, 
-                2.0, 
-                egui::Stroke::new(2.0, egui::Color32::from_rgb(100, 150, 255))
-            );
-        }
-        
-        // Focus-based shortcut handling removed - shortcuts are now global
-        
-        // 子UIでコントロール要素を表示
-        let mut child_ui = ui.child_ui(control_rect, *ui.layout(), None);
-        
         // シークバーを最初に表示（横幅全体を使用）
-        Self::show_seek_bar(&mut child_ui, current_position, total_duration, on_seek, on_seek_start, on_seek_end);
+        Self::show_seek_bar(ui, current_position, total_duration, on_seek, on_seek_start, on_seek_end);
         
-        child_ui.add_space(10.0);
+        ui.add_space(10.0);
 
         // Playback control buttons
-        child_ui.horizontal(|ui| {
+        ui.horizontal(|ui| {
             ui.add_space(5.0);
             
             let button_size = [48.0, 48.0];
@@ -376,6 +348,57 @@ impl PlaybackControlsUI {
                     ui.label(format!("{} - {}", track.artist, track.album));
                 });
             }
+        });
+        
+        // リピート・シャッフル選択UI
+        ui.add_space(10.0);
+        ui.horizontal(|ui| {
+            ui.add_space(5.0);
+            
+            // リピートモード選択
+            ui.label("リピート:");
+            ui.add_space(5.0);
+            
+            let repeat_text = match repeat_mode {
+                RepeatMode::Normal => "オフ",
+                RepeatMode::RepeatOne => "1曲",
+                RepeatMode::RepeatAll => "全曲",
+            };
+            
+            let mut new_repeat_mode = repeat_mode.clone();
+            egui::ComboBox::from_id_source("repeat_mode_selector")
+                .selected_text(repeat_text)
+                .show_ui(ui, |ui| {
+                    if ui.selectable_value(&mut new_repeat_mode, RepeatMode::Normal, "オフ").changed() {
+                        on_repeat_mode_change(RepeatMode::Normal);
+                    }
+                    if ui.selectable_value(&mut new_repeat_mode, RepeatMode::RepeatOne, "1曲").changed() {
+                        on_repeat_mode_change(RepeatMode::RepeatOne);
+                    }
+                    if ui.selectable_value(&mut new_repeat_mode, RepeatMode::RepeatAll, "全曲").changed() {
+                        on_repeat_mode_change(RepeatMode::RepeatAll);
+                    }
+                });
+            
+            ui.add_space(20.0);
+            
+            // シャッフル選択
+            ui.label("シャッフル:");
+            ui.add_space(5.0);
+            
+            let shuffle_text = if shuffle_enabled { "オン" } else { "オフ" };
+            let mut new_shuffle_enabled = shuffle_enabled;
+            
+            egui::ComboBox::from_id_source("shuffle_selector")
+                .selected_text(shuffle_text)
+                .show_ui(ui, |ui| {
+                    if ui.selectable_value(&mut new_shuffle_enabled, false, "オフ").changed() {
+                        on_shuffle_change(false);
+                    }
+                    if ui.selectable_value(&mut new_shuffle_enabled, true, "オン").changed() {
+                        on_shuffle_change(true);
+                    }
+                });
         });
     }
 

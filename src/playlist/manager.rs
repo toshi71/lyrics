@@ -2,6 +2,7 @@ use std::collections::HashSet;
 use std::time::SystemTime;
 use serde::{Deserialize, Serialize};
 use crate::music::TrackInfo;
+use crate::settings::RepeatMode;
 
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -79,6 +80,8 @@ pub struct PlaylistManager {
     selected_indices: HashSet<usize>,
     current_playing_index: Option<usize>,
     pub(crate) current_playing_playlist_id: Option<String>, // 現在再生中の楽曲があるプレイリスト
+    shuffle_order: Vec<usize>, // シャッフル時の再生順序
+    shuffle_position: Option<usize>, // シャッフル順序内での現在位置
 }
 
 impl PlaylistManager {
@@ -92,6 +95,8 @@ impl PlaylistManager {
             selected_indices: HashSet::new(),
             current_playing_index: None,
             current_playing_playlist_id: None,
+            shuffle_order: Vec::new(),
+            shuffle_position: None,
         }
     }
 
@@ -110,6 +115,8 @@ impl PlaylistManager {
             selected_indices: HashSet::new(),
             current_playing_index: None,
             current_playing_playlist_id: None,
+            shuffle_order: Vec::new(),
+            shuffle_position: None,
         };
 
         // プレイリストの表示順序を適用（永続化されたプレイリストが読み込まれた後に呼び出される）
@@ -258,6 +265,14 @@ impl PlaylistManager {
     pub fn get_active_playlist_mut(&mut self) -> Option<&mut Playlist> {
         let id = self.active_playlist_id.clone();
         self.get_playlist_mut(&id)
+    }
+
+    pub fn get_current_playing_playlist(&self) -> Option<&Playlist> {
+        if let Some(ref playlist_id) = self.current_playing_playlist_id {
+            self.get_playlist(playlist_id)
+        } else {
+            self.get_active_playlist()
+        }
     }
 
     // 楽曲操作（アクティブプレイリストに対して）
@@ -684,5 +699,193 @@ impl PlaylistManager {
         }
         
         found_in
+    }
+
+    // リピート・シャッフル機能
+    pub fn generate_shuffle_order(&mut self) {
+        let playlist = match self.get_current_playing_playlist() {
+            Some(p) => p.clone(),
+            None => return,
+        };
+        
+        let track_count = playlist.tracks.len();
+        if track_count == 0 {
+            self.shuffle_order.clear();
+            self.shuffle_position = None;
+            return;
+        }
+
+        // 0からtrack_count-1までのインデックスを作成
+        self.shuffle_order = (0..track_count).collect();
+        
+        // Fisher-Yates シャッフルアルゴリズム
+        use std::collections::hash_map::DefaultHasher;
+        use std::hash::{Hash, Hasher};
+        use std::time::SystemTime;
+        
+        let mut hasher = DefaultHasher::new();
+        SystemTime::now().hash(&mut hasher);
+        let seed = hasher.finish();
+        let mut rng_state = seed;
+        
+        for i in (1..track_count).rev() {
+            // 簡単な線形合同法でランダム数生成
+            rng_state = rng_state.wrapping_mul(1103515245).wrapping_add(12345);
+            let j = (rng_state as usize) % (i + 1);
+            self.shuffle_order.swap(i, j);
+        }
+        
+        // 現在の再生インデックスがある場合、シャッフル順序内での位置を見つける
+        if let Some(current_index) = self.current_playing_index {
+            self.shuffle_position = self.shuffle_order.iter().position(|&x| x == current_index);
+        } else {
+            self.shuffle_position = None;
+        }
+    }
+
+    pub fn move_to_next_with_modes(&mut self, repeat_mode: &RepeatMode, shuffle_enabled: bool) -> Option<TrackInfo> {
+        // プレイリストのクローンを取得して借用の問題を回避
+        let playlist = self.get_current_playing_playlist()?.clone();
+        let track_count = playlist.tracks.len();
+        if track_count == 0 {
+            return None;
+        }
+
+        if shuffle_enabled {
+            // シャッフル再生
+            if self.shuffle_order.is_empty() {
+                self.generate_shuffle_order();
+            }
+
+            if let Some(current_pos) = self.shuffle_position {
+                match repeat_mode {
+                    RepeatMode::RepeatOne => {
+                        // 1曲リピート：シャッフル順序に関係なく現在の曲をリピート
+                        let track_index = self.shuffle_order[current_pos];
+                        return Some(playlist.tracks[track_index].clone());
+                    }
+                    _ => {
+                        // 通常再生またはプレイリストリピート
+                        let next_pos = current_pos + 1;
+                        if next_pos < self.shuffle_order.len() {
+                            // 次の曲があるので移動
+                            self.shuffle_position = Some(next_pos);
+                            let track_index = self.shuffle_order[next_pos];
+                            self.current_playing_index = Some(track_index);
+                            return Some(playlist.tracks[track_index].clone());
+                        } else {
+                            // シャッフル順序の最後に到達
+                            match repeat_mode {
+                                RepeatMode::RepeatAll => {
+                                    // 新しいシャッフル順序を生成して最初から
+                                    self.generate_shuffle_order();
+                                    if !self.shuffle_order.is_empty() {
+                                        self.shuffle_position = Some(0);
+                                        let track_index = self.shuffle_order[0];
+                                        self.current_playing_index = Some(track_index);
+                                        return Some(playlist.tracks[track_index].clone());
+                                    }
+                                }
+                                RepeatMode::Normal => {
+                                    // リピートなし時は停止
+                                    self.current_playing_index = None;
+                                    self.shuffle_position = None;
+                                    return None;
+                                }
+                                _ => {}
+                            }
+                        }
+                    }
+                }
+            } else {
+                // シャッフル位置が不明な場合、最初から開始
+                if !self.shuffle_order.is_empty() {
+                    self.shuffle_position = Some(0);
+                    let track_index = self.shuffle_order[0];
+                    self.current_playing_index = Some(track_index);
+                    return Some(playlist.tracks[track_index].clone());
+                }
+            }
+        } else {
+            // 通常再生
+            if let Some(current_index) = self.current_playing_index {
+                match repeat_mode {
+                    RepeatMode::RepeatOne => {
+                        // 1曲リピート：同じ曲を返す
+                        return Some(playlist.tracks[current_index].clone());
+                    }
+                    RepeatMode::RepeatAll => {
+                        // プレイリストリピート
+                        let next_index = if current_index + 1 < track_count {
+                            current_index + 1
+                        } else {
+                            0
+                        };
+                        self.current_playing_index = Some(next_index);
+                        return Some(playlist.tracks[next_index].clone());
+                    }
+                    RepeatMode::Normal => {
+                        // 通常再生
+                        if current_index + 1 < track_count {
+                            let next_index = current_index + 1;
+                            self.current_playing_index = Some(next_index);
+                            return Some(playlist.tracks[next_index].clone());
+                        } else {
+                            // プレイリストの最後に到達
+                            self.current_playing_index = None;
+                            return None;
+                        }
+                    }
+                }
+            } else {
+                // 現在のインデックスがない場合、最初の曲を開始
+                if track_count > 0 {
+                    self.current_playing_index = Some(0);
+                    return Some(playlist.tracks[0].clone());
+                }
+            }
+        }
+        None
+    }
+
+    pub fn move_to_previous_with_modes(&mut self, shuffle_enabled: bool) -> Option<TrackInfo> {
+        let playlist = self.get_current_playing_playlist()?.clone();
+        let track_count = playlist.tracks.len();
+        if track_count == 0 {
+            return None;
+        }
+
+        if shuffle_enabled {
+            // シャッフル再生での前の曲
+            if let Some(current_pos) = self.shuffle_position {
+                if current_pos > 0 {
+                    let prev_pos = current_pos - 1;
+                    self.shuffle_position = Some(prev_pos);
+                    let track_index = self.shuffle_order[prev_pos];
+                    self.current_playing_index = Some(track_index);
+                    return Some(playlist.tracks[track_index].clone());
+                }
+            }
+        } else {
+            // 通常再生での前の曲
+            if let Some(current_index) = self.current_playing_index {
+                if current_index > 0 {
+                    let prev_index = current_index - 1;
+                    self.current_playing_index = Some(prev_index);
+                    return Some(playlist.tracks[prev_index].clone());
+                }
+            }
+        }
+        None
+    }
+
+    pub fn update_shuffle_when_settings_changed(&mut self, shuffle_enabled: bool) {
+        if shuffle_enabled && self.shuffle_order.is_empty() {
+            self.generate_shuffle_order();
+        } else if !shuffle_enabled {
+            // シャッフル無効時はシャッフル情報をクリア
+            self.shuffle_order.clear();
+            self.shuffle_position = None;
+        }
     }
 }

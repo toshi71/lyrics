@@ -628,6 +628,13 @@ impl MyApp {
         }
         
         let current_track = self.playlist_manager.get_current_track();
+        
+        // リピート・シャッフルモードの変更処理用変数
+        let mut repeat_mode_changed = false;
+        let mut new_repeat_mode = self.settings.get_repeat_mode().clone();
+        let mut shuffle_changed = false;
+        let mut new_shuffle_enabled = self.settings.is_shuffle_enabled();
+        
         PlaybackControlsUI::show_controls_with_seek_bar(
             ui,
             &playback_state,
@@ -644,6 +651,16 @@ impl MyApp {
             &mut || seek_started = true,
             &mut || seek_ended = true,
             auto_focus,
+            self.settings.get_repeat_mode(),
+            self.settings.is_shuffle_enabled(),
+            &mut |mode| {
+                new_repeat_mode = mode;
+                repeat_mode_changed = true;
+            },
+            &mut |enabled| {
+                new_shuffle_enabled = enabled;
+                shuffle_changed = true;
+            },
         );
         
         // Handle actions after UI (removed clear_queue handling)
@@ -673,6 +690,17 @@ impl MyApp {
         }
         if seek_ended {
             self.handle_seek_end();
+        }
+        
+        // リピート・シャッフルモードの変更処理
+        if repeat_mode_changed {
+            self.settings.set_repeat_mode(new_repeat_mode);
+            self.save_settings();
+        }
+        if shuffle_changed {
+            self.settings.set_shuffle_enabled(new_shuffle_enabled);
+            self.playlist_manager.update_shuffle_when_settings_changed(new_shuffle_enabled);
+            self.save_settings();
         }
         
         // Focus flag reset removed - auto focus disabled

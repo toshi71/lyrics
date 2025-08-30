@@ -2,6 +2,13 @@ use serde::{Deserialize, Serialize};
 use std::fs;
 use std::path::PathBuf;
 
+#[derive(Serialize, Deserialize, Clone, PartialEq, Debug)]
+pub enum RepeatMode {
+    Normal,         // 通常再生（リピートなし）
+    RepeatOne,      // 1曲リピート
+    RepeatAll,      // プレイリストリピート
+}
+
 #[derive(Serialize, Deserialize, Clone)]
 pub struct Settings {
     pub target_directory: String,
@@ -25,6 +32,10 @@ pub struct Settings {
     
     // テーマ設定
     pub dark_mode: bool,                    // ダークモード（デフォルト: false）
+    
+    // 再生モード設定
+    pub repeat_mode: RepeatMode,            // リピートモード（デフォルト: Normal）
+    pub shuffle_enabled: bool,              // シャッフル有効（デフォルト: false）
 }
 
 #[derive(Serialize, Deserialize, Clone)]
@@ -48,6 +59,8 @@ impl Default for Settings {
             right_bottom_left_right_position: 0.3,
             seek_seconds: 10,
             dark_mode: false,
+            repeat_mode: RepeatMode::Normal,
+            shuffle_enabled: false,
         }
     }
 }
@@ -213,5 +226,22 @@ impl Settings {
 
     pub fn is_dark_mode(&self) -> bool {
         self.dark_mode
+    }
+
+    // 再生モード設定メソッド
+    pub fn set_repeat_mode(&mut self, repeat_mode: RepeatMode) {
+        self.repeat_mode = repeat_mode;
+    }
+
+    pub fn get_repeat_mode(&self) -> &RepeatMode {
+        &self.repeat_mode
+    }
+
+    pub fn set_shuffle_enabled(&mut self, shuffle_enabled: bool) {
+        self.shuffle_enabled = shuffle_enabled;
+    }
+
+    pub fn is_shuffle_enabled(&self) -> bool {
+        self.shuffle_enabled
     }
 }

@@ -132,10 +132,11 @@ impl MyApp {
     pub fn check_playback_finished(&mut self) {
         // 楽曲が終了したかチェック
         if *self.audio_player.get_state() == PlaybackState::Playing && self.audio_player.is_finished() {
-            // 現在の楽曲が終了した場合、次の楽曲を自動再生
-            let was_playing = true; // 現在再生中だったので次の曲も再生状態にする
+            // 現在の楽曲が終了した場合、リピート・シャッフルモードに応じて次の楽曲を自動再生
+            let repeat_mode = self.settings.get_repeat_mode();
+            let shuffle_enabled = self.settings.is_shuffle_enabled();
             
-            if let Some(next_track) = self.playlist_manager.move_to_next() {
+            if let Some(next_track) = self.playlist_manager.move_to_next_with_modes(repeat_mode, shuffle_enabled) {
                 if let Err(_) = self.audio_player.play(next_track) {
                     // エラーの場合は停止状態にする
                     self.audio_player.stop();
