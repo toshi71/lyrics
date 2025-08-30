@@ -33,16 +33,11 @@ pub struct Settings {
     // テーマ設定
     pub dark_mode: bool,                    // ダークモード（デフォルト: false）
     
-    // 再生モード設定
-    pub repeat_mode: RepeatMode,            // リピートモード（デフォルト: Normal）
-    pub shuffle_enabled: bool,              // シャッフル有効（デフォルト: false）
 }
 
 #[derive(Serialize, Deserialize, Clone)]
 pub struct DefaultPlaylistSettings {
     pub auto_add_new_tracks: bool,
-    pub clear_on_startup: bool,
-    pub max_tracks: Option<usize>,
 }
 
 impl Default for Settings {
@@ -59,8 +54,6 @@ impl Default for Settings {
             right_bottom_left_right_position: 0.3,
             seek_seconds: 10,
             dark_mode: false,
-            repeat_mode: RepeatMode::Normal,
-            shuffle_enabled: false,
         }
     }
 }
@@ -69,8 +62,6 @@ impl Default for DefaultPlaylistSettings {
     fn default() -> Self {
         Self {
             auto_add_new_tracks: false,
-            clear_on_startup: false,
-            max_tracks: None,
         }
     }
 }
@@ -229,19 +220,4 @@ impl Settings {
     }
 
     // 再生モード設定メソッド
-    pub fn set_repeat_mode(&mut self, repeat_mode: RepeatMode) {
-        self.repeat_mode = repeat_mode;
-    }
-
-    pub fn get_repeat_mode(&self) -> &RepeatMode {
-        &self.repeat_mode
-    }
-
-    pub fn set_shuffle_enabled(&mut self, shuffle_enabled: bool) {
-        self.shuffle_enabled = shuffle_enabled;
-    }
-
-    pub fn is_shuffle_enabled(&self) -> bool {
-        self.shuffle_enabled
-    }
 }

@@ -227,10 +227,10 @@ impl MyApp {
             self.handle_add_artist_to_playlist(node, playlist_id);
         }
         
-        // TODO: Implement playlist addition on double-click
-        // For now, double-click does nothing
-        if let Some(_track) = double_clicked_track {
-            // Double-click functionality will be implemented later as "add to playlist"
+        // ダブルクリック時にデフォルトプレイリストに楽曲を追加
+        if let Some(track) = double_clicked_track {
+            self.playlist_manager.add_track_to_playlist("default", track);
+            let _ = self.playlist_manager.auto_save();
         }
     }
 }

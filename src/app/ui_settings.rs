@@ -129,35 +129,6 @@ impl MyApp {
         
         let mut settings_changed = false;
         
-        ui.horizontal(|ui| {
-            let response = ui.checkbox(&mut self.settings.default_playlist_settings.clear_on_startup, 
-                "起動時にデフォルトプレイリストをクリアする");
-            if response.changed() {
-                settings_changed = true;
-            }
-        });
-        
-        ui.horizontal(|ui| {
-            ui.label("最大曲数制限:");
-            let mut has_limit = self.settings.default_playlist_settings.max_tracks.is_some();
-            let response = ui.checkbox(&mut has_limit, "有効");
-            if response.changed() {
-                if has_limit {
-                    self.settings.default_playlist_settings.max_tracks = Some(100);
-                } else {
-                    self.settings.default_playlist_settings.max_tracks = None;
-                }
-                settings_changed = true;
-            }
-            
-            if let Some(ref mut max_tracks) = self.settings.default_playlist_settings.max_tracks {
-                ui.add_space(10.0);
-                let response = ui.add(egui::DragValue::new(max_tracks).range(1..=10000).suffix("曲"));
-                if response.changed() {
-                    settings_changed = true;
-                }
-            }
-        });
         
         if settings_changed {
             self.save_settings();

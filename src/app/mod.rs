@@ -48,6 +48,8 @@ pub struct MyApp {
     pub seek_drag_state: Option<PlaybackState>,
     pub should_focus_controls: bool,
     pub cover_art_cache: std::collections::HashMap<std::path::PathBuf, egui::TextureHandle>,
+    pub repeat_mode: crate::settings::RepeatMode,
+    pub shuffle_enabled: bool,
 }
 
 impl MyApp {
@@ -77,6 +79,12 @@ impl MyApp {
                 });
                 
                 manager.apply_default_playlist_settings(&settings.default_playlist_settings);
+                
+                // 起動時にデフォルトプレイリストをクリア
+                if let Some(default_playlist) = manager.get_playlist_mut("default") {
+                    default_playlist.clear();
+                }
+                
                 manager
             },
             editing_playlist_id: None,
@@ -84,6 +92,8 @@ impl MyApp {
             seek_drag_state: None,
             should_focus_controls: false,
             cover_art_cache: std::collections::HashMap::new(),
+            repeat_mode: crate::settings::RepeatMode::Normal,
+            shuffle_enabled: false,
             settings,
         };
         app.refresh_music_library();
@@ -133,8 +143,8 @@ impl MyApp {
         // 楽曲が終了したかチェック
         if *self.audio_player.get_state() == PlaybackState::Playing && self.audio_player.is_finished() {
             // 現在の楽曲が終了した場合、リピート・シャッフルモードに応じて次の楽曲を自動再生
-            let repeat_mode = self.settings.get_repeat_mode();
-            let shuffle_enabled = self.settings.is_shuffle_enabled();
+            let repeat_mode = &self.repeat_mode;
+            let shuffle_enabled = self.shuffle_enabled;
             
             if let Some(next_track) = self.playlist_manager.move_to_next_with_modes(repeat_mode, shuffle_enabled) {
                 if let Err(_) = self.audio_player.play(next_track) {

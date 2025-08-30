@@ -283,6 +283,13 @@ impl PlaylistManager {
         }
     }
 
+    // 指定されたプレイリストに楽曲を追加
+    pub fn add_track_to_playlist(&mut self, playlist_id: &str, track: TrackInfo) {
+        if let Some(playlist) = self.get_playlist_mut(playlist_id) {
+            playlist.add_track(track);
+        }
+    }
+
     pub fn remove_track(&mut self, index: usize) -> Option<TrackInfo> {
         // 先に現在再生中のトラックが削除される場合の処理
         if let Some(current_index) = self.current_playing_index {
@@ -630,20 +637,8 @@ impl PlaylistManager {
     }
 
     // デフォルトプレイリスト設定の適用
-    pub fn apply_default_playlist_settings(&mut self, settings: &crate::settings::DefaultPlaylistSettings) {
-        if let Some(default_playlist) = self.playlists.iter_mut().find(|p| p.id == "default") {
-            // 起動時クリア設定
-            if settings.clear_on_startup {
-                default_playlist.clear();
-            }
-
-            // 最大曲数制限
-            if let Some(max_tracks) = settings.max_tracks {
-                while default_playlist.tracks.len() > max_tracks {
-                    default_playlist.tracks.remove(0);
-                }
-            }
-        }
+    pub fn apply_default_playlist_settings(&mut self, _settings: &crate::settings::DefaultPlaylistSettings) {
+        // 設定項目が削除されたため、現在は何も処理しない
     }
 
     // Step 4-3: パフォーマンス最適化メソッド
