@@ -24,12 +24,31 @@ impl PlaybackControlsUI {
         on_remove_selected: &mut dyn FnMut(),
         on_copy_to_playlist: &mut dyn FnMut(String), // playlist_id
         on_move_to_playlist: &mut dyn FnMut(String), // playlist_id
+        on_select_all: &mut dyn FnMut(), // 全選択
+        on_clear_selection: &mut dyn FnMut(), // 選択解除
     ) {
+        // キーボードショートカットの処理
+        ui.input(|i| {
+            if i.key_pressed(egui::Key::A) && i.modifiers.ctrl {
+                on_select_all();
+            }
+        });
         
         if queue.is_empty() {
             ui.label("プレイリストは空です");
         } else {
-            for (index, track) in queue.iter().enumerate() {
+            // プレイリスト表示全体を囲んで空白クリックを検出
+            let available_rect = ui.available_rect_before_wrap();
+            let group_response = ui.allocate_response(available_rect.size(), egui::Sense::click());
+            
+            // 空白部分をクリックした場合の処理
+            if group_response.clicked() {
+                on_clear_selection();
+            }
+            
+            // 楽曲リストの表示
+            ui.allocate_ui_at_rect(available_rect, |ui| {
+                for (index, track) in queue.iter().enumerate() {
                 let is_selected = selected_indices.contains(&index);
                 
                 // 現在再生中の楽曲との比較
@@ -234,7 +253,8 @@ impl PlaybackControlsUI {
                         });
                     });
                 });
-            }
+                }
+            });
         }
     }
 

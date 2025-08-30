@@ -380,6 +380,16 @@ impl PlaylistManager {
     pub fn clear_selection(&mut self) {
         self.selected_indices.clear();
         self.last_selected_index = None;
+    }
+
+    pub fn select_all(&mut self) {
+        self.selected_indices.clear();
+        if let Some(playlist) = self.get_active_playlist() {
+            for i in 0..playlist.tracks.len() {
+                self.selected_indices.insert(i);
+            }
+        }
+        // 全選択時は最後の選択インデックスをクリア
         self.last_selected_index = None;
     }
 

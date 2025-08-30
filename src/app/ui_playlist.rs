@@ -773,6 +773,8 @@ impl MyApp {
         let mut remove_selected = false;
         let mut copy_to_playlist: Option<String> = None;
         let mut move_to_playlist: Option<String> = None;
+        let mut select_all = false;
+        let mut clear_selection = false;
         
         PlaybackControlsUI::show_track_list(
             ui,
@@ -792,6 +794,8 @@ impl MyApp {
             &mut || remove_selected = true,
             &mut |playlist_id| copy_to_playlist = Some(playlist_id),
             &mut |playlist_id| move_to_playlist = Some(playlist_id),
+            &mut || select_all = true,
+            &mut || clear_selection = true,
         );
         
         // Handle actions after UI
@@ -828,6 +832,12 @@ impl MyApp {
         }
         if let Some(playlist_id) = move_to_playlist {
             self.handle_move_selected_to_playlist(playlist_id);
+        }
+        if select_all {
+            self.playlist_manager.select_all();
+        }
+        if clear_selection {
+            self.playlist_manager.clear_selection();
         }
     }
 
