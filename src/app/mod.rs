@@ -47,6 +47,7 @@ pub struct MyApp {
     pub editing_playlist_name: String,
     pub seek_drag_state: Option<PlaybackState>,
     pub should_focus_controls: bool,
+    pub cover_art_cache: std::collections::HashMap<std::path::PathBuf, egui::TextureHandle>,
 }
 
 impl MyApp {
@@ -82,6 +83,7 @@ impl MyApp {
             editing_playlist_name: String::new(),
             seek_drag_state: None,
             should_focus_controls: false,
+            cover_art_cache: std::collections::HashMap::new(),
             settings,
         };
         app.refresh_music_library();

@@ -174,64 +174,139 @@ impl MyApp {
     }
 
     pub fn show_track_info(&mut self, ui: &mut egui::Ui) {
-        // 選択中の楽曲を優先表示、なければ再生中の楽曲を表示
-        if let Some(track) = &self.selected_track {
+        // 選択中の楽曲のみ表示
+        if let Some(track) = self.selected_track.clone() {
             ui.heading("📋 選択中の楽曲");
-            self.show_track_details(ui, track);
-        } else if let Some(current_track) = self.playlist_manager.get_current_track() {
-            ui.heading("🎵 現在再生中");
-            if let Some(playing_playlist_id) = self.playlist_manager.get_current_playing_playlist_id() {
-                if let Some(playlist) = self.playlist_manager.get_playlist(playing_playlist_id) {
-                    ui.label(format!("プレイリスト: {}", playlist.name));
-                }
-            }
-            ui.separator();
-            
-            self.show_track_details(ui, current_track);
+            self.show_track_details(ui, &track);
         } else {
-            ui.label("楽曲を選択するか、再生を開始してください");
+            ui.label("楽曲を選択してください");
         }
     }
 
-    fn show_track_details(&self, ui: &mut egui::Ui, track: &crate::music::TrackInfo) {
+    fn show_track_details(&mut self, ui: &mut egui::Ui, track: &crate::music::TrackInfo) {
+        // カバーアートがある場合は先に表示
+        if let Some(cover_art_data) = &track.cover_art {
+            self.show_cover_art(ui, track, cover_art_data);
+            ui.add_space(10.0);
+        }
+        
         egui::Grid::new("track_info_grid")
             .num_columns(2)
-            .spacing([10.0, 5.0])
+            .spacing([15.0, 8.0])
+            .striped(true)
             .show(ui, |ui| {
-                ui.label("タイトル:");
-                ui.label(&track.title);
-                ui.end_row();
-                
-                ui.label("アーティスト:");
-                ui.label(&track.artist);
-                ui.end_row();
-                
-                ui.label("アルバム:");
-                ui.label(&track.album);
-                ui.end_row();
-                
-                if let Some(composer) = &track.composer {
-                    ui.label("作曲者:");
-                    ui.label(composer);
-                    ui.end_row();
-                }
-                
-                if let Some(genre) = &track.genre {
-                    ui.label("ジャンル:");
-                    ui.label(genre);
-                    ui.end_row();
-                }
-                
-                if let Some(track_num) = track.track_number {
-                    ui.label("トラック番号:");
-                    ui.label(track_num.to_string());
-                    ui.end_row();
-                }
-                
-                ui.label("ファイルパス:");
-                ui.label(track.path.display().to_string());
-                ui.end_row();
+                        // 基本情報
+                        ui.strong("タイトル:");
+                        ui.label(&track.title);
+                        ui.end_row();
+                        
+                        ui.strong("アーティスト:");
+                        ui.label(&track.artist);
+                        ui.end_row();
+                        
+                        ui.strong("アルバムアーティスト:");
+                        ui.label(track.album_artist.as_deref().unwrap_or(""));
+                        ui.end_row();
+                        
+                        ui.strong("アルバム:");
+                        ui.label(&track.album);
+                        ui.end_row();
+                        
+                        ui.strong("作曲者:");
+                        ui.label(track.composer.as_deref().unwrap_or(""));
+                        ui.end_row();
+                        
+                        ui.strong("ジャンル:");
+                        ui.label(track.genre.as_deref().unwrap_or(""));
+                        ui.end_row();
+                        
+                        ui.strong("トラック番号:");
+                        match (track.track_number, track.track_total) {
+                            (Some(track_num), Some(track_total)) => ui.label(format!("{}/{}", track_num, track_total)),
+                            (Some(track_num), None) => ui.label(track_num.to_string()),
+                            (None, Some(track_total)) => ui.label(format!("?/{}", track_total)),
+                            (None, None) => ui.label(""),
+                        };
+                        ui.end_row();
+                        
+                        ui.strong("ディスク番号:");
+                        match (track.disc_number, track.disc_total) {
+                            (Some(disc_num), Some(disc_total)) => ui.label(format!("{}/{}", disc_num, disc_total)),
+                            (Some(disc_num), None) => ui.label(disc_num.to_string()),
+                            (None, Some(disc_total)) => ui.label(format!("?/{}", disc_total)),
+                            (None, None) => ui.label(""),
+                        };
+                        ui.end_row();
+                        
+                        ui.strong("日付:");
+                        ui.label(track.date.as_deref().unwrap_or(""));
+                        ui.end_row();
+                        
+                        ui.strong("カバーアート:");
+                        if track.cover_art.is_some() {
+                            ui.label("あり");
+                        } else {
+                            ui.label("なし");
+                        }
+                        ui.end_row();
+                        
+                        // ファイル情報
+                        ui.strong("ファイル名:");
+                        if let Some(filename) = track.path.file_name() {
+                            ui.label(filename.to_string_lossy().to_string());
+                        } else {
+                            ui.label("N/A");
+                        }
+                        ui.end_row();
+                        
+                        ui.strong("ファイル形式:");
+                        if let Some(extension) = track.path.extension() {
+                            ui.label(extension.to_string_lossy().to_uppercase());
+                        } else {
+                            ui.label("N/A");
+                        }
+                        ui.end_row();
+                        
+                        // ファイルパス（折り返し表示）
+                        ui.strong("ファイルパス:");
+                        ui.with_layout(egui::Layout::left_to_right(egui::Align::TOP), |ui| {
+                            ui.add(
+                                egui::Label::new(track.path.display().to_string())
+                                    .wrap()
+                                    .selectable(true)
+                            );
+                        });
+                        ui.end_row();
+                    });
+    }
+    
+    fn show_cover_art(&mut self, ui: &mut egui::Ui, track: &crate::music::TrackInfo, cover_art_data: &[u8]) {
+        // キャッシュから既存のテクスチャを確認
+        if !self.cover_art_cache.contains_key(&track.path) {
+            // 画像をデコードしてテクスチャを作成
+            if let Ok(image) = image::load_from_memory(cover_art_data) {
+                let rgba_image = image.to_rgba8();
+                let size = [rgba_image.width() as usize, rgba_image.height() as usize];
+                let pixels = rgba_image.as_flat_samples();
+                let color_image = egui::ColorImage::from_rgba_unmultiplied(size, pixels.as_slice());
+                let texture = ui.ctx().load_texture("cover_art", color_image, egui::TextureOptions::default());
+                self.cover_art_cache.insert(track.path.clone(), texture);
+            }
+        }
+        
+        // テクスチャがあれば表示
+        if let Some(texture) = self.cover_art_cache.get(&track.path) {
+            let available_width = ui.available_width();
+            let max_size = 200.0; // 最大サイズを200pxに制限
+            let image_size = texture.size_vec2();
+            let scale = (max_size / image_size.x.max(image_size.y)).min(1.0);
+            let scaled_size = image_size * scale;
+            
+            // 画像を中央揃えで表示
+            ui.with_layout(egui::Layout::top_down(egui::Align::Center), |ui| {
+                ui.add(egui::Image::from_texture(texture).max_size(scaled_size));
             });
+        }
     }
 
     pub fn show_playlist_tabs(&mut self, ui: &mut egui::Ui) {
@@ -552,11 +627,13 @@ impl MyApp {
             ui.ctx().request_repaint();
         }
         
+        let current_track = self.playlist_manager.get_current_track();
         PlaybackControlsUI::show_controls_with_seek_bar(
             ui,
             &playback_state,
             current_position,
             total_duration,
+            current_track,
             &mut || previous_clicked = true,
             &mut || seek_backward_clicked = true,
             &mut || play_pause_clicked = true,

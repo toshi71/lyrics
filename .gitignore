@@ -1,4 +1,5 @@
 .claude/
 target/
 settings.json
+metadata.txt
 playlists.json

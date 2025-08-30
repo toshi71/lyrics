@@ -241,6 +241,7 @@ impl PlaybackControlsUI {
         playback_state: &PlaybackState,
         current_position: std::time::Duration,
         total_duration: Option<std::time::Duration>,
+        current_track: Option<&TrackInfo>,
         on_previous: &mut dyn FnMut(),
         on_seek_backward: &mut dyn FnMut(),
         on_play_pause: &mut dyn FnMut(),
@@ -362,6 +363,18 @@ impl PlaybackControlsUI {
                 )
             ).clicked() {
                 on_next();
+            }
+            
+            // 6つのボタンの右側のスペースに再生中楽曲情報を表示
+            if let Some(track) = current_track {
+                ui.add_space(20.0);
+                ui.separator();
+                ui.add_space(10.0);
+                
+                ui.vertical(|ui| {
+                    ui.label(egui::RichText::new(&track.title).strong());
+                    ui.label(format!("{} - {}", track.artist, track.album));
+                });
             }
         });
     }

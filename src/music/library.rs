@@ -160,7 +160,7 @@ impl MusicLibrary {
             composer_map
                 .entry(composer)
                 .or_default()
-                .entry(track.artist.clone())
+                .entry(track.album_artist.clone().unwrap_or_else(|| track.artist.clone()))
                 .or_default()
                 .entry(track.album.clone())
                 .or_default()
@@ -207,7 +207,7 @@ impl MusicLibrary {
         
         for track in tracks {
             artist_map
-                .entry(track.artist.clone())
+                .entry(track.album_artist.clone().unwrap_or_else(|| track.artist.clone()))
                 .or_default()
                 .entry(track.album.clone())
                 .or_default()
