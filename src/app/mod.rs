@@ -21,6 +21,7 @@ pub enum Tab {
 
 #[derive(PartialEq)]
 pub enum RightTab {
+    #[allow(dead_code)]
     Playback,
     Info,
     Lrc,
@@ -46,6 +47,7 @@ pub struct MyApp {
     pub editing_playlist_id: Option<String>,
     pub editing_playlist_name: String,
     pub seek_drag_state: Option<PlaybackState>,
+    #[allow(dead_code)]
     pub should_focus_controls: bool,
     pub cover_art_cache: std::collections::HashMap<std::path::PathBuf, egui::TextureHandle>,
     pub repeat_mode: crate::settings::RepeatMode,

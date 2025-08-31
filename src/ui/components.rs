@@ -37,6 +37,7 @@ pub fn show_highlighted_text(ui: &mut egui::Ui, text: &str, search_query: &str) 
     }
 }
 
+#[allow(unused_assignments)]
 pub fn show_clickable_highlighted_text(
     ui: &mut egui::Ui, 
     icon: &str, 

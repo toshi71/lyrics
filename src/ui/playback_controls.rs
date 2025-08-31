@@ -299,7 +299,7 @@ impl PlaybackControlsUI {
         on_seek: &mut dyn FnMut(std::time::Duration),
         on_seek_start: &mut dyn FnMut(),
         on_seek_end: &mut dyn FnMut(),
-        auto_focus: bool,
+        _auto_focus: bool,
         repeat_mode: &RepeatMode,
         shuffle_enabled: bool,
         on_repeat_mode_change: &mut dyn FnMut(RepeatMode),

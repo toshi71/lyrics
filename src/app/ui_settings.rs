@@ -127,10 +127,10 @@ impl MyApp {
         // デフォルトプレイリスト設定
         ui.heading("デフォルトプレイリスト");
         
-        let mut settings_changed = false;
+        let _settings_changed = false;
         
         
-        if settings_changed {
+        if _settings_changed {
             self.save_settings();
         }
 
