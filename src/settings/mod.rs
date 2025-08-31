@@ -89,6 +89,7 @@ impl Settings {
         path
     }
 
+    #[allow(dead_code)]
     pub fn validate(&self) -> Result<(), String> {
         if !self.target_directory.is_empty() {
             let path = PathBuf::from(&self.target_directory);
@@ -130,6 +131,7 @@ impl Settings {
     }
 
     // フォント設定メソッド
+    #[allow(dead_code)]
     pub fn set_selected_font(&mut self, font_name: String) {
         self.selected_font = font_name;
     }

@@ -1,5 +1,6 @@
 use eframe::egui;
 
+#[allow(dead_code)]
 pub fn show_highlighted_text(ui: &mut egui::Ui, text: &str, search_query: &str) {
     if search_query.is_empty() {
         ui.label(text);

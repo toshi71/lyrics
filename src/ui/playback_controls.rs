@@ -284,6 +284,7 @@ impl PlaybackControlsUI {
         }
     }
 
+    #[allow(dead_code)]
     pub fn show_controls_with_seek_bar(
         ui: &mut egui::Ui,
         playback_state: &PlaybackState,
@@ -449,6 +450,7 @@ impl PlaybackControlsUI {
         });
     }
 
+    #[allow(dead_code)]
     pub fn show_controls_only(
         ui: &mut egui::Ui,
         playback_state: &PlaybackState,

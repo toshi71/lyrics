@@ -57,6 +57,7 @@ impl Playlist {
         self.modified_at = SystemTime::now();
     }
 
+    #[allow(dead_code)]
     pub fn is_empty(&self) -> bool {
         self.tracks.is_empty()
     }
@@ -278,6 +279,7 @@ impl PlaylistManager {
         self.get_playlist(&self.active_playlist_id)
     }
 
+    #[allow(dead_code)]
     pub fn get_active_playlist_mut(&mut self) -> Option<&mut Playlist> {
         let id = self.active_playlist_id.clone();
         self.get_playlist_mut(&id)
