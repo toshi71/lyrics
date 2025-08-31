@@ -538,6 +538,7 @@ impl PlaybackControlsUI {
         });
     }
 
+    #[allow(dead_code)]
     pub fn show(
         ui: &mut egui::Ui,
         queue: &[TrackInfo],

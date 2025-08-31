@@ -294,6 +294,7 @@ impl PlaylistManager {
     }
 
     // 楽曲操作（アクティブプレイリストに対して）
+    #[allow(dead_code)]
     pub fn add_track(&mut self, track: TrackInfo) {
         let active_id = self.active_playlist_id.clone();
         if let Some(playlist) = self.get_playlist_mut(&active_id) {
@@ -388,6 +389,7 @@ impl PlaylistManager {
         &self.selected_indices
     }
 
+    #[allow(dead_code)]
     pub fn set_selected(&mut self, index: usize, selected: bool) {
         if selected {
             self.selected_indices.insert(index);
@@ -523,6 +525,7 @@ impl PlaylistManager {
     }
 
     // 再生管理
+    #[allow(dead_code)]
     pub fn get_current_playing_index(&self) -> Option<usize> {
         self.current_playing_index
     }
