@@ -20,6 +20,7 @@ pub struct AudioPlayer {
     current_track: Option<TrackInfo>,
     total_duration: Option<Duration>,
     state: PlaybackState,
+    #[allow(dead_code)]
     clock: Option<ClockHandle>,
     play_start_time: Option<Instant>,
     paused_duration: Duration,
@@ -95,6 +96,7 @@ impl AudioPlayer {
         self.paused_duration = Duration::from_secs(0);
     }
 
+    #[allow(dead_code)]
     pub fn toggle_play_pause(&mut self) {
         match self.state {
             PlaybackState::Playing => self.pause(),
@@ -109,6 +111,7 @@ impl AudioPlayer {
         &self.state
     }
 
+    #[allow(dead_code)]
     pub fn get_current_track(&self) -> Option<&TrackInfo> {
         self.current_track.as_ref()
     }
@@ -233,6 +236,7 @@ impl AudioPlayer {
         Ok(())
     }
 
+    #[allow(dead_code)]
     fn seek_to_end(&mut self) -> Result<(), Box<dyn std::error::Error>> {
         // 曲の最後に到達した場合の処理
         self.stop();

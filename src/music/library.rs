@@ -32,6 +32,7 @@ impl MusicLibrary {
         }
     }
 
+    #[allow(dead_code)]
     pub fn get_tree(&self) -> &Vec<MusicTreeNode> {
         &self.tree
     }
@@ -329,6 +330,7 @@ impl MusicLibrary {
         }
     }
 
+    #[allow(dead_code)]
     pub fn get_first_track(&self) -> Option<TrackInfo> {
         for node in &self.tree {
             if let Some(track) = self.get_first_track_from_node(node) {
@@ -338,6 +340,7 @@ impl MusicLibrary {
         None
     }
 
+    #[allow(dead_code)]
     fn get_first_track_from_node(&self, node: &MusicTreeNode) -> Option<TrackInfo> {
         if node.node_type == MusicNodeType::Track {
             return node.track_info.clone();
