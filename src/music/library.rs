@@ -2,7 +2,7 @@ use super::metadata::{TrackInfo, get_flac_metadata, is_flac_file};
 use super::tree::{MusicTreeNode, MusicNodeType};
 use std::collections::HashMap;
 use std::fs;
-use std::path::{Path, PathBuf};
+use std::path::Path;
 
 pub struct MusicLibrary {
     tracks: Vec<TrackInfo>,

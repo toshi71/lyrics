@@ -3,5 +3,5 @@ pub mod metadata;
 pub mod tree;
 
 pub use library::MusicLibrary;
-pub use metadata::{TrackInfo, get_flac_metadata};
+pub use metadata::TrackInfo;
 pub use tree::{MusicTreeNode, MusicNodeType};
