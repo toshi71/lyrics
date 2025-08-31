@@ -196,6 +196,9 @@ impl MyApp {
         let mut add_to_playlist_track: Option<(TrackInfo, String)> = None;
         let mut add_album_to_playlist: Option<(MusicTreeNode, String)> = None;
         let mut add_artist_to_playlist: Option<(MusicTreeNode, String)> = None;
+        let mut create_playlist_with_track: Option<TrackInfo> = None;
+        let mut create_playlist_with_album: Option<MusicTreeNode> = None;
+        let mut create_playlist_with_artist: Option<MusicTreeNode> = None;
         
         MusicTreeUI::show(
             ui,
@@ -209,6 +212,9 @@ impl MyApp {
             &mut |track, playlist_id| add_to_playlist_track = Some((track, playlist_id)),
             &mut |node, playlist_id| add_album_to_playlist = Some((node.clone(), playlist_id)),
             &mut |node, playlist_id| add_artist_to_playlist = Some((node.clone(), playlist_id)),
+            &mut |track| create_playlist_with_track = Some(track),
+            &mut |node| create_playlist_with_album = Some(node.clone()),
+            &mut |node| create_playlist_with_artist = Some(node.clone()),
         );
         
         if let Some((track, ctrl_held, shift_held)) = track_selection {
@@ -216,21 +222,58 @@ impl MyApp {
         }
         
         if let Some((track, playlist_id)) = add_to_playlist_track {
-            self.handle_add_to_playlist(track, playlist_id);
+            if let Err(error_message) = self.handle_add_to_playlist(track, playlist_id) {
+                self.show_error_dialog_main("楽曲追加エラー", &error_message);
+            }
         }
         
         if let Some((node, playlist_id)) = add_album_to_playlist {
-            self.handle_add_album_to_playlist(node, playlist_id);
+            if let Err(error_message) = self.handle_add_album_to_playlist(node, playlist_id) {
+                self.show_error_dialog_main("アルバム追加エラー", &error_message);
+            }
         }
         
         if let Some((node, playlist_id)) = add_artist_to_playlist {
-            self.handle_add_artist_to_playlist(node, playlist_id);
+            if let Err(error_message) = self.handle_add_artist_to_playlist(node, playlist_id) {
+                self.show_error_dialog_main("アーティスト追加エラー", &error_message);
+            }
         }
         
         // ダブルクリック時にデフォルトプレイリストに楽曲を追加
         if let Some(track) = double_clicked_track {
-            self.playlist_manager.add_track_to_playlist("default", track);
-            let _ = self.playlist_manager.auto_save();
+            if let Err(error_message) = self.playlist_manager.add_track_to_playlist("default", track) {
+                self.show_error_dialog_main("楽曲追加エラー", &error_message);
+            } else {
+                let _ = self.playlist_manager.auto_save();
+            }
         }
+        
+        // 新プレイリスト作成処理
+        if let Some(track) = create_playlist_with_track {
+            if let Err(error_message) = self.handle_create_playlist_with_track(track) {
+                self.show_error_dialog_main("新プレイリスト作成エラー", &error_message);
+            }
+        }
+        
+        if let Some(node) = create_playlist_with_album {
+            if let Err(error_message) = self.handle_create_playlist_with_album(&node) {
+                self.show_error_dialog_main("新プレイリスト作成エラー", &error_message);
+            }
+        }
+        
+        if let Some(node) = create_playlist_with_artist {
+            if let Err(error_message) = self.handle_create_playlist_with_artist(&node) {
+                self.show_error_dialog_main("新プレイリスト作成エラー", &error_message);
+            }
+        }
+    }
+
+    /// OS標準のエラーダイアログを表示
+    fn show_error_dialog_main(&self, title: &str, message: &str) {
+        rfd::MessageDialog::new()
+            .set_title(title)
+            .set_description(message)
+            .set_level(rfd::MessageLevel::Error)
+            .show();
     }
 }

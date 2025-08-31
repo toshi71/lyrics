@@ -18,6 +18,13 @@ pub struct TrackInfo {
     pub path: PathBuf,
 }
 
+impl TrackInfo {
+    /// 同一楽曲かどうかを判定（ファイルパスが同じかどうかで判定）
+    pub fn is_same_track(&self, other: &TrackInfo) -> bool {
+        self.path == other.path
+    }
+}
+
 pub fn get_flac_metadata(path: &Path) -> Option<TrackInfo> {
     // Step 4-2: ファイル存在確認とエラーハンドリング強化
     if !path.exists() {

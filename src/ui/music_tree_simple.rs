@@ -20,6 +20,9 @@ impl MusicTreeUI {
         on_add_to_playlist: &mut dyn FnMut(TrackInfo, String), // Add track to specific playlist
         on_add_album_to_playlist: &mut dyn FnMut(&MusicTreeNode, String), // Add album to specific playlist
         on_add_artist_to_playlist: &mut dyn FnMut(&MusicTreeNode, String), // Add artist to specific playlist
+        on_create_playlist_with_track: &mut dyn FnMut(TrackInfo), // Create new playlist with track
+        on_create_playlist_with_album: &mut dyn FnMut(&MusicTreeNode), // Create new playlist with album
+        on_create_playlist_with_artist: &mut dyn FnMut(&MusicTreeNode), // Create new playlist with artist
     ) {
         let mut actions = Vec::new();
         
@@ -38,6 +41,9 @@ impl MusicTreeUI {
                 on_add_to_playlist,
                 on_add_album_to_playlist,
                 on_add_artist_to_playlist,
+                on_create_playlist_with_track,
+                on_create_playlist_with_album,
+                on_create_playlist_with_artist,
             ) {
                 actions.push(action);
             }
@@ -67,6 +73,9 @@ impl MusicTreeUI {
         on_add_to_playlist: &mut dyn FnMut(TrackInfo, String),
         on_add_album_to_playlist: &mut dyn FnMut(&MusicTreeNode, String),
         on_add_artist_to_playlist: &mut dyn FnMut(&MusicTreeNode, String),
+        on_create_playlist_with_track: &mut dyn FnMut(TrackInfo),
+        on_create_playlist_with_album: &mut dyn FnMut(&MusicTreeNode),
+        on_create_playlist_with_artist: &mut dyn FnMut(&MusicTreeNode),
     ) -> Option<TreeAction> {
         let mut current_path = parent_path.to_vec();
         current_path.push(index);
@@ -87,6 +96,15 @@ impl MusicTreeUI {
                         response.context_menu(|ui| {
                             // プレイリストに追加メニュー
                             ui.menu_button("アルバムをプレイリストに追加", |ui| {
+                                // 新プレイリスト作成オプション
+                                ui.separator();
+                                if ui.button("➕ 新たなプレイリストを作成して追加").clicked() {
+                                    on_create_playlist_with_album(node);
+                                    ui.close_menu();
+                                }
+                                ui.separator();
+                                
+                                // 既存のプレイリスト一覧
                                 for playlist in playlists {
                                     if ui.button(&playlist.name).clicked() {
                                         on_add_album_to_playlist(node, playlist.id.clone());
@@ -100,6 +118,15 @@ impl MusicTreeUI {
                         response.context_menu(|ui| {
                             // プレイリストに追加メニュー
                             ui.menu_button("アーティストをプレイリストに追加", |ui| {
+                                // 新プレイリスト作成オプション
+                                ui.separator();
+                                if ui.button("➕ 新たなプレイリストを作成して追加").clicked() {
+                                    on_create_playlist_with_artist(node);
+                                    ui.close_menu();
+                                }
+                                ui.separator();
+                                
+                                // 既存のプレイリスト一覧
                                 for playlist in playlists {
                                     if ui.button(&playlist.name).clicked() {
                                         on_add_artist_to_playlist(node, playlist.id.clone());
@@ -113,6 +140,15 @@ impl MusicTreeUI {
                         response.context_menu(|ui| {
                             // プレイリストに追加メニュー
                             ui.menu_button("作曲家をプレイリストに追加", |ui| {
+                                // 新プレイリスト作成オプション
+                                ui.separator();
+                                if ui.button("➕ 新たなプレイリストを作成して追加").clicked() {
+                                    on_create_playlist_with_artist(node);
+                                    ui.close_menu();
+                                }
+                                ui.separator();
+                                
+                                // 既存のプレイリスト一覧
                                 for playlist in playlists {
                                     if ui.button(&playlist.name).clicked() {
                                         on_add_artist_to_playlist(node, playlist.id.clone());
@@ -150,6 +186,15 @@ impl MusicTreeUI {
                     response.context_menu(|ui| {
                         // プレイリストに追加メニュー
                         ui.menu_button("プレイリストに追加", |ui| {
+                            // 新プレイリスト作成オプション
+                            ui.separator();
+                            if ui.button("➕ 新たなプレイリストを作成して追加").clicked() {
+                                on_create_playlist_with_track(track_info.clone());
+                                ui.close_menu();
+                            }
+                            ui.separator();
+                            
+                            // 既存のプレイリスト一覧
                             for playlist in playlists {
                                 if ui.button(&playlist.name).clicked() {
                                     on_add_to_playlist(track_info.clone(), playlist.id.clone());
@@ -181,6 +226,9 @@ impl MusicTreeUI {
                         on_add_to_playlist,
                         on_add_album_to_playlist,
                         on_add_artist_to_playlist,
+                        on_create_playlist_with_track,
+                        on_create_playlist_with_album,
+                        on_create_playlist_with_artist,
                     ) {
                         if action.is_none() {
                             action = Some(child_action);

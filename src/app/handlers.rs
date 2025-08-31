@@ -223,55 +223,130 @@ impl MyApp {
         self.playlist_manager.remove_selected();
     }
 
-    pub fn handle_add_to_playlist(&mut self, track: TrackInfo, playlist_id: String) {
+    pub fn handle_add_to_playlist(&mut self, track: TrackInfo, playlist_id: String) -> Result<(), String> {
         if let Some(playlist) = self.playlist_manager.get_playlist_mut(&playlist_id) {
+            if playlist.contains_track(&track) {
+                return Err("既に同一楽曲が存在するため追加できません".to_string());
+            }
             playlist.add_track(track);
             let _ = self.playlist_manager.auto_save();
+            Ok(())
+        } else {
+            Err("対象のプレイリストが見つかりません".to_string())
         }
     }
 
-    pub fn handle_add_album_to_playlist(&mut self, node: MusicTreeNode, playlist_id: String) {
+    pub fn handle_add_album_to_playlist(&mut self, node: MusicTreeNode, playlist_id: String) -> Result<(), String> {
         let tracks = self.collect_all_tracks_from_node(&node);
         if let Some(playlist) = self.playlist_manager.get_playlist_mut(&playlist_id) {
+            // 重複チェック
+            let duplicate_tracks = playlist.get_duplicate_tracks(&tracks);
+            if !duplicate_tracks.is_empty() {
+                return Err(format!("既に同一楽曲が{}曲存在するため追加できません", duplicate_tracks.len()));
+            }
+            
             for track in tracks {
                 playlist.add_track(track);
             }
             let _ = self.playlist_manager.auto_save();
+            Ok(())
+        } else {
+            Err("対象のプレイリストが見つかりません".to_string())
         }
     }
 
-    pub fn handle_add_artist_to_playlist(&mut self, node: MusicTreeNode, playlist_id: String) {
+    pub fn handle_add_artist_to_playlist(&mut self, node: MusicTreeNode, playlist_id: String) -> Result<(), String> {
         let tracks = self.collect_all_tracks_from_node(&node);
         if let Some(playlist) = self.playlist_manager.get_playlist_mut(&playlist_id) {
+            // 重複チェック
+            let duplicate_tracks = playlist.get_duplicate_tracks(&tracks);
+            if !duplicate_tracks.is_empty() {
+                return Err(format!("既に同一楽曲が{}曲存在するため追加できません", duplicate_tracks.len()));
+            }
+            
             for track in tracks {
                 playlist.add_track(track);
             }
             let _ = self.playlist_manager.auto_save();
+            Ok(())
+        } else {
+            Err("対象のプレイリストが見つかりません".to_string())
         }
     }
 
-    pub fn handle_copy_selected_to_playlist(&mut self, target_playlist_id: String) {
+    pub fn handle_copy_selected_to_playlist(&mut self, target_playlist_id: String) -> Result<(), String> {
         let selected_tracks = self.get_selected_tracks_from_active_playlist();
         
         if let Some(target_playlist) = self.playlist_manager.get_playlist_mut(&target_playlist_id) {
+            // 重複チェック
+            let duplicate_tracks = target_playlist.get_duplicate_tracks(&selected_tracks);
+            if !duplicate_tracks.is_empty() {
+                return Err(format!("既に同一楽曲が{}曲存在するためコピーできません", duplicate_tracks.len()));
+            }
+            
             for track in selected_tracks {
                 target_playlist.add_track(track);
             }
             let _ = self.playlist_manager.auto_save();
+            Ok(())
+        } else {
+            Err("対象のプレイリストが見つかりません".to_string())
         }
     }
 
-    pub fn handle_move_selected_to_playlist(&mut self, target_playlist_id: String) {
+    pub fn handle_move_selected_to_playlist(&mut self, target_playlist_id: String) -> Result<(), String> {
         let selected_tracks = self.get_selected_tracks_from_active_playlist();
         
         if let Some(target_playlist) = self.playlist_manager.get_playlist_mut(&target_playlist_id) {
+            // 重複チェック
+            let duplicate_tracks = target_playlist.get_duplicate_tracks(&selected_tracks);
+            if !duplicate_tracks.is_empty() {
+                return Err(format!("既に同一楽曲が{}曲存在するため移動できません", duplicate_tracks.len()));
+            }
+            
             for track in selected_tracks {
                 target_playlist.add_track(track);
             }
+        } else {
+            return Err("対象のプレイリストが見つかりません".to_string());
         }
         
         self.playlist_manager.remove_selected();
         let _ = self.playlist_manager.auto_save();
+        Ok(())
+    }
+
+    // 左ペイン用の新プレイリスト作成ハンドラ
+    pub fn handle_create_playlist_with_track(&mut self, track: TrackInfo) -> Result<(), String> {
+        match self.playlist_manager.create_playlist_with_track(track) {
+            Ok(_playlist_id) => {
+                let _ = self.playlist_manager.auto_save();
+                Ok(())
+            },
+            Err(error_message) => Err(error_message)
+        }
+    }
+
+    pub fn handle_create_playlist_with_album(&mut self, node: &MusicTreeNode) -> Result<(), String> {
+        let tracks = self.collect_all_tracks_from_node(node);
+        match self.playlist_manager.create_playlist_with_tracks(tracks) {
+            Ok(_playlist_id) => {
+                let _ = self.playlist_manager.auto_save();
+                Ok(())
+            },
+            Err(error_message) => Err(error_message)
+        }
+    }
+
+    pub fn handle_create_playlist_with_artist(&mut self, node: &MusicTreeNode) -> Result<(), String> {
+        let tracks = self.collect_all_tracks_from_node(node);
+        match self.playlist_manager.create_playlist_with_tracks(tracks) {
+            Ok(_playlist_id) => {
+                let _ = self.playlist_manager.auto_save();
+                Ok(())
+            },
+            Err(error_message) => Err(error_message)
+        }
     }
 
     // Helper methods

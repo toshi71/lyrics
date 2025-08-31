@@ -72,6 +72,16 @@ impl Playlist {
     pub fn get_tracks(&self) -> &Vec<TrackInfo> {
         &self.tracks
     }
+
+    /// 指定された楽曲がプレイリストに既に存在するかチェック
+    pub fn contains_track(&self, track: &TrackInfo) -> bool {
+        self.tracks.iter().any(|existing_track| existing_track.is_same_track(track))
+    }
+
+    /// 複数の楽曲のうち、プレイリストに既に存在するものを返す
+    pub fn get_duplicate_tracks<'a>(&self, tracks: &'a [TrackInfo]) -> Vec<&'a TrackInfo> {
+        tracks.iter().filter(|track| self.contains_track(track)).collect()
+    }
 }
 
 #[derive(Debug)]
@@ -289,10 +299,16 @@ impl PlaylistManager {
         }
     }
 
-    // 指定されたプレイリストに楽曲を追加
-    pub fn add_track_to_playlist(&mut self, playlist_id: &str, track: TrackInfo) {
+    // 指定されたプレイリストに楽曲を追加（重複チェック付き）
+    pub fn add_track_to_playlist(&mut self, playlist_id: &str, track: TrackInfo) -> Result<(), String> {
         if let Some(playlist) = self.get_playlist_mut(playlist_id) {
+            if playlist.contains_track(&track) {
+                return Err("既に同一楽曲が存在するため追加できません".to_string());
+            }
             playlist.add_track(track);
+            Ok(())
+        } else {
+            Err("対象のプレイリストが見つかりません".to_string())
         }
     }
 
@@ -467,6 +483,36 @@ impl PlaylistManager {
         // 元のプレイリストから選択楽曲を削除
         self.remove_selected();
         
+        Ok(playlist_id)
+    }
+
+    // 単一楽曲から新しいプレイリストを作成
+    pub fn create_playlist_with_track(&mut self, track: TrackInfo) -> Result<String, String> {
+        let playlist_name = self.generate_unique_playlist_name();
+        let playlist_id = format!("playlist_{}", Uuid::new_v4().to_string().replace("-", ""));
+        
+        let mut new_playlist = Playlist::new(playlist_id.clone(), playlist_name.clone());
+        new_playlist.add_track(track);
+        
+        self.playlists.push(new_playlist);
+        Ok(playlist_id)
+    }
+
+    // 複数楽曲から新しいプレイリストを作成（アルバム・アーティスト用）
+    pub fn create_playlist_with_tracks(&mut self, tracks: Vec<TrackInfo>) -> Result<String, String> {
+        if tracks.is_empty() {
+            return Err("楽曲が選択されていません".to_string());
+        }
+
+        let playlist_name = self.generate_unique_playlist_name();
+        let playlist_id = format!("playlist_{}", Uuid::new_v4().to_string().replace("-", ""));
+        
+        let mut new_playlist = Playlist::new(playlist_id.clone(), playlist_name.clone());
+        for track in tracks {
+            new_playlist.add_track(track);
+        }
+        
+        self.playlists.push(new_playlist);
         Ok(playlist_id)
     }
 

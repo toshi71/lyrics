@@ -832,10 +832,14 @@ impl MyApp {
             self.handle_remove_selected_from_queue();
         }
         if let Some(playlist_id) = copy_to_playlist {
-            self.handle_copy_selected_to_playlist(playlist_id);
+            if let Err(error_message) = self.handle_copy_selected_to_playlist(playlist_id) {
+                self.show_error_dialog("コピーエラー", &error_message);
+            }
         }
         if let Some(playlist_id) = move_to_playlist {
-            self.handle_move_selected_to_playlist(playlist_id);
+            if let Err(error_message) = self.handle_move_selected_to_playlist(playlist_id) {
+                self.show_error_dialog("移動エラー", &error_message);
+            }
         }
         if select_all {
             self.playlist_manager.select_all();
@@ -960,8 +964,7 @@ impl MyApp {
                 // 成功時は特に何もしない（プレイリストが作成された）
             },
             Err(error_message) => {
-                // エラー処理（必要に応じてログ出力等）
-                eprintln!("新プレイリスト作成（コピー）に失敗しました: {}", error_message);
+                self.show_error_dialog("新プレイリスト作成（コピー）エラー", &error_message);
             }
         }
     }
@@ -972,9 +975,17 @@ impl MyApp {
                 // 成功時は特に何もしない（プレイリストが作成され、楽曲が移動された）
             },
             Err(error_message) => {
-                // エラー処理（必要に応じてログ出力等）
-                eprintln!("新プレイリスト作成（移動）に失敗しました: {}", error_message);
+                self.show_error_dialog("新プレイリスト作成（移動）エラー", &error_message);
             }
         }
+    }
+    
+    /// OS標準のエラーダイアログを表示
+    fn show_error_dialog(&self, title: &str, message: &str) {
+        rfd::MessageDialog::new()
+            .set_title(title)
+            .set_description(message)
+            .set_level(rfd::MessageLevel::Error)
+            .show();
     }
 }
