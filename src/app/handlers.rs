@@ -197,6 +197,7 @@ impl MyApp {
         }
     }
 
+    #[allow(dead_code)]
     pub fn clear_playback_queue(&mut self) {
         self.audio_player.stop();
         self.playlist_manager.clear();
