@@ -329,7 +329,7 @@ impl MyApp {
             }
         };
 
-        let get_unified_option_u32 = |get_field: fn(&crate::music::TrackInfo) -> &Option<u32>| -> String {
+        let _get_unified_option_u32 = |get_field: fn(&crate::music::TrackInfo) -> &Option<u32>| -> String {
             let first_value = get_field(&tracks[0]);
             if tracks.iter().all(|track| get_field(track) == first_value) {
                 match first_value {
@@ -460,7 +460,7 @@ impl MyApp {
         
         // テクスチャがあれば表示
         if let Some(texture) = self.cover_art_cache.get(&track.path) {
-            let available_width = ui.available_width();
+            let _available_width = ui.available_width();
             let max_size = 200.0; // 最大サイズを200pxに制限
             let image_size = texture.size_vec2();
             let scale = (max_size / image_size.x.max(image_size.y)).min(1.0);
@@ -545,7 +545,7 @@ impl MyApp {
             egui::Layout::top_down(egui::Align::LEFT),
             |ui| {
                 ui.add_space(2.0);
-                let scroll_area_response = egui::ScrollArea::horizontal()
+                let _scroll_area_response = egui::ScrollArea::horizontal()
                     .id_source("playlist_tabs_scroll")
                     .auto_shrink([false, true])
                     .scroll_bar_visibility(egui::scroll_area::ScrollBarVisibility::VisibleWhenNeeded)
@@ -870,7 +870,7 @@ impl MyApp {
         let mut seek_ended = false;
         
         // Auto focus disabled
-        let auto_focus = false;
+        let _auto_focus = false;
         
         // 再生位置と総再生時間を取得
         let current_position = self.audio_player.get_playback_position();
@@ -904,7 +904,7 @@ impl MyApp {
             &mut |position| seek_position = Some(position),
             &mut || seek_started = true,
             &mut || seek_ended = true,
-            auto_focus,
+            _auto_focus,
             &self.repeat_mode,
             self.shuffle_enabled,
             &mut |mode| {

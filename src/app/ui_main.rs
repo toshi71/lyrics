@@ -94,7 +94,7 @@ impl MyApp {
         
         // リサイズ可能な水平分割線
         let separator_id = ui.id().with("main_horizontal_separator");
-        let separator_response = ui.allocate_response(
+        let _separator_response = ui.allocate_response(
             egui::Vec2::new(available_width, available_height),
             egui::Sense::hover()
         );
