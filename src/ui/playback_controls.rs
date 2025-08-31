@@ -26,6 +26,8 @@ impl PlaybackControlsUI {
         on_move_to_playlist: &mut dyn FnMut(String), // playlist_id
         on_select_all: &mut dyn FnMut(), // 全選択
         on_clear_selection: &mut dyn FnMut(), // 選択解除
+        on_copy_to_new_playlist: &mut dyn FnMut(), // 新プレイリストにコピー
+        on_move_to_new_playlist: &mut dyn FnMut(), // 新プレイリストに移動
     ) {
         // キーボードショートカットの処理
         ui.input(|i| {
@@ -202,6 +204,18 @@ impl PlaybackControlsUI {
                             }
                             ui.set_min_width(max_width);
                             
+                            // 新しいプレイリストを作成してコピー
+                            if ui.button("➕ 新たなプレイリストを作成してコピー").clicked() {
+                                // If this item wasn't selected, select it first
+                                if !item_is_selected {
+                                    on_queue_item_selected(index, false, false);
+                                }
+                                on_copy_to_new_playlist();
+                                ui.close_menu();
+                            }
+                            
+                            ui.separator();
+                            
                             for playlist in playlists {
                                 if playlist.id != current_playlist_id {
                                     if ui.button(&playlist.name).clicked() {
@@ -237,6 +251,18 @@ impl PlaybackControlsUI {
                                 }
                             }
                             ui.set_min_width(max_width);
+                            
+                            // 新しいプレイリストを作成して移動
+                            if ui.button("➕ 新たなプレイリストを作成して移動").clicked() {
+                                // If this item wasn't selected, select it first
+                                if !item_is_selected {
+                                    on_queue_item_selected(index, false, false);
+                                }
+                                on_move_to_new_playlist();
+                                ui.close_menu();
+                            }
+                            
+                            ui.separator();
                             
                             for playlist in playlists {
                                 if playlist.id != current_playlist_id {

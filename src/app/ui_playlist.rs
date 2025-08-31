@@ -775,6 +775,8 @@ impl MyApp {
         let mut move_to_playlist: Option<String> = None;
         let mut select_all = false;
         let mut clear_selection = false;
+        let mut copy_to_new_playlist = false;
+        let mut move_to_new_playlist = false;
         
         PlaybackControlsUI::show_track_list(
             ui,
@@ -796,6 +798,8 @@ impl MyApp {
             &mut |playlist_id| move_to_playlist = Some(playlist_id),
             &mut || select_all = true,
             &mut || clear_selection = true,
+            &mut || copy_to_new_playlist = true,
+            &mut || move_to_new_playlist = true,
         );
         
         // Handle actions after UI
@@ -838,6 +842,12 @@ impl MyApp {
         }
         if clear_selection {
             self.playlist_manager.clear_selection();
+        }
+        if copy_to_new_playlist {
+            self.handle_copy_to_new_playlist();
+        }
+        if move_to_new_playlist {
+            self.handle_move_to_new_playlist();
         }
     }
 
@@ -942,5 +952,29 @@ impl MyApp {
         }
         
         // Focus flag reset removed - auto focus disabled
+    }
+    
+    fn handle_copy_to_new_playlist(&mut self) {
+        match self.playlist_manager.copy_selected_to_new_playlist() {
+            Ok(_playlist_id) => {
+                // 成功時は特に何もしない（プレイリストが作成された）
+            },
+            Err(error_message) => {
+                // エラー処理（必要に応じてログ出力等）
+                eprintln!("新プレイリスト作成（コピー）に失敗しました: {}", error_message);
+            }
+        }
+    }
+    
+    fn handle_move_to_new_playlist(&mut self) {
+        match self.playlist_manager.move_selected_to_new_playlist() {
+            Ok(_playlist_id) => {
+                // 成功時は特に何もしない（プレイリストが作成され、楽曲が移動された）
+            },
+            Err(error_message) => {
+                // エラー処理（必要に応じてログ出力等）
+                eprintln!("新プレイリスト作成（移動）に失敗しました: {}", error_message);
+            }
+        }
     }
 }

@@ -13,3 +13,4 @@ serde_json = "1.0"
 metaflac = "0.2"
 kira = { version = "0.9", features = ["cpal"] }
 image = "0.24"
+uuid = { version = "1.0", features = ["v4"] }

@@ -1,6 +1,7 @@
 use std::collections::HashSet;
 use std::time::SystemTime;
 use serde::{Deserialize, Serialize};
+use uuid::Uuid;
 use crate::music::TrackInfo;
 use crate::settings::RepeatMode;
 
@@ -391,6 +392,82 @@ impl PlaylistManager {
         }
         // 全選択時は最後の選択インデックスをクリア
         self.last_selected_index = None;
+    }
+
+    // 重複しないプレイリスト名を生成
+    fn generate_unique_playlist_name(&self) -> String {
+        let base_name = "新しいプレイリスト";
+        let mut counter = 1;
+        
+        // 重複チェック
+        loop {
+            let candidate = if counter == 1 {
+                base_name.to_string()
+            } else {
+                format!("{} {}", base_name, counter)
+            };
+            
+            if !self.playlists.iter().any(|p| p.name == candidate) {
+                return candidate;
+            }
+            counter += 1;
+        }
+    }
+
+    // 新しいプレイリストを作成して選択中の楽曲をコピー
+    pub fn copy_selected_to_new_playlist(&mut self) -> Result<String, String> {
+        let selected_tracks: Vec<TrackInfo> = if let Some(playlist) = self.get_active_playlist() {
+            self.selected_indices.iter()
+                .filter_map(|&index| playlist.tracks.get(index).cloned())
+                .collect()
+        } else {
+            return Err("アクティブなプレイリストが見つかりません".to_string());
+        };
+
+        if selected_tracks.is_empty() {
+            return Err("選択された楽曲がありません".to_string());
+        }
+
+        let playlist_name = self.generate_unique_playlist_name();
+        let playlist_id = format!("playlist_{}", Uuid::new_v4().to_string().replace("-", ""));
+        
+        let mut new_playlist = Playlist::new(playlist_id.clone(), playlist_name.clone());
+        for track in selected_tracks {
+            new_playlist.add_track(track);
+        }
+        
+        self.playlists.push(new_playlist);
+        Ok(playlist_id)
+    }
+
+    // 新しいプレイリストを作成して選択中の楽曲を移動
+    pub fn move_selected_to_new_playlist(&mut self) -> Result<String, String> {
+        let selected_tracks: Vec<TrackInfo> = if let Some(playlist) = self.get_active_playlist() {
+            self.selected_indices.iter()
+                .filter_map(|&index| playlist.tracks.get(index).cloned())
+                .collect()
+        } else {
+            return Err("アクティブなプレイリストが見つかりません".to_string());
+        };
+
+        if selected_tracks.is_empty() {
+            return Err("選択された楽曲がありません".to_string());
+        }
+
+        let playlist_name = self.generate_unique_playlist_name();
+        let playlist_id = format!("playlist_{}", Uuid::new_v4().to_string().replace("-", ""));
+        
+        let mut new_playlist = Playlist::new(playlist_id.clone(), playlist_name.clone());
+        for track in selected_tracks {
+            new_playlist.add_track(track);
+        }
+        
+        self.playlists.push(new_playlist);
+        
+        // 元のプレイリストから選択楽曲を削除
+        self.remove_selected();
+        
+        Ok(playlist_id)
     }
 
     pub fn is_selected(&self, index: usize) -> bool {
