@@ -141,8 +141,8 @@ impl MyApp {
             ui.horizontal(|ui| {
                 ui.add_space(5.0); // Left padding
                 // 情報・LRCタブ切り替え
-                ui.selectable_value(&mut self.right_pane_tab, super::RightTab::Info, "情報");
-                ui.selectable_value(&mut self.right_pane_tab, super::RightTab::Lrc, "LRC");
+                ui.selectable_value(&mut self.ui_state.right_pane_tab, crate::app::state::RightTab::Info, "情報");
+                ui.selectable_value(&mut self.ui_state.right_pane_tab, crate::app::state::RightTab::Lrc, "LRC");
             });
             
             ui.separator();
@@ -156,14 +156,14 @@ impl MyApp {
                     ui.horizontal(|ui| {
                         ui.add_space(5.0);
                         ui.vertical(|ui| {
-                            match self.right_pane_tab {
-                                super::RightTab::Playback => {
+                            match self.ui_state.right_pane_tab {
+                                crate::app::state::RightTab::Playback => {
                                     ui.label("プレイリスト表示（左側で表示）");
                                 },
-                                super::RightTab::Info => {
+                                crate::app::state::RightTab::Info => {
                                     self.show_track_info(ui);
                                 },
-                                super::RightTab::Lrc => {
+                                crate::app::state::RightTab::Lrc => {
                                     ui.label("LRC歌詞表示機能は未実装です");
                                 },
                             }

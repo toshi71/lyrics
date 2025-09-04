@@ -27,7 +27,6 @@ pub struct MyApp {
     pub splitter_position: f32,           // 左 vs 右ペイン（下位互換性のため残す）
     pub right_top_bottom_position: f32,   // 右ペイン上部 vs 下部
     pub right_bottom_left_right_position: f32, // 右ペイン下部：左 vs 右
-    pub right_pane_tab: RightTab,
     pub selected_track: Option<TrackInfo>,
     pub selected_tracks: std::collections::HashSet<std::path::PathBuf>,
     pub last_selected_path: Option<std::path::PathBuf>,
@@ -55,7 +54,6 @@ impl MyApp {
             splitter_position: settings.main_splitter_position,
             right_top_bottom_position: settings.right_top_bottom_position,
             right_bottom_left_right_position: settings.right_bottom_left_right_position,
-            right_pane_tab: RightTab::Info,
             selected_track: None,
             selected_tracks: std::collections::HashSet::new(),
             last_selected_path: None,

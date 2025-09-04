@@ -10,7 +10,7 @@ mod app_tests {
         
         // 基本的な初期状態をテスト
         assert_eq!(app.ui_state.current_tab, Tab::Main);
-        assert_eq!(app.right_pane_tab, RightTab::Info);
+        assert_eq!(app.ui_state.right_pane_tab, RightTab::Info);
         assert_eq!(app.ui_state.show_dialog, false);
         assert_eq!(app.search_query, "");
         assert_eq!(app.focus_search, false);
@@ -33,7 +33,7 @@ mod app_tests {
         // UI状態を変更
         app.ui_state.show_dialog = true;
         app.ui_state.current_tab = Tab::Settings;
-        app.right_pane_tab = RightTab::Lrc;
+        app.ui_state.right_pane_tab = RightTab::Lrc;
         
         // UI状態変更がアプリケーション状態（位置）に影響しないことを確認
         assert_eq!(app.splitter_position, initial_splitter);
@@ -43,7 +43,7 @@ mod app_tests {
         // 変更されたUI状態を確認
         assert_eq!(app.ui_state.show_dialog, true);
         assert_eq!(app.ui_state.current_tab, Tab::Settings);
-        assert_eq!(app.right_pane_tab, RightTab::Lrc);
+        assert_eq!(app.ui_state.right_pane_tab, RightTab::Lrc);
     }
     
     #[test]
