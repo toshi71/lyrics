@@ -12,7 +12,7 @@ mod app_tests {
         assert_eq!(app.ui_state.current_tab, Tab::Main);
         assert_eq!(app.ui_state.right_pane_tab, RightTab::Info);
         assert_eq!(app.ui_state.show_dialog, false);
-        assert_eq!(app.search_query, "");
+        assert_eq!(app.selection_state.search_query, "");
         assert_eq!(app.focus_search, false);
         assert_eq!(app.search_has_focus, false);
         assert_eq!(app.editing_playlist_id, None);
@@ -51,17 +51,17 @@ mod app_tests {
         let mut app = MyApp::new();
         
         // 検索状態の初期値
-        assert_eq!(app.search_query, "");
+        assert_eq!(app.selection_state.search_query, "");
         assert_eq!(app.focus_search, false);
         assert_eq!(app.search_has_focus, false);
         
         // 検索状態を変更
-        app.search_query = "test".to_string();
+        app.selection_state.search_query = "test".to_string();
         app.focus_search = true;
         app.search_has_focus = true;
         
         // 変更が正しく反映されることを確認
-        assert_eq!(app.search_query, "test");
+        assert_eq!(app.selection_state.search_query, "test");
         assert_eq!(app.focus_search, true);
         assert_eq!(app.search_has_focus, true);
     }

@@ -19,9 +19,9 @@ mod state;
 
 pub struct MyApp {
     pub ui_state: UIState,
+    pub selection_state: SelectionState,
     pub settings: Settings,
     pub music_library: MusicLibrary,
-    pub search_query: String,
     pub focus_search: bool,
     pub search_has_focus: bool,
     pub selected_track: Option<TrackInfo>,
@@ -43,8 +43,8 @@ impl MyApp {
         let settings = Settings::load();
         let mut app = Self {
             ui_state: UIState::new(&settings),
+            selection_state: SelectionState::new(),
             music_library: MusicLibrary::new(settings.classical_composer_hierarchy),
-            search_query: String::new(),
             focus_search: false,
             search_has_focus: false,
             selected_track: None,
@@ -114,7 +114,7 @@ impl MyApp {
     }
 
     pub fn apply_search_filter(&mut self) {
-        self.music_library.apply_search_filter(&self.search_query);
+        self.music_library.apply_search_filter(&self.selection_state.search_query);
     }
 
     pub fn check_playback_finished(&mut self) {

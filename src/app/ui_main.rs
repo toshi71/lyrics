@@ -172,7 +172,7 @@ impl MyApp {
                     let mut search_changed = false;
                     let search_has_focus = SearchUI::show(
                         ui,
-                        &mut self.search_query,
+                        &mut self.selection_state.search_query,
                         &mut self.focus_search,
                         &mut || search_changed = true,
                     );
@@ -203,7 +203,7 @@ impl MyApp {
         MusicTreeUI::show(
             ui,
             self.music_library.get_tree_mut(),
-            &self.search_query,
+            &self.selection_state.search_query,
             self.selected_track.as_ref(),
             &self.selected_tracks,
             &self.playlist_manager.get_playlists(),
