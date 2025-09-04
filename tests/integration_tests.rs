@@ -18,7 +18,7 @@ mod app_tests {
         assert_eq!(app.editing_playlist_id, None);
         assert_eq!(app.editing_playlist_name, "");
         assert_eq!(app.shuffle_enabled, false);
-        assert_eq!(app.should_focus_controls, false);
+        assert_eq!(app.ui_state.should_focus_controls, false);
     }
     
     #[test]
@@ -26,9 +26,9 @@ mod app_tests {
         let mut app = MyApp::new();
         
         // UI状態変更前の初期値を保存
-        let initial_splitter = app.splitter_position;
-        let initial_right_top_bottom = app.right_top_bottom_position;
-        let initial_right_bottom_lr = app.right_bottom_left_right_position;
+        let initial_splitter = app.ui_state.splitter_position;
+        let initial_right_top_bottom = app.ui_state.right_top_bottom_position;
+        let initial_right_bottom_lr = app.ui_state.right_bottom_left_right_position;
         
         // UI状態を変更
         app.ui_state.show_dialog = true;
@@ -36,9 +36,9 @@ mod app_tests {
         app.ui_state.right_pane_tab = RightTab::Lrc;
         
         // UI状態変更がアプリケーション状態（位置）に影響しないことを確認
-        assert_eq!(app.splitter_position, initial_splitter);
-        assert_eq!(app.right_top_bottom_position, initial_right_top_bottom);
-        assert_eq!(app.right_bottom_left_right_position, initial_right_bottom_lr);
+        assert_eq!(app.ui_state.splitter_position, initial_splitter);
+        assert_eq!(app.ui_state.right_top_bottom_position, initial_right_top_bottom);
+        assert_eq!(app.ui_state.right_bottom_left_right_position, initial_right_bottom_lr);
         
         // 変更されたUI状態を確認
         assert_eq!(app.ui_state.show_dialog, true);

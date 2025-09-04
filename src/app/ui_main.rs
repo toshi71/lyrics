@@ -100,7 +100,7 @@ impl MyApp {
         );
         
         // マウスドラッグによる分割位置の更新
-        let left_width = available_width * self.splitter_position;
+        let left_width = available_width * self.ui_state.splitter_position;
         let separator_x = available_rect.min.x + left_width;
         let separator_rect = egui::Rect::from_min_size(
             egui::Pos2::new(separator_x - 2.0, available_rect.min.y),
@@ -111,7 +111,7 @@ impl MyApp {
         if separator_response.dragged() {
             if let Some(pointer_pos) = ui.ctx().pointer_interact_pos() {
                 let new_left_width = (pointer_pos.x - available_rect.min.x).max(50.0).min(available_width - 50.0);
-                self.splitter_position = new_left_width / available_width;
+                self.ui_state.splitter_position = new_left_width / available_width;
             }
         }
         
@@ -120,7 +120,7 @@ impl MyApp {
             ui.ctx().set_cursor_icon(egui::CursorIcon::ResizeHorizontal);
         }
         
-        let left_width = available_width * self.splitter_position;
+        let left_width = available_width * self.ui_state.splitter_position;
         
         // Left pane
         let left_rect = egui::Rect::from_min_size(

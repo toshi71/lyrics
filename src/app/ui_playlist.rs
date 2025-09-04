@@ -8,7 +8,7 @@ impl MyApp {
         let available_height = available_rect.height();
         
         // 1. 再生コントロール（上部）の高さを計算
-        let controls_height = available_height * self.right_top_bottom_position;
+        let controls_height = available_height * self.ui_state.right_top_bottom_position;
         
         // リサイズ可能な上下分割線
         let top_bottom_separator_id = ui.id().with("right_top_bottom_separator");
@@ -22,7 +22,7 @@ impl MyApp {
         if top_bottom_separator_response.dragged() {
             if let Some(pointer_pos) = ui.ctx().pointer_interact_pos() {
                 let new_controls_height = (pointer_pos.y - available_rect.min.y).max(50.0).min(available_height - 100.0);
-                self.right_top_bottom_position = new_controls_height / available_height;
+                self.ui_state.right_top_bottom_position = new_controls_height / available_height;
             }
         }
         
@@ -31,7 +31,7 @@ impl MyApp {
             ui.ctx().set_cursor_icon(egui::CursorIcon::ResizeVertical);
         }
         
-        let controls_height = available_height * self.right_top_bottom_position;
+        let controls_height = available_height * self.ui_state.right_top_bottom_position;
         
         // 上部：再生コントロール
         let top_rect = egui::Rect::from_min_size(
@@ -64,7 +64,7 @@ impl MyApp {
         bottom_ui.set_clip_rect(bottom_rect);
         
         // 下部の左右分割
-        let bottom_left_width = bottom_rect.width() * self.right_bottom_left_right_position;
+        let bottom_left_width = bottom_rect.width() * self.ui_state.right_bottom_left_right_position;
         
         // リサイズ可能な左右分割線
         let left_right_separator_id = bottom_ui.id().with("right_bottom_left_right_separator");
@@ -78,7 +78,7 @@ impl MyApp {
         if left_right_separator_response.dragged() {
             if let Some(pointer_pos) = bottom_ui.ctx().pointer_interact_pos() {
                 let new_left_width = (pointer_pos.x - bottom_rect.min.x).max(50.0).min(bottom_rect.width() - 100.0);
-                self.right_bottom_left_right_position = new_left_width / bottom_rect.width();
+                self.ui_state.right_bottom_left_right_position = new_left_width / bottom_rect.width();
             }
         }
         
@@ -87,7 +87,7 @@ impl MyApp {
             bottom_ui.ctx().set_cursor_icon(egui::CursorIcon::ResizeHorizontal);
         }
         
-        let bottom_left_width = bottom_rect.width() * self.right_bottom_left_right_position;
+        let bottom_left_width = bottom_rect.width() * self.ui_state.right_bottom_left_right_position;
         
         // 下部左側：プレイリスト関連
         let bottom_left_rect = egui::Rect::from_min_size(

@@ -24,9 +24,6 @@ pub struct MyApp {
     pub search_query: String,
     pub focus_search: bool,
     pub search_has_focus: bool,
-    pub splitter_position: f32,           // 左 vs 右ペイン（下位互換性のため残す）
-    pub right_top_bottom_position: f32,   // 右ペイン上部 vs 下部
-    pub right_bottom_left_right_position: f32, // 右ペイン下部：左 vs 右
     pub selected_track: Option<TrackInfo>,
     pub selected_tracks: std::collections::HashSet<std::path::PathBuf>,
     pub last_selected_path: Option<std::path::PathBuf>,
@@ -36,7 +33,6 @@ pub struct MyApp {
     pub editing_playlist_name: String,
     pub seek_drag_state: Option<PlaybackState>,
     #[allow(dead_code)]
-    pub should_focus_controls: bool,
     pub cover_art_cache: std::collections::HashMap<std::path::PathBuf, egui::TextureHandle>,
     pub repeat_mode: crate::settings::RepeatMode,
     pub shuffle_enabled: bool,
@@ -51,9 +47,6 @@ impl MyApp {
             search_query: String::new(),
             focus_search: false,
             search_has_focus: false,
-            splitter_position: settings.main_splitter_position,
-            right_top_bottom_position: settings.right_top_bottom_position,
-            right_bottom_left_right_position: settings.right_bottom_left_right_position,
             selected_track: None,
             selected_tracks: std::collections::HashSet::new(),
             last_selected_path: None,
@@ -78,7 +71,6 @@ impl MyApp {
             editing_playlist_id: None,
             editing_playlist_name: String::new(),
             seek_drag_state: None,
-            should_focus_controls: false,
             cover_art_cache: std::collections::HashMap::new(),
             repeat_mode: crate::settings::RepeatMode::Normal,
             shuffle_enabled: false,
@@ -93,9 +85,7 @@ impl MyApp {
         self.settings.update_playlist_display_order(self.playlist_manager.get_ordered_playlist_ids());
         
         // 分割比率を保存
-        self.settings.main_splitter_position = self.splitter_position;
-        self.settings.right_top_bottom_position = self.right_top_bottom_position;
-        self.settings.right_bottom_left_right_position = self.right_bottom_left_right_position;
+        self.ui_state.save_to_settings(&mut self.settings);
         
         self.playlist_manager.optimize_memory();
         
