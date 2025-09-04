@@ -13,13 +13,13 @@ use crate::player::{AudioPlayer, PlaybackState};
 use crate::playlist::PlaylistManager;
 use crate::settings::Settings;
 
-#[derive(PartialEq)]
+#[derive(PartialEq, Debug)]
 pub enum Tab {
     Main,
     Settings,
 }
 
-#[derive(PartialEq)]
+#[derive(PartialEq, Debug)]
 pub enum RightTab {
     #[allow(dead_code)]
     Playback,

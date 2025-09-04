@@ -7,7 +7,7 @@ use kira::tween::Tween;
 use metaflac::Tag;
 use std::time::{Duration, Instant};
 
-#[derive(PartialEq, Clone)]
+#[derive(PartialEq, Clone, Debug)]
 pub enum PlaybackState {
     Playing,
     Paused,
