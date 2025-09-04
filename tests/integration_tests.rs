@@ -9,7 +9,7 @@ mod app_tests {
         let app = MyApp::new();
         
         // 基本的な初期状態をテスト
-        assert_eq!(app.current_tab, Tab::Main);
+        assert_eq!(app.ui_state.current_tab, Tab::Main);
         assert_eq!(app.right_pane_tab, RightTab::Info);
         assert_eq!(app.ui_state.show_dialog, false);
         assert_eq!(app.search_query, "");
@@ -32,7 +32,7 @@ mod app_tests {
         
         // UI状態を変更
         app.ui_state.show_dialog = true;
-        app.current_tab = Tab::Settings;
+        app.ui_state.current_tab = Tab::Settings;
         app.right_pane_tab = RightTab::Lrc;
         
         // UI状態変更がアプリケーション状態（位置）に影響しないことを確認
@@ -42,7 +42,7 @@ mod app_tests {
         
         // 変更されたUI状態を確認
         assert_eq!(app.ui_state.show_dialog, true);
-        assert_eq!(app.current_tab, Tab::Settings);
+        assert_eq!(app.ui_state.current_tab, Tab::Settings);
         assert_eq!(app.right_pane_tab, RightTab::Lrc);
     }
     
@@ -110,7 +110,7 @@ mod state_migration_tests {
         let app = MyApp::new();
         
         // MyAppが正常に作成できることを確認
-        assert_eq!(app.current_tab, Tab::Main);
+        assert_eq!(app.ui_state.current_tab, Tab::Main);
         
         // 将来的にここで新旧構造体の互換性をテスト予定
         // 例: 新しいUIState構造体への移行後も同じ値が取得できることを確認

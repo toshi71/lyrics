@@ -6,13 +6,13 @@ use crate::music::TrackInfo;
 use crate::player::{AudioPlayer, PlaybackState};
 use crate::settings::{Settings, RepeatMode};
 
-#[derive(PartialEq)]
+#[derive(PartialEq, Debug)]
 pub enum Tab {
     Main,
     Settings,
 }
 
-#[derive(PartialEq)]
+#[derive(PartialEq, Debug)]
 pub enum RightTab {
     Playback,
     Info,

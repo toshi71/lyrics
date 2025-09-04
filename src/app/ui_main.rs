@@ -9,12 +9,12 @@ impl MyApp {
             egui::menu::bar(ui, |ui| {
                 ui.menu_button("ファイル", |ui| {
                     if ui.add(egui::Button::new("検索").shortcut_text("Ctrl+F")).clicked() {
-                        self.current_tab = super::Tab::Main;
+                        self.ui_state.current_tab = crate::app::state::Tab::Main;
                         self.focus_search = true;
                         ui.close_menu();
                     }
                     if ui.add(egui::Button::new("設定").shortcut_text("Ctrl+.")).clicked() {
-                        self.current_tab = super::Tab::Settings;
+                        self.ui_state.current_tab = crate::app::state::Tab::Settings;
                         ui.close_menu();
                     }
                     if ui.add(egui::Button::new("終了").shortcut_text("Ctrl+Q")).clicked() {
@@ -52,19 +52,19 @@ impl MyApp {
     pub fn show_tab_bar(&mut self, ctx: &egui::Context) {
         egui::TopBottomPanel::top("tabs").show(ctx, |ui| {
             ui.horizontal(|ui| {
-                ui.selectable_value(&mut self.current_tab, super::Tab::Main, "メイン");
-                ui.selectable_value(&mut self.current_tab, super::Tab::Settings, "設定");
+                ui.selectable_value(&mut self.ui_state.current_tab, crate::app::state::Tab::Main, "メイン");
+                ui.selectable_value(&mut self.ui_state.current_tab, crate::app::state::Tab::Settings, "設定");
             });
         });
     }
 
     pub fn show_central_panel(&mut self, ctx: &egui::Context) {
         egui::CentralPanel::default().show(ctx, |ui| {
-            match self.current_tab {
-                super::Tab::Main => {
+            match self.ui_state.current_tab {
+                crate::app::state::Tab::Main => {
                     self.show_main_tab(ui);
                 },
-                super::Tab::Settings => {
+                crate::app::state::Tab::Settings => {
                     self.show_settings_tab(ui);
                 },
             }

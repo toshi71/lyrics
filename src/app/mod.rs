@@ -13,26 +13,12 @@ use crate::player::{AudioPlayer, PlaybackState};
 use crate::playlist::PlaylistManager;
 use crate::settings::Settings;
 
-pub use state::{UIState, SelectionState, PlayerState, PlaylistEditState, CoverArtCache};
+pub use state::{UIState, SelectionState, PlayerState, PlaylistEditState, CoverArtCache, Tab, RightTab};
 mod state;
 
-#[derive(PartialEq, Debug)]
-pub enum Tab {
-    Main,
-    Settings,
-}
-
-#[derive(PartialEq, Debug)]
-pub enum RightTab {
-    #[allow(dead_code)]
-    Playback,
-    Info,
-    Lrc,
-}
 
 pub struct MyApp {
     pub ui_state: UIState,
-    pub current_tab: Tab,
     pub settings: Settings,
     pub music_library: MusicLibrary,
     pub search_query: String,
@@ -62,7 +48,6 @@ impl MyApp {
         let settings = Settings::load();
         let mut app = Self {
             ui_state: UIState::new(&settings),
-            current_tab: Tab::Main,
             music_library: MusicLibrary::new(settings.classical_composer_hierarchy),
             search_query: String::new(),
             focus_search: false,
