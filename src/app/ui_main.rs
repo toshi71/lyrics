@@ -72,7 +72,7 @@ impl MyApp {
     }
 
     pub fn show_dialog_if_needed(&mut self, ctx: &egui::Context) {
-        if self.show_dialog {
+        if self.ui_state.show_dialog {
             egui::Window::new("ダイアログ")
                 .collapsible(false)
                 .resizable(false)
@@ -80,7 +80,7 @@ impl MyApp {
                     ui.label("Hello, World!");
                     ui.horizontal(|ui| {
                         if ui.button("OK").clicked() {
-                            self.show_dialog = false;
+                            self.ui_state.show_dialog = false;
                         }
                     });
                 });

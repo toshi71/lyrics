@@ -11,7 +11,7 @@ mod app_tests {
         // 基本的な初期状態をテスト
         assert_eq!(app.current_tab, Tab::Main);
         assert_eq!(app.right_pane_tab, RightTab::Info);
-        assert_eq!(app.show_dialog, false);
+        assert_eq!(app.ui_state.show_dialog, false);
         assert_eq!(app.search_query, "");
         assert_eq!(app.focus_search, false);
         assert_eq!(app.search_has_focus, false);
@@ -31,7 +31,7 @@ mod app_tests {
         let initial_right_bottom_lr = app.right_bottom_left_right_position;
         
         // UI状態を変更
-        app.show_dialog = true;
+        app.ui_state.show_dialog = true;
         app.current_tab = Tab::Settings;
         app.right_pane_tab = RightTab::Lrc;
         
@@ -41,7 +41,7 @@ mod app_tests {
         assert_eq!(app.right_bottom_left_right_position, initial_right_bottom_lr);
         
         // 変更されたUI状態を確認
-        assert_eq!(app.show_dialog, true);
+        assert_eq!(app.ui_state.show_dialog, true);
         assert_eq!(app.current_tab, Tab::Settings);
         assert_eq!(app.right_pane_tab, RightTab::Lrc);
     }

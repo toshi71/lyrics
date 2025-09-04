@@ -13,6 +13,9 @@ use crate::player::{AudioPlayer, PlaybackState};
 use crate::playlist::PlaylistManager;
 use crate::settings::Settings;
 
+pub use state::{UIState, SelectionState, PlayerState, PlaylistEditState, CoverArtCache};
+mod state;
+
 #[derive(PartialEq, Debug)]
 pub enum Tab {
     Main,
@@ -28,7 +31,7 @@ pub enum RightTab {
 }
 
 pub struct MyApp {
-    pub show_dialog: bool,
+    pub ui_state: UIState,
     pub current_tab: Tab,
     pub settings: Settings,
     pub music_library: MusicLibrary,
@@ -58,7 +61,7 @@ impl MyApp {
     pub fn new() -> Self {
         let settings = Settings::load();
         let mut app = Self {
-            show_dialog: false,
+            ui_state: UIState::new(&settings),
             current_tab: Tab::Main,
             music_library: MusicLibrary::new(settings.classical_composer_hierarchy),
             search_query: String::new(),
