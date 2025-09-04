@@ -178,7 +178,7 @@ impl MyApp {
                     );
                     
                     // Store search focus state for global shortcut handling
-                    self.search_has_focus = search_has_focus;
+                    self.selection_state.search_has_focus = search_has_focus;
                     
                     if search_changed {
                         self.apply_search_filter();

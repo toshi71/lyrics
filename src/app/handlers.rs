@@ -16,7 +16,7 @@ impl MyApp {
         }
         
         // Global playback shortcuts (disabled when search has focus)
-        if !self.search_has_focus {
+        if !self.selection_state.search_has_focus {
             // Space: Play/Pause
             if ctx.input(|i| i.key_pressed(eframe::egui::Key::Space)) {
                 self.handle_play_pause();
