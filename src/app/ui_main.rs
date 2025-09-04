@@ -10,7 +10,7 @@ impl MyApp {
                 ui.menu_button("ファイル", |ui| {
                     if ui.add(egui::Button::new("検索").shortcut_text("Ctrl+F")).clicked() {
                         self.ui_state.current_tab = crate::app::state::Tab::Main;
-                        self.focus_search = true;
+                        self.selection_state.focus_search = true;
                         ui.close_menu();
                     }
                     if ui.add(egui::Button::new("設定").shortcut_text("Ctrl+.")).clicked() {
@@ -173,7 +173,7 @@ impl MyApp {
                     let search_has_focus = SearchUI::show(
                         ui,
                         &mut self.selection_state.search_query,
-                        &mut self.focus_search,
+                        &mut self.selection_state.focus_search,
                         &mut || search_changed = true,
                     );
                     

@@ -13,7 +13,7 @@ mod app_tests {
         assert_eq!(app.ui_state.right_pane_tab, RightTab::Info);
         assert_eq!(app.ui_state.show_dialog, false);
         assert_eq!(app.selection_state.search_query, "");
-        assert_eq!(app.focus_search, false);
+        assert_eq!(app.selection_state.focus_search, false);
         assert_eq!(app.search_has_focus, false);
         assert_eq!(app.editing_playlist_id, None);
         assert_eq!(app.editing_playlist_name, "");
@@ -52,17 +52,17 @@ mod app_tests {
         
         // 検索状態の初期値
         assert_eq!(app.selection_state.search_query, "");
-        assert_eq!(app.focus_search, false);
+        assert_eq!(app.selection_state.focus_search, false);
         assert_eq!(app.search_has_focus, false);
         
         // 検索状態を変更
         app.selection_state.search_query = "test".to_string();
-        app.focus_search = true;
+        app.selection_state.focus_search = true;
         app.search_has_focus = true;
         
         // 変更が正しく反映されることを確認
         assert_eq!(app.selection_state.search_query, "test");
-        assert_eq!(app.focus_search, true);
+        assert_eq!(app.selection_state.focus_search, true);
         assert_eq!(app.search_has_focus, true);
     }
     

@@ -6,7 +6,7 @@ impl MyApp {
     pub fn handle_keyboard_shortcuts(&mut self, ctx: &eframe::egui::Context) {
         if ctx.input(|i| i.key_pressed(eframe::egui::Key::F) && i.modifiers.ctrl) {
             self.ui_state.current_tab = crate::app::state::Tab::Main;
-            self.focus_search = true;
+            self.selection_state.focus_search = true;
         }
         if ctx.input(|i| i.key_pressed(eframe::egui::Key::Period) && i.modifiers.ctrl) {
             self.ui_state.current_tab = crate::app::state::Tab::Settings;
