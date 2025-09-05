@@ -184,7 +184,7 @@ impl MyApp {
 
     pub fn handle_next(&mut self) {
         let was_playing = *self.player_state.audio_player.get_state() == PlaybackState::Playing;
-        let repeat_mode = &self.repeat_mode;
+        let repeat_mode = &self.player_state.repeat_mode;
         let shuffle_enabled = self.shuffle_enabled;
         
         if let Some(next_track) = self.playlist_manager.move_to_next_with_modes(repeat_mode, shuffle_enabled) {

@@ -885,7 +885,7 @@ impl MyApp {
         
         // リピート・シャッフルモードの変更処理用変数
         let mut repeat_mode_changed = false;
-        let mut new_repeat_mode = self.repeat_mode.clone();
+        let mut new_repeat_mode = self.player_state.repeat_mode.clone();
         let mut shuffle_changed = false;
         let mut new_shuffle_enabled = self.shuffle_enabled;
         
@@ -905,7 +905,7 @@ impl MyApp {
             &mut || seek_started = true,
             &mut || seek_ended = true,
             _auto_focus,
-            &self.repeat_mode,
+            &self.player_state.repeat_mode,
             self.shuffle_enabled,
             &mut |mode| {
                 new_repeat_mode = mode;
@@ -948,7 +948,7 @@ impl MyApp {
         
         // リピート・シャッフルモードの変更処理（永続化なし）
         if repeat_mode_changed {
-            self.repeat_mode = new_repeat_mode;
+            self.player_state.repeat_mode = new_repeat_mode;
         }
         if shuffle_changed {
             self.shuffle_enabled = new_shuffle_enabled;
