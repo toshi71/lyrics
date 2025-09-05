@@ -22,7 +22,6 @@ pub struct MyApp {
     pub selection_state: SelectionState,
     pub settings: Settings,
     pub music_library: MusicLibrary,
-    pub last_selected_path: Option<std::path::PathBuf>,
     pub audio_player: AudioPlayer,
     pub playlist_manager: PlaylistManager,
     pub editing_playlist_id: Option<String>,
@@ -41,7 +40,6 @@ impl MyApp {
             ui_state: UIState::new(&settings),
             selection_state: SelectionState::new(),
             music_library: MusicLibrary::new(settings.classical_composer_hierarchy),
-            last_selected_path: None,
             audio_player: AudioPlayer::new(),
             playlist_manager: {
                 let mut manager = PlaylistManager::auto_load().unwrap_or_else(|_| {

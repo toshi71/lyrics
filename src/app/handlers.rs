@@ -45,7 +45,7 @@ impl MyApp {
     }
 
     pub fn handle_track_selection(&mut self, track: TrackInfo, ctrl_held: bool, shift_held: bool) {
-        if shift_held && self.last_selected_path.is_some() {
+        if shift_held && self.selection_state.last_selected_path.is_some() {
             self.handle_range_selection(track.clone());
         } else if ctrl_held {
             if let Some(ref current_track) = self.selection_state.selected_track {
@@ -61,16 +61,16 @@ impl MyApp {
             }
             
             self.selection_state.selected_track = Some(track.clone());
-            self.last_selected_path = Some(track.path);
+            self.selection_state.last_selected_path = Some(track.path);
         } else {
             self.selection_state.selected_tracks.clear();
             self.selection_state.selected_track = Some(track.clone());
-            self.last_selected_path = Some(track.path);
+            self.selection_state.last_selected_path = Some(track.path);
         }
     }
 
     pub fn handle_range_selection(&mut self, end_track: TrackInfo) {
-        let start_path = match &self.last_selected_path {
+        let start_path = match &self.selection_state.last_selected_path {
             Some(path) => path.clone(),
             None => return,
         };
