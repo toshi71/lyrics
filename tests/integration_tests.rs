@@ -17,7 +17,7 @@ mod app_tests {
         assert_eq!(app.selection_state.search_has_focus, false);
         assert_eq!(app.editing_playlist_id, None);
         assert_eq!(app.editing_playlist_name, "");
-        assert_eq!(app.shuffle_enabled, false);
+        assert_eq!(app.player_state.shuffle_enabled, false);
         assert_eq!(app.ui_state.should_focus_controls, false);
     }
     
@@ -88,14 +88,14 @@ mod app_tests {
         let mut app = MyApp::new();
         
         // 再生状態の初期値
-        assert_eq!(app.shuffle_enabled, false);
-        assert_eq!(app.seek_drag_state, None);
+        assert_eq!(app.player_state.shuffle_enabled, false);
+        assert_eq!(app.player_state.seek_drag_state, None);
         
         // 再生状態を変更
-        app.shuffle_enabled = true;
+        app.player_state.shuffle_enabled = true;
         
         // 変更が正しく反映されることを確認
-        assert_eq!(app.shuffle_enabled, true);
+        assert_eq!(app.player_state.shuffle_enabled, true);
     }
 }
 

@@ -29,7 +29,6 @@ pub struct MyApp {
     pub seek_drag_state: Option<PlaybackState>,
     #[allow(dead_code)]
     pub cover_art_cache: std::collections::HashMap<std::path::PathBuf, egui::TextureHandle>,
-    pub shuffle_enabled: bool,
 }
 
 impl MyApp {
@@ -61,7 +60,6 @@ impl MyApp {
             editing_playlist_name: String::new(),
             seek_drag_state: None,
             cover_art_cache: std::collections::HashMap::new(),
-            shuffle_enabled: false,
             settings,
         };
         app.refresh_music_library();
@@ -110,7 +108,7 @@ impl MyApp {
         if *self.player_state.audio_player.get_state() == PlaybackState::Playing && self.player_state.audio_player.is_finished() {
             // 現在の楽曲が終了した場合、リピート・シャッフルモードに応じて次の楽曲を自動再生
             let repeat_mode = &self.player_state.repeat_mode;
-            let shuffle_enabled = self.shuffle_enabled;
+            let shuffle_enabled = self.player_state.shuffle_enabled;
             
             if let Some(next_track) = self.playlist_manager.move_to_next_with_modes(repeat_mode, shuffle_enabled) {
                 if let Err(_) = self.player_state.audio_player.play(next_track) {

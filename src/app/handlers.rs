@@ -114,7 +114,7 @@ impl MyApp {
         let was_playing = *self.player_state.audio_player.get_state() == PlaybackState::Playing;
         
         if position.as_secs() <= 3 {
-            let shuffle_enabled = self.shuffle_enabled;
+            let shuffle_enabled = self.player_state.shuffle_enabled;
             if let Some(prev_track) = self.playlist_manager.move_to_previous_with_modes(shuffle_enabled) {
                 if let Err(_) = self.player_state.audio_player.play(prev_track) {
                     // Handle error silently
@@ -185,7 +185,7 @@ impl MyApp {
     pub fn handle_next(&mut self) {
         let was_playing = *self.player_state.audio_player.get_state() == PlaybackState::Playing;
         let repeat_mode = &self.player_state.repeat_mode;
-        let shuffle_enabled = self.shuffle_enabled;
+        let shuffle_enabled = self.player_state.shuffle_enabled;
         
         if let Some(next_track) = self.playlist_manager.move_to_next_with_modes(repeat_mode, shuffle_enabled) {
             if let Err(_) = self.player_state.audio_player.play(next_track) {

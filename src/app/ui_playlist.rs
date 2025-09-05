@@ -887,7 +887,7 @@ impl MyApp {
         let mut repeat_mode_changed = false;
         let mut new_repeat_mode = self.player_state.repeat_mode.clone();
         let mut shuffle_changed = false;
-        let mut new_shuffle_enabled = self.shuffle_enabled;
+        let mut new_shuffle_enabled = self.player_state.shuffle_enabled;
         
         PlaybackControlsUI::show_controls_with_seek_bar(
             ui,
@@ -906,7 +906,7 @@ impl MyApp {
             &mut || seek_ended = true,
             _auto_focus,
             &self.player_state.repeat_mode,
-            self.shuffle_enabled,
+            self.player_state.shuffle_enabled,
             &mut |mode| {
                 new_repeat_mode = mode;
                 repeat_mode_changed = true;
@@ -951,7 +951,7 @@ impl MyApp {
             self.player_state.repeat_mode = new_repeat_mode;
         }
         if shuffle_changed {
-            self.shuffle_enabled = new_shuffle_enabled;
+            self.player_state.shuffle_enabled = new_shuffle_enabled;
             self.playlist_manager.update_shuffle_when_settings_changed(new_shuffle_enabled);
         }
         
