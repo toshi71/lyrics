@@ -26,7 +26,6 @@ pub struct MyApp {
     pub playlist_manager: PlaylistManager,
     pub editing_playlist_id: Option<String>,
     pub editing_playlist_name: String,
-    pub seek_drag_state: Option<PlaybackState>,
     #[allow(dead_code)]
     pub cover_art_cache: std::collections::HashMap<std::path::PathBuf, egui::TextureHandle>,
 }
@@ -58,7 +57,6 @@ impl MyApp {
             },
             editing_playlist_id: None,
             editing_playlist_name: String::new(),
-            seek_drag_state: None,
             cover_art_cache: std::collections::HashMap::new(),
             settings,
         };

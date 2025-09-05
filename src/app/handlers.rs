@@ -448,7 +448,7 @@ impl MyApp {
     pub fn handle_seek_start(&mut self) {
         // ドラッグ開始時に現在の再生状態を保存し、再生を一時停止
         let current_state = self.player_state.audio_player.get_state().clone();
-        self.seek_drag_state = Some(current_state.clone());
+        self.player_state.seek_drag_state = Some(current_state.clone());
         
         if current_state == crate::player::PlaybackState::Playing {
             self.player_state.audio_player.pause();
@@ -457,7 +457,7 @@ impl MyApp {
 
     pub fn handle_seek_end(&mut self) {
         // ドラッグ終了時に保存した再生状態を復元
-        if let Some(previous_state) = self.seek_drag_state.take() {
+        if let Some(previous_state) = self.player_state.seek_drag_state.take() {
             if previous_state == crate::player::PlaybackState::Playing {
                 self.player_state.audio_player.resume();
             }
