@@ -110,38 +110,38 @@ impl MyApp {
     }
 
     pub fn handle_previous_button(&mut self) {
-        let position = self.audio_player.get_playback_position();
-        let was_playing = *self.audio_player.get_state() == PlaybackState::Playing;
+        let position = self.player_state.audio_player.get_playback_position();
+        let was_playing = *self.player_state.audio_player.get_state() == PlaybackState::Playing;
         
         if position.as_secs() <= 3 {
             let shuffle_enabled = self.shuffle_enabled;
             if let Some(prev_track) = self.playlist_manager.move_to_previous_with_modes(shuffle_enabled) {
-                if let Err(_) = self.audio_player.play(prev_track) {
+                if let Err(_) = self.player_state.audio_player.play(prev_track) {
                     // Handle error silently
                 } else if !was_playing {
                     // If it was paused before, pause the new track
-                    self.audio_player.pause();
+                    self.player_state.audio_player.pause();
                 }
             }
         } else {
-            if let Err(_) = self.audio_player.restart_current() {
+            if let Err(_) = self.player_state.audio_player.restart_current() {
                 // Handle error silently
             }
         }
     }
 
     pub fn handle_play_pause(&mut self) {
-        match self.audio_player.get_state() {
+        match self.player_state.audio_player.get_state() {
             PlaybackState::Playing => {
-                self.audio_player.pause();
+                self.player_state.audio_player.pause();
             },
             PlaybackState::Paused => {
-                self.audio_player.resume();
+                self.player_state.audio_player.resume();
             },
             PlaybackState::Stopped => {
                 // Try to get current track, if none exists, start from selected or first track
                 if let Some(track) = self.playlist_manager.get_current_track() {
-                    if let Err(_) = self.audio_player.play(track.clone()) {
+                    if let Err(_) = self.player_state.audio_player.play(track.clone()) {
                         // Handle error silently for now
                     }
                 } else {
@@ -170,7 +170,7 @@ impl MyApp {
             // Set the target index as current and start playback
             self.playlist_manager.set_current_index(target_index);
             if let Some(track) = self.playlist_manager.get_current_track() {
-                if let Err(_) = self.audio_player.play(track.clone()) {
+                if let Err(_) = self.player_state.audio_player.play(track.clone()) {
                     // Handle error silently
                 }
             }
@@ -178,28 +178,28 @@ impl MyApp {
     }
 
     pub fn handle_stop(&mut self) {
-        self.audio_player.stop();
+        self.player_state.audio_player.stop();
         self.playlist_manager.set_current_playing_index(None);
     }
 
     pub fn handle_next(&mut self) {
-        let was_playing = *self.audio_player.get_state() == PlaybackState::Playing;
+        let was_playing = *self.player_state.audio_player.get_state() == PlaybackState::Playing;
         let repeat_mode = &self.repeat_mode;
         let shuffle_enabled = self.shuffle_enabled;
         
         if let Some(next_track) = self.playlist_manager.move_to_next_with_modes(repeat_mode, shuffle_enabled) {
-            if let Err(_) = self.audio_player.play(next_track) {
+            if let Err(_) = self.player_state.audio_player.play(next_track) {
                 // Handle error silently
             } else if !was_playing {
                 // If it was paused before, pause the new track
-                self.audio_player.pause();
+                self.player_state.audio_player.pause();
             }
         }
     }
 
     #[allow(dead_code)]
     pub fn clear_playback_queue(&mut self) {
-        self.audio_player.stop();
+        self.player_state.audio_player.stop();
         self.playlist_manager.clear();
         self.playlist_manager.set_current_playing_index(None);
     }
@@ -207,7 +207,7 @@ impl MyApp {
     pub fn handle_queue_item_double_clicked(&mut self, index: usize) {
         self.playlist_manager.set_current_index(index);
         if let Some(track) = self.playlist_manager.get_current_track() {
-            if let Err(_) = self.audio_player.play(track.clone()) {
+            if let Err(_) = self.player_state.audio_player.play(track.clone()) {
                 // Handle error silently
             }
         }
@@ -216,7 +216,7 @@ impl MyApp {
     pub fn handle_remove_selected_from_queue(&mut self) {
         if let Some(current_index) = self.playlist_manager.get_current_index() {
             if self.playlist_manager.is_selected(current_index) {
-                self.audio_player.stop();
+                self.player_state.audio_player.stop();
                 self.playlist_manager.set_current_playing_index(None);
             }
         }
@@ -390,68 +390,68 @@ impl MyApp {
     }
 
     pub fn handle_seek_backward(&mut self) {
-        let was_paused = *self.audio_player.get_state() == PlaybackState::Paused;
+        let was_paused = *self.player_state.audio_player.get_state() == PlaybackState::Paused;
         let seek_seconds = self.settings.get_seek_seconds();
         
         if was_paused {
             // If paused, temporarily resume for seek operation
-            self.audio_player.resume();
+            self.player_state.audio_player.resume();
         }
         
-        if let Err(_) = self.audio_player.seek_backward(seek_seconds) {
+        if let Err(_) = self.player_state.audio_player.seek_backward(seek_seconds) {
             // Handle error silently
         }
         
         if was_paused {
             // Restore paused state after seek
-            self.audio_player.pause();
+            self.player_state.audio_player.pause();
         }
     }
 
     pub fn handle_seek_forward(&mut self) {
-        let was_paused = *self.audio_player.get_state() == PlaybackState::Paused;
+        let was_paused = *self.player_state.audio_player.get_state() == PlaybackState::Paused;
         let seek_seconds = self.settings.get_seek_seconds();
         
         if was_paused {
             // If paused, temporarily resume for seek operation
-            self.audio_player.resume();
+            self.player_state.audio_player.resume();
         }
         
-        if let Err(_) = self.audio_player.seek_forward(seek_seconds) {
+        if let Err(_) = self.player_state.audio_player.seek_forward(seek_seconds) {
             // Handle error silently
         }
         
         if was_paused {
             // Restore paused state after seek
-            self.audio_player.pause();
+            self.player_state.audio_player.pause();
         }
     }
 
     pub fn handle_seek_to_position(&mut self, position: std::time::Duration) {
-        let was_paused = *self.audio_player.get_state() == PlaybackState::Paused;
+        let was_paused = *self.player_state.audio_player.get_state() == PlaybackState::Paused;
         
         if was_paused {
             // If paused, temporarily resume for seek operation
-            self.audio_player.resume();
+            self.player_state.audio_player.resume();
         }
         
-        if let Err(_) = self.audio_player.seek_to_position(position) {
+        if let Err(_) = self.player_state.audio_player.seek_to_position(position) {
             // Handle error silently
         }
         
         if was_paused {
             // Restore paused state after seek
-            self.audio_player.pause();
+            self.player_state.audio_player.pause();
         }
     }
 
     pub fn handle_seek_start(&mut self) {
         // ドラッグ開始時に現在の再生状態を保存し、再生を一時停止
-        let current_state = self.audio_player.get_state().clone();
+        let current_state = self.player_state.audio_player.get_state().clone();
         self.seek_drag_state = Some(current_state.clone());
         
         if current_state == crate::player::PlaybackState::Playing {
-            self.audio_player.pause();
+            self.player_state.audio_player.pause();
         }
     }
 
@@ -459,7 +459,7 @@ impl MyApp {
         // ドラッグ終了時に保存した再生状態を復元
         if let Some(previous_state) = self.seek_drag_state.take() {
             if previous_state == crate::player::PlaybackState::Playing {
-                self.audio_player.resume();
+                self.player_state.audio_player.resume();
             }
         }
     }

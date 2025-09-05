@@ -735,7 +735,7 @@ impl MyApp {
                             
                             // もしクリアしたプレイリストが現在再生中だった場合、再生を停止
                             if self.playlist_manager.get_current_playing_playlist_id() == Some(&playlist_id) {
-                                self.audio_player.stop();
+                                self.player_state.audio_player.stop();
                                 self.playlist_manager.set_current_playing_index(None);
                             }
                             
@@ -856,7 +856,7 @@ impl MyApp {
     }
 
     pub fn show_playback_controls_only(&mut self, ui: &mut egui::Ui) {
-        let playback_state = self.audio_player.get_state().clone();
+        let playback_state = self.player_state.audio_player.get_state().clone();
         
         // Collect actions (removed clear_queue)
         let mut previous_clicked = false;
@@ -873,8 +873,8 @@ impl MyApp {
         let _auto_focus = false;
         
         // 再生位置と総再生時間を取得
-        let current_position = self.audio_player.get_playback_position();
-        let total_duration = self.audio_player.get_total_duration();
+        let current_position = self.player_state.audio_player.get_playback_position();
+        let total_duration = self.player_state.audio_player.get_total_duration();
         
         // 再生中の場合はUIを継続的に更新
         if playback_state == crate::player::PlaybackState::Playing {

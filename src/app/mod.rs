@@ -20,9 +20,9 @@ mod state;
 pub struct MyApp {
     pub ui_state: UIState,
     pub selection_state: SelectionState,
+    pub player_state: PlayerState,
     pub settings: Settings,
     pub music_library: MusicLibrary,
-    pub audio_player: AudioPlayer,
     pub playlist_manager: PlaylistManager,
     pub editing_playlist_id: Option<String>,
     pub editing_playlist_name: String,
@@ -39,8 +39,8 @@ impl MyApp {
         let mut app = Self {
             ui_state: UIState::new(&settings),
             selection_state: SelectionState::new(),
+            player_state: PlayerState::new(),
             music_library: MusicLibrary::new(settings.classical_composer_hierarchy),
-            audio_player: AudioPlayer::new(),
             playlist_manager: {
                 let mut manager = PlaylistManager::auto_load().unwrap_or_else(|_| {
                     PlaylistManager::new_with_settings(
@@ -109,19 +109,19 @@ impl MyApp {
 
     pub fn check_playback_finished(&mut self) {
         // 楽曲が終了したかチェック
-        if *self.audio_player.get_state() == PlaybackState::Playing && self.audio_player.is_finished() {
+        if *self.player_state.audio_player.get_state() == PlaybackState::Playing && self.player_state.audio_player.is_finished() {
             // 現在の楽曲が終了した場合、リピート・シャッフルモードに応じて次の楽曲を自動再生
             let repeat_mode = &self.repeat_mode;
             let shuffle_enabled = self.shuffle_enabled;
             
             if let Some(next_track) = self.playlist_manager.move_to_next_with_modes(repeat_mode, shuffle_enabled) {
-                if let Err(_) = self.audio_player.play(next_track) {
+                if let Err(_) = self.player_state.audio_player.play(next_track) {
                     // エラーの場合は停止状態にする
-                    self.audio_player.stop();
+                    self.player_state.audio_player.stop();
                 }
             } else {
                 // 次の楽曲がない場合は停止
-                self.audio_player.stop();
+                self.player_state.audio_player.stop();
                 self.playlist_manager.set_current_playing_index(None);
             }
         }
