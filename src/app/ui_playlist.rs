@@ -181,7 +181,7 @@ impl MyApp {
             ui.label("楽曲を選択してください");
         } else if selected_count == 1 {
             // 単一選択の場合は従来通り
-            if let Some(track) = self.selected_track.clone() {
+            if let Some(track) = self.selection_state.selected_track.clone() {
                 ui.heading("📋 選択中の楽曲");
                 self.show_track_details(ui, &track);
             }
@@ -576,7 +576,7 @@ impl MyApp {
                     let default_response = ui.selectable_label(is_default_active, default_label);
                     if default_response.clicked() {
                         self.playlist_manager.set_active_playlist("default");
-                        self.selected_track = None; // Reset selected track when changing playlist
+                        self.selection_state.selected_track = None; // Reset selected track when changing playlist
                         self.save_settings();
                     }
                     
@@ -691,7 +691,7 @@ impl MyApp {
                         let new_name = format!("新しいプレイリスト{}", user_playlist_count + 1);
                         let new_id = self.playlist_manager.create_playlist(new_name);
                         self.playlist_manager.set_active_playlist(&new_id);
-                        self.selected_track = None; // Reset selected track when changing playlist
+                        self.selection_state.selected_track = None; // Reset selected track when changing playlist
                         
                         self.settings.add_to_display_order(new_id);
                         
@@ -702,7 +702,7 @@ impl MyApp {
                     // アクション実行（借用チェッカー対応）
                     if let Some(id) = playlist_to_activate {
                         self.playlist_manager.set_active_playlist(&id);
-                        self.selected_track = None; // Reset selected track when changing playlist
+                        self.selection_state.selected_track = None; // Reset selected track when changing playlist
                         self.save_settings();
                     }
                     if let Some(id) = playlist_to_delete {
@@ -809,7 +809,7 @@ impl MyApp {
             // Update selected_track for info display
             if let Some(tracks) = self.playlist_manager.get_tracks() {
                 if index < tracks.len() {
-                    self.selected_track = Some(tracks[index].clone());
+                    self.selection_state.selected_track = Some(tracks[index].clone());
                 }
             }
         }

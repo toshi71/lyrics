@@ -48,7 +48,7 @@ impl MyApp {
         if shift_held && self.last_selected_path.is_some() {
             self.handle_range_selection(track.clone());
         } else if ctrl_held {
-            if let Some(ref current_track) = self.selected_track {
+            if let Some(ref current_track) = self.selection_state.selected_track {
                 if !self.selected_tracks.contains(&current_track.path) {
                     self.selected_tracks.insert(current_track.path.clone());
                 }
@@ -60,11 +60,11 @@ impl MyApp {
                 self.selected_tracks.insert(track.path.clone());
             }
             
-            self.selected_track = Some(track.clone());
+            self.selection_state.selected_track = Some(track.clone());
             self.last_selected_path = Some(track.path);
         } else {
             self.selected_tracks.clear();
-            self.selected_track = Some(track.clone());
+            self.selection_state.selected_track = Some(track.clone());
             self.last_selected_path = Some(track.path);
         }
     }
@@ -78,7 +78,7 @@ impl MyApp {
         if start_path == end_track.path {
             self.selected_tracks.clear();
             self.selected_tracks.insert(end_track.path.clone());
-            self.selected_track = Some(end_track);
+            self.selection_state.selected_track = Some(end_track);
             return;
         }
 
@@ -100,12 +100,12 @@ impl MyApp {
                 self.selected_tracks.insert(track.path.clone());
             }
             
-            self.selected_track = Some(end_track);
+            self.selection_state.selected_track = Some(end_track);
         } else {
             self.selected_tracks.clear();
             self.selected_tracks.insert(start_path);
             self.selected_tracks.insert(end_track.path.clone());
-            self.selected_track = Some(end_track);
+            self.selection_state.selected_track = Some(end_track);
         }
     }
 
