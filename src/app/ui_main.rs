@@ -205,7 +205,7 @@ impl MyApp {
             self.music_library.get_tree_mut(),
             &self.selection_state.search_query,
             self.selection_state.selected_track.as_ref(),
-            &self.selected_tracks,
+            &self.selection_state.selected_tracks,
             &self.playlist_manager.get_playlists(),
             &mut |track, ctrl_held, shift_held| track_selection = Some((track, ctrl_held, shift_held)),
             &mut |track| double_clicked_track = Some(track),

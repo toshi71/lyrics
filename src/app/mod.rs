@@ -22,7 +22,6 @@ pub struct MyApp {
     pub selection_state: SelectionState,
     pub settings: Settings,
     pub music_library: MusicLibrary,
-    pub selected_tracks: std::collections::HashSet<std::path::PathBuf>,
     pub last_selected_path: Option<std::path::PathBuf>,
     pub audio_player: AudioPlayer,
     pub playlist_manager: PlaylistManager,
@@ -42,7 +41,6 @@ impl MyApp {
             ui_state: UIState::new(&settings),
             selection_state: SelectionState::new(),
             music_library: MusicLibrary::new(settings.classical_composer_hierarchy),
-            selected_tracks: std::collections::HashSet::new(),
             last_selected_path: None,
             audio_player: AudioPlayer::new(),
             playlist_manager: {

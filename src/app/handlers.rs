@@ -49,21 +49,21 @@ impl MyApp {
             self.handle_range_selection(track.clone());
         } else if ctrl_held {
             if let Some(ref current_track) = self.selection_state.selected_track {
-                if !self.selected_tracks.contains(&current_track.path) {
-                    self.selected_tracks.insert(current_track.path.clone());
+                if !self.selection_state.selected_tracks.contains(&current_track.path) {
+                    self.selection_state.selected_tracks.insert(current_track.path.clone());
                 }
             }
             
-            if self.selected_tracks.contains(&track.path) {
-                self.selected_tracks.remove(&track.path);
+            if self.selection_state.selected_tracks.contains(&track.path) {
+                self.selection_state.selected_tracks.remove(&track.path);
             } else {
-                self.selected_tracks.insert(track.path.clone());
+                self.selection_state.selected_tracks.insert(track.path.clone());
             }
             
             self.selection_state.selected_track = Some(track.clone());
             self.last_selected_path = Some(track.path);
         } else {
-            self.selected_tracks.clear();
+            self.selection_state.selected_tracks.clear();
             self.selection_state.selected_track = Some(track.clone());
             self.last_selected_path = Some(track.path);
         }
@@ -76,8 +76,8 @@ impl MyApp {
         };
 
         if start_path == end_track.path {
-            self.selected_tracks.clear();
-            self.selected_tracks.insert(end_track.path.clone());
+            self.selection_state.selected_tracks.clear();
+            self.selection_state.selected_tracks.insert(end_track.path.clone());
             self.selection_state.selected_track = Some(end_track);
             return;
         }
@@ -88,7 +88,7 @@ impl MyApp {
         let end_index = all_tracks.iter().position(|t| t.path == end_track.path);
         
         if let (Some(start_idx), Some(end_idx)) = (start_index, end_index) {
-            self.selected_tracks.clear();
+            self.selection_state.selected_tracks.clear();
             
             let (min_idx, max_idx) = if start_idx <= end_idx {
                 (start_idx, end_idx)
@@ -97,14 +97,14 @@ impl MyApp {
             };
             
             for track in &all_tracks[min_idx..=max_idx] {
-                self.selected_tracks.insert(track.path.clone());
+                self.selection_state.selected_tracks.insert(track.path.clone());
             }
             
             self.selection_state.selected_track = Some(end_track);
         } else {
-            self.selected_tracks.clear();
-            self.selected_tracks.insert(start_path);
-            self.selected_tracks.insert(end_track.path.clone());
+            self.selection_state.selected_tracks.clear();
+            self.selection_state.selected_tracks.insert(start_path);
+            self.selection_state.selected_tracks.insert(end_track.path.clone());
             self.selection_state.selected_track = Some(end_track);
         }
     }
