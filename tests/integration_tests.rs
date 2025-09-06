@@ -15,8 +15,8 @@ mod app_tests {
         assert_eq!(app.selection_state.search_query, "");
         assert_eq!(app.selection_state.focus_search, false);
         assert_eq!(app.selection_state.search_has_focus, false);
-        assert_eq!(app.editing_playlist_id, None);
-        assert_eq!(app.editing_playlist_name, "");
+        assert_eq!(app.playlist_edit_state.editing_playlist_id, None);
+        assert_eq!(app.playlist_edit_state.editing_playlist_name, "");
         assert_eq!(app.player_state.shuffle_enabled, false);
         assert_eq!(app.ui_state.should_focus_controls, false);
     }
@@ -71,16 +71,16 @@ mod app_tests {
         let mut app = MyApp::new();
         
         // プレイリスト編集状態の初期値
-        assert_eq!(app.editing_playlist_id, None);
-        assert_eq!(app.editing_playlist_name, "");
+        assert_eq!(app.playlist_edit_state.editing_playlist_id, None);
+        assert_eq!(app.playlist_edit_state.editing_playlist_name, "");
         
         // プレイリスト編集状態を変更
-        app.editing_playlist_id = Some("test_playlist".to_string());
-        app.editing_playlist_name = "Test Playlist".to_string();
+        app.playlist_edit_state.editing_playlist_id = Some("test_playlist".to_string());
+        app.playlist_edit_state.editing_playlist_name = "Test Playlist".to_string();
         
         // 変更が正しく反映されることを確認
-        assert_eq!(app.editing_playlist_id, Some("test_playlist".to_string()));
-        assert_eq!(app.editing_playlist_name, "Test Playlist");
+        assert_eq!(app.playlist_edit_state.editing_playlist_id, Some("test_playlist".to_string()));
+        assert_eq!(app.playlist_edit_state.editing_playlist_name, "Test Playlist");
     }
     
     #[test]

@@ -134,4 +134,8 @@ impl CoverArtCache {
     pub fn len(&self) -> usize {
         self.cache.len()
     }
+
+    pub fn contains_key(&self, path: &PathBuf) -> bool {
+        self.cache.contains_key(path)
+    }
 }

@@ -8,8 +8,8 @@ use font_kit::family_name::FamilyName;
 use font_kit::properties::Properties;
 use font_kit::source::SystemSource;
 
-use crate::music::{MusicLibrary, TrackInfo};
-use crate::player::{AudioPlayer, PlaybackState};
+use crate::music::MusicLibrary;
+use crate::player::PlaybackState;
 use crate::playlist::PlaylistManager;
 use crate::settings::Settings;
 
@@ -21,13 +21,11 @@ pub struct MyApp {
     pub ui_state: UIState,
     pub selection_state: SelectionState,
     pub player_state: PlayerState,
+    pub playlist_edit_state: PlaylistEditState,
+    pub cover_art_cache: CoverArtCache,
     pub settings: Settings,
     pub music_library: MusicLibrary,
     pub playlist_manager: PlaylistManager,
-    pub editing_playlist_id: Option<String>,
-    pub editing_playlist_name: String,
-    #[allow(dead_code)]
-    pub cover_art_cache: std::collections::HashMap<std::path::PathBuf, egui::TextureHandle>,
 }
 
 impl MyApp {
@@ -37,6 +35,8 @@ impl MyApp {
             ui_state: UIState::new(&settings),
             selection_state: SelectionState::new(),
             player_state: PlayerState::new(),
+            playlist_edit_state: PlaylistEditState::new(),
+            cover_art_cache: CoverArtCache::new(),
             music_library: MusicLibrary::new(settings.classical_composer_hierarchy),
             playlist_manager: {
                 let mut manager = PlaylistManager::auto_load().unwrap_or_else(|_| {
@@ -55,9 +55,6 @@ impl MyApp {
                 
                 manager
             },
-            editing_playlist_id: None,
-            editing_playlist_name: String::new(),
-            cover_art_cache: std::collections::HashMap::new(),
             settings,
         };
         app.refresh_music_library();

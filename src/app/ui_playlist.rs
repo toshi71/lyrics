@@ -605,13 +605,13 @@ impl MyApp {
                         }
                         
                         let is_active = self.playlist_manager.get_active_playlist_id() == playlist.id;
-                        let is_editing = self.editing_playlist_id.as_ref() == Some(&playlist.id);
+                        let is_editing = self.playlist_edit_state.editing_playlist_id.as_ref() == Some(&playlist.id);
                         let is_playing = self.playlist_manager.get_current_playing_playlist_id() == Some(&playlist.id)
                             && self.playlist_manager.get_current_track().is_some();
                         
                         if is_editing {
                             // 編集モード：テキスト入力フィールドを表示
-                            let response = ui.text_edit_singleline(&mut self.editing_playlist_name);
+                            let response = ui.text_edit_singleline(&mut self.playlist_edit_state.editing_playlist_name);
                             
                             // フォーカスを設定（初回のみ）
                             if response.gained_focus() {
@@ -620,7 +620,7 @@ impl MyApp {
                             
                             // Enter/Escapeキーの処理
                             if response.lost_focus() || ui.input(|i| i.key_pressed(eframe::egui::Key::Enter)) {
-                                playlist_rename_result = Some((playlist.id.clone(), self.editing_playlist_name.clone()));
+                                playlist_rename_result = Some((playlist.id.clone(), self.playlist_edit_state.editing_playlist_name.clone()));
                                 cancel_editing = true;
                             }
                             
@@ -713,20 +713,20 @@ impl MyApp {
                         }
                     }
                     if let Some((id, name)) = playlist_to_start_editing {
-                        self.editing_playlist_id = Some(id);
-                        self.editing_playlist_name = name;
+                        self.playlist_edit_state.editing_playlist_id = Some(id);
+                        self.playlist_edit_state.editing_playlist_name = name;
                     }
                     if let Some((id, new_name)) = playlist_rename_result {
                         if self.playlist_manager.rename_playlist(&id, new_name) {
                             let _ = self.playlist_manager.auto_save();
                             self.save_settings();
                         }
-                        self.editing_playlist_id = None;
-                        self.editing_playlist_name.clear();
+                        self.playlist_edit_state.editing_playlist_id = None;
+                        self.playlist_edit_state.editing_playlist_name.clear();
                     }
                     if cancel_editing {
-                        self.editing_playlist_id = None;
-                        self.editing_playlist_name.clear();
+                        self.playlist_edit_state.editing_playlist_id = None;
+                        self.playlist_edit_state.editing_playlist_name.clear();
                     }
                     if let Some(playlist_id) = playlist_to_clear {
                         if let Some(playlist) = self.playlist_manager.get_playlist_mut(&playlist_id) {
