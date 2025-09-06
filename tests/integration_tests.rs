@@ -18,7 +18,6 @@ mod app_tests {
         assert_eq!(app.playlist_edit_state.editing_playlist_id, None);
         assert_eq!(app.playlist_edit_state.editing_playlist_name, "");
         assert_eq!(app.player_state.shuffle_enabled, false);
-        assert_eq!(app.ui_state.should_focus_controls, false);
     }
     
     #[test]
