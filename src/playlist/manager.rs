@@ -542,6 +542,7 @@ impl PlaylistManager {
     }
     
     // 特定のプレイリストでの再生状態を設定するメソッド
+    #[allow(dead_code)]
     pub fn set_current_playing_with_playlist(&mut self, index: Option<usize>, playlist_id: String) {
         
         self.current_playing_index = index;
@@ -576,11 +577,13 @@ impl PlaylistManager {
         self.get_active_playlist().map_or(0, |p| p.len())
     }
 
+    #[allow(dead_code)]
     pub fn is_active_playlist_empty(&self) -> bool {
         self.get_active_playlist().map_or(true, |p| p.is_empty())
     }
 
     // 再生制御メソッド（PlaybackQueueからの移行）
+    #[allow(dead_code)]
     pub fn move_to_next(&mut self) -> Option<TrackInfo> {
         // 現在再生中のプレイリストから次の楽曲を取得
         let playing_playlist_id = self.current_playing_playlist_id.clone()
@@ -613,6 +616,7 @@ impl PlaylistManager {
         }
     }
 
+    #[allow(dead_code)]
     pub fn move_to_previous(&mut self) -> Option<TrackInfo> {
         if let Some(current_index) = self.current_playing_index {
             if current_index > 0 {
@@ -786,6 +790,7 @@ impl PlaylistManager {
         self.playlists = ordered_playlists;
     }
 
+    #[allow(dead_code)]
     pub fn reorder_playlist(&mut self, from_index: usize, to_index: usize) -> bool {
         if from_index < self.playlists.len() && to_index < self.playlists.len() && from_index != to_index {
             let playlist = self.playlists.remove(from_index);
@@ -804,6 +809,7 @@ impl PlaylistManager {
     // Step 4-3: パフォーマンス最適化メソッド
     
     /// 遅延ファイル存在チェック（大量プレイリスト用）
+    #[allow(dead_code)]
     pub fn validate_tracks_lazy(&mut self, playlist_id: &str) -> Result<usize, String> {
         let removed_count = if let Some(playlist) = self.get_playlist_mut(playlist_id) {
             let original_count = playlist.tracks.len();
@@ -844,6 +850,7 @@ impl PlaylistManager {
     }
 
     /// 大量プレイリストでの効率的な楽曲検索
+    #[allow(dead_code)]
     pub fn find_track_in_playlists(&self, track_path: &std::path::Path) -> Vec<String> {
         let mut found_in = Vec::new();
         

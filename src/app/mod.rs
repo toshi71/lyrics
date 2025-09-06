@@ -13,6 +13,7 @@ use crate::player::PlaybackState;
 use crate::playlist::PlaylistManager;
 use crate::settings::Settings;
 
+#[allow(unused_imports)]
 pub use state::{UIState, SelectionState, PlayerState, PlaylistEditState, CoverArtCache, Tab, RightTab};
 mod state;
 

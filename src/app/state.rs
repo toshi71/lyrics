@@ -14,6 +14,7 @@ pub enum Tab {
 
 #[derive(PartialEq, Debug)]
 pub enum RightTab {
+    #[allow(dead_code)]
     Playback,
     Info,
     Lrc,
@@ -27,7 +28,6 @@ pub struct UIState {
     pub splitter_position: f32,
     pub right_top_bottom_position: f32,
     pub right_bottom_left_right_position: f32,
-    pub should_focus_controls: bool,
 }
 
 impl UIState {
@@ -39,7 +39,6 @@ impl UIState {
             splitter_position: settings.main_splitter_position,
             right_top_bottom_position: settings.right_top_bottom_position,
             right_bottom_left_right_position: settings.right_bottom_left_right_position,
-            should_focus_controls: false,
         }
     }
 
@@ -127,13 +126,6 @@ impl CoverArtCache {
         self.cache.insert(path, handle);
     }
 
-    pub fn clear(&mut self) {
-        self.cache.clear();
-    }
-
-    pub fn len(&self) -> usize {
-        self.cache.len()
-    }
 
     pub fn contains_key(&self, path: &PathBuf) -> bool {
         self.cache.contains_key(path)
