@@ -51,7 +51,7 @@ pub struct TrackSeekPoints {
 
 pub struct SeekPointManager {
     track_seek_points: HashMap<PathBuf, TrackSeekPoints>,
-    data_file_path: PathBuf,
+    data_dir: PathBuf,      // アプリディレクトリ内のdataフォルダ
 }
 ```
 
@@ -74,9 +74,15 @@ impl SeekPointManager {
     pub fn find_next_seek_point(&self, track_path: &Path, current_ms: u64) -> Option<&SeekPoint>
     pub fn find_previous_seek_point(&self, track_path: &Path, current_ms: u64) -> Option<&SeekPoint>
     
-    // 永続化
-    pub fn save_to_file(&self) -> Result<(), String>
-    pub fn load_from_file(&mut self) -> Result<(), String>
+    // 永続化（アプリディレクトリ内data/seek_points/）
+    pub fn save_track_seek_points(&self, track_path: &Path) -> Result<(), String>
+    pub fn load_track_seek_points(&mut self, track_path: &Path) -> Result<(), String>
+    pub fn save_all(&self) -> Result<(), String>
+    pub fn load_all(&mut self) -> Result<(), String>
+    
+    // データディレクトリ管理
+    fn get_data_dir() -> PathBuf  // アプリ実行ファイル/data/seek_points/
+    fn get_track_file_path(&self, track_path: &Path) -> PathBuf
 }
 ```
 
@@ -85,7 +91,7 @@ impl SeekPointManager {
 ### Phase 1: データ基盤構築 (2-3時間)
 - [ ] **Step 1.1**: `SeekPoint`, `TrackSeekPoints`, `SeekPointManager` 構造体実装
 - [ ] **Step 1.2**: 基本的なCRUD操作実装（追加・削除・取得）
-- [ ] **Step 1.3**: JSON永続化機能実装
+- [ ] **Step 1.3**: アプリディレクトリ内JSON永続化機能実装
 - [ ] **Step 1.4**: `MyApp`構造体への統合
 - [ ] **Step 1.5**: 基本テストケース作成
 
@@ -152,6 +158,7 @@ mod seek_point_tests {
 
 ## 📂 ファイル構成
 
+### コード構成
 ```
 src/
 ├── seek_points/
@@ -165,6 +172,25 @@ src/
 └── ui/
     └── playback_controls.rs # シークバー統合
 ```
+
+### データファイル構成（アプリディレクトリ内）
+```
+C:\Users\toshi\src\lyrics\
+├── target\debug\flac-music-player.exe  # 実行ファイル
+├── data\                               # 設定・データ専用フォルダ
+│   ├── settings.json                   # 既存設定（将来移行）
+│   ├── playlists\                      # 既存プレイリスト（将来移行）
+│   └── seek_points\
+│       ├── index.json                  # 高速検索用インデックス
+│       └── tracks\
+│           ├── a1b2c3d4.json          # パスハッシュ → シークポイント
+│           └── e5f6g7h8.json          # ファイル別管理
+```
+
+**永続化方式:**
+- 楽曲ファイルパスをSHA256ハッシュ化してファイル名に使用
+- 各楽曲のシークポイントを個別JSONファイルで管理
+- index.jsonで高速検索をサポート
 
 ## 🎯 成功指標
 
