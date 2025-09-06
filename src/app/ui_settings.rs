@@ -119,20 +119,6 @@ impl MyApp {
             ui.label("(↩/↪ ボタンで前後にジャンプする秒数)");
         });
         
-        ui.add_space(20.0);
-        ui.separator();
-        ui.heading("プレイリスト設定");
-        ui.add_space(10.0);
-        
-        // デフォルトプレイリスト設定
-        ui.heading("デフォルトプレイリスト");
-        
-        let _settings_changed = false;
-        
-        
-        if _settings_changed {
-            self.save_settings();
-        }
 
         // システム統計の表示
         ui.add_space(20.0);
