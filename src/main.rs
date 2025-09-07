@@ -2,6 +2,7 @@ mod app;
 mod music;
 mod player;
 mod playlist;
+mod seek_points;
 mod settings;
 mod ui;
 

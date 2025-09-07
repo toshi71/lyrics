@@ -4,6 +4,7 @@ use std::path::PathBuf;
 
 use crate::music::TrackInfo;
 use crate::player::{AudioPlayer, PlaybackState};
+use crate::seek_points::SeekPointManager;
 use crate::settings::{Settings, RepeatMode};
 
 #[derive(PartialEq, Debug)]
@@ -78,15 +79,23 @@ pub struct PlayerState {
     pub seek_drag_state: Option<PlaybackState>,
     pub repeat_mode: RepeatMode,
     pub shuffle_enabled: bool,
+    pub seek_point_manager: SeekPointManager,
 }
 
 impl PlayerState {
     pub fn new() -> Self {
+        let mut seek_point_manager = SeekPointManager::new();
+        // 起動時にシークポイントデータを読み込み
+        if let Err(e) = seek_point_manager.load_from_file() {
+            eprintln!("Warning: Failed to load seek points: {}", e);
+        }
+
         Self {
             audio_player: AudioPlayer::new(),
             seek_drag_state: None,
             repeat_mode: RepeatMode::Normal,
             shuffle_enabled: false,
+            seek_point_manager,
         }
     }
 }

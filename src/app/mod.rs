@@ -11,6 +11,7 @@ use font_kit::source::SystemSource;
 use crate::music::MusicLibrary;
 use crate::player::PlaybackState;
 use crate::playlist::PlaylistManager;
+use crate::seek_points::SeekPoint;
 use crate::settings::Settings;
 
 #[allow(unused_imports)]
@@ -97,6 +98,53 @@ impl MyApp {
 
     pub fn apply_search_filter(&mut self) {
         self.music_library.apply_search_filter(&self.selection_state.search_query);
+    }
+
+    // シークポイント管理の便利メソッド
+    pub fn add_seek_point(&mut self, track_path: &std::path::Path, name: String, position_ms: u64) -> Result<String, String> {
+        let result = self.player_state.seek_point_manager.add_seek_point(track_path, name, position_ms);
+        if result.is_ok() {
+            // 変更があった場合は保存
+            if let Err(e) = self.player_state.seek_point_manager.save_to_file() {
+                eprintln!("Warning: Failed to save seek points: {}", e);
+            }
+        }
+        result
+    }
+
+    pub fn remove_seek_point(&mut self, track_path: &std::path::Path, seek_point_id: &str) -> Result<(), String> {
+        let result = self.player_state.seek_point_manager.remove_seek_point(track_path, seek_point_id);
+        if result.is_ok() {
+            // 変更があった場合は保存
+            if let Err(e) = self.player_state.seek_point_manager.save_to_file() {
+                eprintln!("Warning: Failed to save seek points: {}", e);
+            }
+        }
+        result
+    }
+
+    pub fn get_current_track_seek_points(&self) -> Option<&Vec<SeekPoint>> {
+        if let Some(current_track) = self.playlist_manager.get_current_track() {
+            self.player_state.seek_point_manager.get_seek_points(&current_track.path)
+        } else {
+            None
+        }
+    }
+
+    pub fn find_next_seek_point(&self, current_ms: u64) -> Option<&SeekPoint> {
+        if let Some(current_track) = self.playlist_manager.get_current_track() {
+            self.player_state.seek_point_manager.find_next_seek_point(&current_track.path, current_ms)
+        } else {
+            None
+        }
+    }
+
+    pub fn find_previous_seek_point(&self, current_ms: u64) -> Option<&SeekPoint> {
+        if let Some(current_track) = self.playlist_manager.get_current_track() {
+            self.player_state.seek_point_manager.find_previous_seek_point(&current_track.path, current_ms)
+        } else {
+            None
+        }
     }
 
     pub fn check_playback_finished(&mut self) {

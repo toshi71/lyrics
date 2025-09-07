@@ -115,3 +115,141 @@ mod state_migration_tests {
         // 例: 新しいUIState構造体への移行後も同じ値が取得できることを確認
     }
 }
+
+#[cfg(test)]
+mod seek_points_tests {
+    use super::*;
+    use std::path::PathBuf;
+
+    #[test]
+    fn test_seek_point_manager_creation() {
+        // 新しいSeekPointManagerを直接作成してテスト（ファイル読み込みなし）
+        let manager = flac_music_player::seek_points::SeekPointManager::new();
+        
+        // SeekPointManagerが正常に初期化されていることを確認
+        let track_count = manager.get_track_count();
+        let total_points = manager.get_total_seek_points_count();
+        
+        assert_eq!(track_count, 0);
+        assert_eq!(total_points, 0);
+    }
+
+    #[test]
+    fn test_add_and_get_seek_points() {
+        let mut app = MyApp::new();
+        let test_track = PathBuf::from("test_track.flac");
+        
+        // シークポイントを追加
+        let result1 = app.add_seek_point(&test_track, "イントロ終了".to_string(), 30000);
+        let result2 = app.add_seek_point(&test_track, "サビ開始".to_string(), 60000);
+        
+        assert!(result1.is_ok());
+        assert!(result2.is_ok());
+        
+        // 追加されたシークポイントを取得
+        let seek_points = app.player_state.seek_point_manager.get_seek_points(&test_track);
+        assert!(seek_points.is_some());
+        
+        let seek_points = seek_points.unwrap();
+        assert_eq!(seek_points.len(), 2);
+        
+        // 位置順にソートされていることを確認
+        assert_eq!(seek_points[0].position_ms, 30000);
+        assert_eq!(seek_points[0].name, "イントロ終了");
+        assert_eq!(seek_points[1].position_ms, 60000);
+        assert_eq!(seek_points[1].name, "サビ開始");
+    }
+
+    #[test]
+    fn test_remove_seek_point() {
+        let mut app = MyApp::new();
+        let test_track = PathBuf::from("test_track.flac");
+        
+        // シークポイントを追加
+        let id = app.add_seek_point(&test_track, "テストポイント".to_string(), 45000).unwrap();
+        
+        // 追加されたことを確認
+        let seek_points = app.player_state.seek_point_manager.get_seek_points(&test_track);
+        assert!(seek_points.is_some());
+        assert_eq!(seek_points.unwrap().len(), 1);
+        
+        // シークポイントを削除
+        let result = app.remove_seek_point(&test_track, &id);
+        assert!(result.is_ok());
+        
+        // 削除されたことを確認
+        let seek_points = app.player_state.seek_point_manager.get_seek_points(&test_track);
+        assert!(seek_points.is_none() || seek_points.unwrap().is_empty());
+    }
+
+    #[test]
+    fn test_find_next_and_previous_seek_points() {
+        let mut app = MyApp::new();
+        let test_track = PathBuf::from("test_track.flac");
+        
+        // 複数のシークポイントを追加
+        app.add_seek_point(&test_track, "ポイント1".to_string(), 20000).unwrap();
+        app.add_seek_point(&test_track, "ポイント2".to_string(), 40000).unwrap();
+        app.add_seek_point(&test_track, "ポイント3".to_string(), 60000).unwrap();
+        
+        // 次のシークポイントを検索
+        let next_point = app.player_state.seek_point_manager.find_next_seek_point(&test_track, 30000);
+        assert!(next_point.is_some());
+        assert_eq!(next_point.unwrap().position_ms, 40000);
+        assert_eq!(next_point.unwrap().name, "ポイント2");
+        
+        // 前のシークポイントを検索
+        let prev_point = app.player_state.seek_point_manager.find_previous_seek_point(&test_track, 50000);
+        assert!(prev_point.is_some());
+        assert_eq!(prev_point.unwrap().position_ms, 40000);
+        assert_eq!(prev_point.unwrap().name, "ポイント2");
+        
+        // 境界条件のテスト
+        let next_from_end = app.player_state.seek_point_manager.find_next_seek_point(&test_track, 70000);
+        assert!(next_from_end.is_none());
+        
+        let prev_from_start = app.player_state.seek_point_manager.find_previous_seek_point(&test_track, 10000);
+        assert!(prev_from_start.is_none());
+    }
+
+    #[test]
+    fn test_seek_points_persistence() {
+        use std::fs;
+        let test_file = PathBuf::from("test_seek_points.json");
+        
+        // テスト後にファイルを削除するクリーンアップ
+        let _cleanup = || {
+            let _ = fs::remove_file(&test_file);
+        };
+        
+        {
+            let mut manager = flac_music_player::seek_points::SeekPointManager::new();
+            let test_track = PathBuf::from("test_track.flac");
+            
+            // シークポイントを追加
+            manager.add_seek_point(&test_track, "テスト保存".to_string(), 123000).unwrap();
+            
+            // ファイルに保存
+            let result = manager.save_to_file();
+            assert!(result.is_ok());
+        }
+        
+        // 新しいマネージャーでファイルから読み込み
+        {
+            let mut manager = flac_music_player::seek_points::SeekPointManager::new();
+            let result = manager.load_from_file();
+            assert!(result.is_ok());
+            
+            let test_track = PathBuf::from("test_track.flac");
+            let seek_points = manager.get_seek_points(&test_track);
+            assert!(seek_points.is_some());
+            
+            let seek_points = seek_points.unwrap();
+            assert_eq!(seek_points.len(), 1);
+            assert_eq!(seek_points[0].name, "テスト保存");
+            assert_eq!(seek_points[0].position_ms, 123000);
+        }
+        
+        _cleanup();
+    }
+}
