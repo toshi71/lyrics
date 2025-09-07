@@ -112,6 +112,7 @@ impl MyApp {
         result
     }
 
+    #[allow(dead_code)]
     pub fn remove_seek_point(&mut self, track_path: &std::path::Path, seek_point_id: &str) -> Result<(), String> {
         let result = self.player_state.seek_point_manager.remove_seek_point(track_path, seek_point_id);
         if result.is_ok() {
@@ -131,6 +132,7 @@ impl MyApp {
         }
     }
 
+    #[allow(dead_code)]
     pub fn find_next_seek_point(&self, current_ms: u64) -> Option<&SeekPoint> {
         if let Some(current_track) = self.playlist_manager.get_current_track() {
             self.player_state.seek_point_manager.find_next_seek_point(&current_track.path, current_ms)
@@ -139,6 +141,7 @@ impl MyApp {
         }
     }
 
+    #[allow(dead_code)]
     pub fn find_previous_seek_point(&self, current_ms: u64) -> Option<&SeekPoint> {
         if let Some(current_track) = self.playlist_manager.get_current_track() {
             self.player_state.seek_point_manager.find_previous_seek_point(&current_track.path, current_ms)

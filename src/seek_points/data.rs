@@ -12,6 +12,7 @@ pub struct SeekPoint {
 }
 
 impl SeekPoint {
+    #[allow(dead_code)]
     pub fn new(name: String, position_ms: u64) -> Self {
         Self {
             id: uuid::Uuid::new_v4().to_string(),
@@ -31,6 +32,7 @@ pub struct TrackSeekPoints {
 }
 
 impl TrackSeekPoints {
+    #[allow(dead_code)]
     pub fn new(track_path: PathBuf) -> Self {
         Self {
             track_path,
@@ -39,6 +41,7 @@ impl TrackSeekPoints {
         }
     }
 
+    #[allow(dead_code)]
     pub fn add_seek_point(&mut self, name: String, position_ms: u64) -> String {
         let seek_point = SeekPoint::new(name, position_ms);
         let id = seek_point.id.clone();
@@ -50,6 +53,7 @@ impl TrackSeekPoints {
         id
     }
 
+    #[allow(dead_code)]
     pub fn remove_seek_point(&mut self, seek_point_id: &str) -> bool {
         if let Some(index) = self.seek_points.iter().position(|sp| sp.id == seek_point_id) {
             self.seek_points.remove(index);
@@ -60,10 +64,12 @@ impl TrackSeekPoints {
         }
     }
 
+    #[allow(dead_code)]
     pub fn get_seek_point(&self, seek_point_id: &str) -> Option<&SeekPoint> {
         self.seek_points.iter().find(|sp| sp.id == seek_point_id)
     }
 
+    #[allow(dead_code)]
     fn sort_seek_points(&mut self) {
         self.seek_points.sort_by_key(|sp| sp.position_ms);
     }

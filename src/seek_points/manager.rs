@@ -29,6 +29,7 @@ impl SeekPointManager {
         Ok(id)
     }
 
+    #[allow(dead_code)]
     pub fn remove_seek_point(&mut self, track_path: &Path, seek_point_id: &str) -> Result<(), String> {
         if let Some(seek_points) = self.track_seek_points.get_mut(track_path) {
             if let Some(index) = seek_points.iter().position(|sp| sp.id == seek_point_id) {
@@ -46,6 +47,7 @@ impl SeekPointManager {
         self.track_seek_points.get(track_path)
     }
 
+    #[allow(dead_code)]
     pub fn get_seek_point(&self, track_path: &Path, seek_point_id: &str) -> Option<&SeekPoint> {
         self.track_seek_points
             .get(track_path)?
@@ -54,6 +56,7 @@ impl SeekPointManager {
     }
 
     // ナビゲーション
+    #[allow(dead_code)]
     pub fn find_next_seek_point(&self, track_path: &Path, current_ms: u64) -> Option<&SeekPoint> {
         self.track_seek_points
             .get(track_path)?
@@ -61,6 +64,7 @@ impl SeekPointManager {
             .find(|sp| sp.position_ms > current_ms)
     }
 
+    #[allow(dead_code)]
     pub fn find_previous_seek_point(&self, track_path: &Path, current_ms: u64) -> Option<&SeekPoint> {
         self.track_seek_points
             .get(track_path)?
@@ -115,14 +119,17 @@ impl SeekPointManager {
     }
 
     // 統計・ヘルパー
+    #[allow(dead_code)]
     pub fn get_track_count(&self) -> usize {
         self.track_seek_points.len()
     }
 
+    #[allow(dead_code)]
     pub fn get_total_seek_points_count(&self) -> usize {
         self.track_seek_points.values().map(|sp| sp.len()).sum()
     }
 
+    #[allow(dead_code)]
     pub fn clear_track_seek_points(&mut self, track_path: &Path) {
         self.track_seek_points.remove(track_path);
     }
