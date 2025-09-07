@@ -50,8 +50,8 @@ pub struct TrackSeekPoints {
 }
 
 pub struct SeekPointManager {
-    track_seek_points: HashMap<PathBuf, TrackSeekPoints>,
-    data_dir: PathBuf,      // アプリディレクトリ内のdataフォルダ
+    track_seek_points: HashMap<PathBuf, Vec<SeekPoint>>, // メモリ常駐データ
+    seek_points_file: PathBuf,  // 単一JSONファイルパス
 }
 ```
 
@@ -74,15 +74,12 @@ impl SeekPointManager {
     pub fn find_next_seek_point(&self, track_path: &Path, current_ms: u64) -> Option<&SeekPoint>
     pub fn find_previous_seek_point(&self, track_path: &Path, current_ms: u64) -> Option<&SeekPoint>
     
-    // 永続化（アプリディレクトリ内data/seek_points/）
-    pub fn save_track_seek_points(&self, track_path: &Path) -> Result<(), String>
-    pub fn load_track_seek_points(&mut self, track_path: &Path) -> Result<(), String>
-    pub fn save_all(&self) -> Result<(), String>
-    pub fn load_all(&mut self) -> Result<(), String>
+    // 永続化（単一JSONファイル + メモリ常駐）
+    pub fn save_to_file(&self) -> Result<(), String>      // 全データを一括保存
+    pub fn load_from_file(&mut self) -> Result<(), String> // 起動時に全データ読み込み
     
-    // データディレクトリ管理
-    fn get_data_dir() -> PathBuf  // アプリ実行ファイル/data/seek_points/
-    fn get_track_file_path(&self, track_path: &Path) -> PathBuf
+    // ファイルパス管理
+    fn get_seek_points_file_path() -> PathBuf  // settings.jsonと同じディレクトリ
 }
 ```
 
@@ -91,7 +88,7 @@ impl SeekPointManager {
 ### Phase 1: データ基盤構築 (2-3時間)
 - [ ] **Step 1.1**: `SeekPoint`, `TrackSeekPoints`, `SeekPointManager` 構造体実装
 - [ ] **Step 1.2**: 基本的なCRUD操作実装（追加・削除・取得）
-- [ ] **Step 1.3**: アプリディレクトリ内JSON永続化機能実装
+- [ ] **Step 1.3**: 単一JSONファイル永続化機能実装（メモリ常駐方式）
 - [ ] **Step 1.4**: `MyApp`構造体への統合
 - [ ] **Step 1.5**: 基本テストケース作成
 
@@ -173,24 +170,44 @@ src/
     └── playback_controls.rs # シークバー統合
 ```
 
-### データファイル構成（アプリディレクトリ内）
+### データファイル構成
 ```
 C:\Users\toshi\src\lyrics\
 ├── target\debug\flac-music-player.exe  # 実行ファイル
-├── data\                               # 設定・データ専用フォルダ
-│   ├── settings.json                   # 既存設定（将来移行）
-│   ├── playlists\                      # 既存プレイリスト（将来移行）
-│   └── seek_points\
-│       ├── index.json                  # 高速検索用インデックス
-│       └── tracks\
-│           ├── a1b2c3d4.json          # パスハッシュ → シークポイント
-│           └── e5f6g7h8.json          # ファイル別管理
+├── settings.json                       # 既存アプリ設定
+├── playlists.json                      # 既存プレイリスト
+└── seek_points.json                    # シークポイント統合データ（新規）
+```
+
+**seek_points.json 構造:**
+```json
+{
+  "version": "1.0",
+  "tracks": {
+    "D:\\Music\\Artist\\Song1.flac": [
+      {
+        "id": "uuid-1",
+        "name": "イントロ終了", 
+        "position_ms": 45000,
+        "created_at": "2025-09-06T..."
+      },
+      {
+        "id": "uuid-2",
+        "name": "サビ開始",
+        "position_ms": 120000,
+        "created_at": "2025-09-06T..."
+      }
+    ],
+    "D:\\Music\\Artist\\Song2.flac": [...]
+  }
+}
 ```
 
 **永続化方式:**
-- 楽曲ファイルパスをSHA256ハッシュ化してファイル名に使用
-- 各楽曲のシークポイントを個別JSONファイルで管理
-- index.jsonで高速検索をサポート
+- 全データを単一JSONファイルで管理
+- アプリ起動時に全読み込み → メモリ常駐（高速アクセス）
+- 変更時は全体を保存（シンプル + 整合性確保）
+- 将来的にSQLite移行を想定した構造
 
 ## 🎯 成功指標
 
@@ -217,6 +234,21 @@ C:\Users\toshi\src\lyrics\
 - 各Phase完了時にコミット・テスト実行
 - 既存機能への影響を最小化
 - ロールバック可能な実装アプローチ
+
+## 🔮 将来拡張計画
+
+### SQLite移行（Phase 6 - 将来実装）
+**移行理由:**
+- 大量データ（10,000+ 楽曲）対応
+- 複雑検索・統計機能
+- より高速な部分更新
+
+**移行手順:**
+1. 現JSONデータのSQLiteインポート機能
+2. SeekPointManagerの内部実装のみ変更（API互換維持）
+3. パフォーマンステスト・段階的切り替え
+
+**予想工数:** 4-6時間
 
 ---
 *作成日: 2025-09-06*  
