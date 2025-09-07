@@ -137,7 +137,7 @@ mod seek_points_tests {
     #[test]
     fn test_add_and_get_seek_points() {
         let mut app = MyApp::new();
-        let test_track = PathBuf::from("unique_test_track_add_get.flac");
+        let test_track = PathBuf::from(format!("test_track_add_get_{}.flac", std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH).unwrap().as_nanos()));
         
         // シークポイントを追加
         let result1 = app.add_seek_point(&test_track, "イントロ終了".to_string(), 30000);

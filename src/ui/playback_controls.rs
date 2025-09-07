@@ -856,16 +856,22 @@ impl PlaybackControlsUI {
                                 egui::vec2(marker_size * 2.0, rect.height() + marker_size)
                             );
                             
-                            // マーカーのホバー判定とツールチップ表示
+                            // マーカーのホバー判定とクリック検知
                             let marker_id = ui.id().with(format!("seek_marker_{}", seek_point.id));
-                            let marker_response = ui.interact(marker_hit_rect, marker_id, egui::Sense::hover());
+                            let marker_response = ui.interact(marker_hit_rect, marker_id, egui::Sense::click_and_drag());
                             
                             // ホバー状態を先に取得
                             let is_hovered = marker_response.hovered();
                             
+                            // マーカークリック時のシーク処理
+                            if marker_response.clicked() {
+                                let seek_position = std::time::Duration::from_millis(seek_point.position_ms);
+                                on_seek(seek_position);
+                            }
+                            
                             // ホバー時のツールチップ表示
                             let tooltip_text = format!(
-                                "{}\n位置: {}",
+                                "{}\n位置: {} (クリックでシーク)",
                                 seek_point.name,
                                 Self::format_duration(std::time::Duration::from_millis(seek_point.position_ms))
                             );
