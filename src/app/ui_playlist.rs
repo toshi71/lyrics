@@ -352,10 +352,12 @@ impl MyApp {
             }
             ui.add_space(10.0);
             
-            // 現在の楽曲のシークポイントを取得
-            let seek_points = self.get_current_track_seek_points();
+            // 操作の収集用変数
+            let mut seek_point_to_delete: Option<String> = None;
+            let mut seek_to_position: Option<std::time::Duration> = None;
             
-            if let Some(points) = seek_points {
+            // 現在の楽曲のシークポイントを取得
+            if let Some(points) = self.get_current_track_seek_points() {
                 if points.is_empty() {
                     ui.label("シークポイントがありません");
                     ui.label("再生中に「シークポイント追加」ボタンで追加できます");
@@ -364,7 +366,7 @@ impl MyApp {
                     ui.add_space(5.0);
                     
                     // シークポイント一覧を表示
-                    egui::Grid::new("seek_points_grid")
+                    let _grid_response = egui::Grid::new("seek_points_grid")
                         .num_columns(3)
                         .striped(true)
                         .show(ui, |ui| {
@@ -381,20 +383,30 @@ impl MyApp {
                                     // 編集モード：テキストボックス（Step 3.3cで実装）
                                     ui.label(&seek_point.name);
                                 } else {
-                                    // 表示モード：読み取り専用ラベル
-                                    ui.label(&seek_point.name);
+                                    // 表示モード：クリック可能なボタン
+                                    if ui.button(&seek_point.name).clicked() {
+                                        seek_to_position = Some(std::time::Duration::from_millis(seek_point.position_ms));
+                                    }
                                 }
                                 
-                                // 位置表示（MM:SS形式）
+                                // 位置表示（MM:SS形式）- クリック可能
                                 let duration = std::time::Duration::from_millis(seek_point.position_ms);
                                 let minutes = duration.as_secs() / 60;
                                 let seconds = duration.as_secs() % 60;
-                                ui.label(format!("{:02}:{:02}", minutes, seconds));
+                                let time_text = format!("{:02}:{:02}", minutes, seconds);
+                                
+                                if self.seek_point_edit_state.is_editing {
+                                    ui.label(&time_text);
+                                } else {
+                                    if ui.button(&time_text).clicked() {
+                                        seek_to_position = Some(duration);
+                                    }
+                                }
                                 
                                 // 削除ボタン
                                 ui.horizontal(|ui| {
                                     if ui.small_button("✕").clicked() {
-                                        // 削除処理は後で実装
+                                        seek_point_to_delete = Some(seek_point.id.clone());
                                     }
                                 });
                                 
@@ -405,6 +417,23 @@ impl MyApp {
             } else {
                 ui.label("シークポイントがありません");
                 ui.label("再生中に「シークポイント追加」ボタンで追加できます");
+            }
+            
+            // 削除処理の実行（借用チェッカー対応）
+            if let Some(seek_point_id) = seek_point_to_delete {
+                if let Some(current_track) = self.playlist_manager.get_current_track() {
+                    let track_path = current_track.path.clone();
+                    if let Err(error) = self.remove_seek_point(&track_path, &seek_point_id) {
+                        eprintln!("Error removing seek point: {}", error);
+                    }
+                }
+            }
+            
+            // シーク処理の実行（借用チェッカー対応）
+            if let Some(position) = seek_to_position {
+                if let Err(error) = self.player_state.audio_player.seek_to_position(position) {
+                    eprintln!("Error seeking to position: {}", error);
+                }
             }
         } else {
             ui.label("楽曲が選択されていません");
