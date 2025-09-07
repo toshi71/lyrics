@@ -888,6 +888,7 @@ impl MyApp {
         let mut new_repeat_mode = self.player_state.repeat_mode.clone();
         let mut shuffle_changed = false;
         let mut new_shuffle_enabled = self.player_state.shuffle_enabled;
+        let mut add_seek_point_clicked = false;
         
         let seek_points = self.get_current_track_seek_points();
         
@@ -918,6 +919,7 @@ impl MyApp {
                 new_shuffle_enabled = enabled;
                 shuffle_changed = true;
             },
+            &mut || add_seek_point_clicked = true,
         );
         
         // Handle actions after UI (removed clear_queue handling)
@@ -949,6 +951,11 @@ impl MyApp {
             self.handle_seek_end();
         }
         
+        // シークポイント追加処理
+        if add_seek_point_clicked {
+            self.handle_add_seek_point(current_position);
+        }
+        
         // リピート・シャッフルモードの変更処理（永続化なし）
         if repeat_mode_changed {
             self.player_state.repeat_mode = new_repeat_mode;
@@ -959,6 +966,26 @@ impl MyApp {
         }
         
         // Focus flag reset removed - auto focus disabled
+    }
+    
+    fn handle_add_seek_point(&mut self, current_position: std::time::Duration) {
+        if let Some(current_track) = self.playlist_manager.get_current_track() {
+            let track_path = current_track.path.clone();
+            
+            // 現在の楽曲の既存シークポイント数を取得して連番を作成
+            let existing_count = self.player_state.seek_point_manager
+                .get_seek_points(&track_path)
+                .map(|points| points.len())
+                .unwrap_or(0);
+            
+            let point_name = format!("ポイント{}", existing_count + 1);
+            let position_ms = current_position.as_millis() as u64;
+            
+            // シークポイントを追加
+            if let Err(error) = self.add_seek_point(&track_path, point_name, position_ms) {
+                eprintln!("Error adding seek point: {}", error);
+            }
+        }
     }
     
     fn handle_copy_to_new_playlist(&mut self) {

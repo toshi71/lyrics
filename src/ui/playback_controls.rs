@@ -307,6 +307,7 @@ impl PlaybackControlsUI {
         shuffle_enabled: bool,
         on_repeat_mode_change: &mut dyn FnMut(RepeatMode),
         on_shuffle_change: &mut dyn FnMut(bool),
+        on_add_seek_point: &mut dyn FnMut(),
     ) {
         // シークバーを最初に表示（横幅全体を使用）
         Self::show_seek_bar(ui, current_position, total_duration, seek_points, on_seek, on_seek_start, on_seek_end);
@@ -397,6 +398,16 @@ impl PlaybackControlsUI {
                     ui.label(egui::RichText::new(&track.title).strong());
                     ui.label(format!("{} - {}", track.artist, track.album));
                 });
+            }
+        });
+        
+        // シークポイント追加ボタン
+        ui.add_space(10.0);
+        ui.horizontal(|ui| {
+            ui.add_space(5.0);
+            
+            if ui.button("シークポイント追加").clicked() {
+                on_add_seek_point();
             }
         });
         
