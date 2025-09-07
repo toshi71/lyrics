@@ -354,7 +354,6 @@ impl MyApp {
             
             // 操作の収集用変数
             let mut seek_point_to_delete: Option<String> = None;
-            let mut seek_to_position: Option<std::time::Duration> = None;
             
             // 編集中のテキストを一時的に取得（借用問題回避）
             let mut temp_editing_names = if self.seek_point_edit_state.is_editing {
@@ -392,10 +391,8 @@ impl MyApp {
                                         ui.text_edit_singleline(editing_text);
                                     }
                                 } else {
-                                    // 表示モード：クリック可能なボタン
-                                    if ui.button(&seek_point.name).clicked() {
-                                        seek_to_position = Some(std::time::Duration::from_millis(seek_point.position_ms));
-                                    }
+                                    // 表示モード：読み取り専用ラベル
+                                    ui.label(&seek_point.name);
                                 }
                                 
                                 // 位置表示（MM:SS.sss形式）- クリック可能
@@ -405,13 +402,8 @@ impl MyApp {
                                 let seconds = total_seconds % 60.0;
                                 let time_text = format!("{:02}:{:06.3}", minutes, seconds);
                                 
-                                if self.seek_point_edit_state.is_editing {
-                                    ui.label(&time_text);
-                                } else {
-                                    if ui.button(&time_text).clicked() {
-                                        seek_to_position = Some(duration);
-                                    }
-                                }
+                                // 編集モード・表示モード共通：読み取り専用ラベル
+                                ui.label(&time_text);
                                 
                                 // 削除ボタン
                                 ui.horizontal(|ui| {
@@ -441,13 +433,6 @@ impl MyApp {
                     if let Err(error) = self.remove_seek_point(&track_path, &seek_point_id) {
                         eprintln!("Error removing seek point: {}", error);
                     }
-                }
-            }
-            
-            // シーク処理の実行（借用チェッカー対応）
-            if let Some(position) = seek_to_position {
-                if let Err(error) = self.player_state.audio_player.seek_to_position(position) {
-                    eprintln!("Error seeking to position: {}", error);
                 }
             }
         } else {
