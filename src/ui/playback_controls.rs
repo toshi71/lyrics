@@ -850,12 +850,39 @@ impl PlaybackControlsUI {
                             let triangle_left = egui::pos2(marker_x - marker_size/2.0, rect.top() + marker_size);
                             let triangle_right = egui::pos2(marker_x + marker_size/2.0, rect.top() + marker_size);
                             
-                            // 三角形を塗りつぶし
+                            // マーカーのヒットボックスを作成（ホバー検知用）
+                            let marker_hit_rect = egui::Rect::from_center_size(
+                                egui::pos2(marker_x, rect.center().y),
+                                egui::vec2(marker_size * 2.0, rect.height() + marker_size)
+                            );
+                            
+                            // マーカーのホバー判定とツールチップ表示
+                            let marker_id = ui.id().with(format!("seek_marker_{}", seek_point.id));
+                            let marker_response = ui.interact(marker_hit_rect, marker_id, egui::Sense::hover());
+                            
+                            // ホバー状態を先に取得
+                            let is_hovered = marker_response.hovered();
+                            
+                            // ホバー時のツールチップ表示
+                            let tooltip_text = format!(
+                                "{}\n位置: {}",
+                                seek_point.name,
+                                Self::format_duration(std::time::Duration::from_millis(seek_point.position_ms))
+                            );
+                            marker_response.on_hover_text(tooltip_text);
+                            
+                            // 三角形を塗りつぶし（ホバー時は色を変える）
+                            let (fill_color, stroke_color) = if is_hovered {
+                                (egui::Color32::from_rgb(50, 200, 255), egui::Color32::from_rgb(0, 150, 255)) // より明るい青
+                            } else {
+                                (egui::Color32::from_rgb(0, 150, 255), egui::Color32::from_rgb(0, 100, 200)) // 通常の青
+                            };
+                            
                             let triangle_points = vec![triangle_top, triangle_left, triangle_right];
                             ui.painter().add(egui::Shape::convex_polygon(
                                 triangle_points,
-                                egui::Color32::from_rgb(0, 150, 255), // 青色
-                                egui::Stroke::new(1.0, egui::Color32::from_rgb(0, 100, 200))
+                                fill_color,
+                                egui::Stroke::new(1.0, stroke_color)
                             ));
                         }
                     }
