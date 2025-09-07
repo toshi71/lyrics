@@ -15,6 +15,14 @@ impl MyApp {
             ctx.send_viewport_cmd(eframe::egui::ViewportCommand::Close);
         }
         
+        // Escape key: Exit edit mode if active
+        if ctx.input(|i| i.key_pressed(eframe::egui::Key::Escape)) {
+            if self.seek_point_edit_state.is_editing {
+                // Cancel editing without saving
+                self.seek_point_edit_state.stop_editing();
+            }
+        }
+        
         // Global playback shortcuts (disabled when search has focus)
         if !self.selection_state.search_has_focus {
             // Space: Play/Pause
