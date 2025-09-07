@@ -126,6 +126,17 @@ impl MyApp {
         result
     }
 
+    pub fn update_seek_point_name(&mut self, track_path: &std::path::Path, seek_point_id: &str, new_name: String) -> Result<(), String> {
+        let result = self.player_state.seek_point_manager.update_seek_point_name(track_path, seek_point_id, new_name);
+        if result.is_ok() {
+            // 変更があった場合は保存
+            if let Err(e) = self.player_state.seek_point_manager.save_to_file() {
+                eprintln!("Warning: Failed to save seek points: {}", e);
+            }
+        }
+        result
+    }
+
     pub fn get_current_track_seek_points(&self) -> Option<&Vec<SeekPoint>> {
         if let Some(current_track) = self.playlist_manager.get_current_track() {
             self.player_state.seek_point_manager.get_seek_points(&current_track.path)

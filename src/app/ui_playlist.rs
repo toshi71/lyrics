@@ -356,6 +356,13 @@ impl MyApp {
             let mut seek_point_to_delete: Option<String> = None;
             let mut seek_to_position: Option<std::time::Duration> = None;
             
+            // 編集中のテキストを一時的に取得（借用問題回避）
+            let mut temp_editing_names = if self.seek_point_edit_state.is_editing {
+                self.seek_point_edit_state.editing_names.clone()
+            } else {
+                std::collections::HashMap::new()
+            };
+            
             // 現在の楽曲のシークポイントを取得
             if let Some(points) = self.get_current_track_seek_points() {
                 if points.is_empty() {
@@ -380,8 +387,10 @@ impl MyApp {
                             for seek_point in points {
                                 // 名前の表示/編集
                                 if self.seek_point_edit_state.is_editing {
-                                    // 編集モード：テキストボックス（Step 3.3cで実装）
-                                    ui.label(&seek_point.name);
+                                    // 編集モード：テキストボックス
+                                    if let Some(editing_text) = temp_editing_names.get_mut(&seek_point.id) {
+                                        ui.text_edit_singleline(editing_text);
+                                    }
                                 } else {
                                     // 表示モード：クリック可能なボタン
                                     if ui.button(&seek_point.name).clicked() {
@@ -419,6 +428,11 @@ impl MyApp {
                 ui.label("再生中に「シークポイント追加」ボタンで追加できます");
             }
             
+            // 編集中の場合、変更されたテキストを戻す
+            if self.seek_point_edit_state.is_editing {
+                self.seek_point_edit_state.editing_names = temp_editing_names;
+            }
+            
             // 削除処理の実行（借用チェッカー対応）
             if let Some(seek_point_id) = seek_point_to_delete {
                 if let Some(current_track) = self.playlist_manager.get_current_track() {
@@ -442,12 +456,16 @@ impl MyApp {
     
     fn save_seek_point_edits(&mut self) {
         if let Some(current_track) = self.playlist_manager.get_current_track() {
-            let _track_path = current_track.path.clone();
+            let track_path = current_track.path.clone();
             
-            // 編集された名前を保存（Step 3.3cで実装予定）
-            for (_seek_point_id, _new_name) in &self.seek_point_edit_state.editing_names {
-                // TODO: シークポイントの名前更新処理を実装
-                // self.player_state.seek_point_manager.update_seek_point_name(&_track_path, _seek_point_id, _new_name);
+            // 編集された名前を一時的にクローン
+            let editing_names = self.seek_point_edit_state.editing_names.clone();
+            
+            // 編集された名前を保存
+            for (seek_point_id, new_name) in editing_names {
+                if let Err(error) = self.update_seek_point_name(&track_path, &seek_point_id, new_name) {
+                    eprintln!("Error updating seek point name: {}", error);
+                }
             }
         }
     }

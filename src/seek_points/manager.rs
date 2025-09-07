@@ -43,6 +43,19 @@ impl SeekPointManager {
         }
     }
 
+    pub fn update_seek_point_name(&mut self, track_path: &Path, seek_point_id: &str, new_name: String) -> Result<(), String> {
+        if let Some(seek_points) = self.track_seek_points.get_mut(track_path) {
+            if let Some(seek_point) = seek_points.iter_mut().find(|sp| sp.id == seek_point_id) {
+                seek_point.name = new_name;
+                Ok(())
+            } else {
+                Err(format!("Seek point with id '{}' not found", seek_point_id))
+            }
+        } else {
+            Err(format!("No seek points found for track: {}", track_path.display()))
+        }
+    }
+
     pub fn get_seek_points(&self, track_path: &Path) -> Option<&Vec<SeekPoint>> {
         self.track_seek_points.get(track_path)
     }
