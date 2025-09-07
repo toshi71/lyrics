@@ -877,19 +877,38 @@ impl PlaybackControlsUI {
                             );
                             marker_response.on_hover_text(tooltip_text);
                             
-                            // 三角形を塗りつぶし（ホバー時は色を変える）
-                            let (fill_color, stroke_color) = if is_hovered {
-                                (egui::Color32::from_rgb(50, 200, 255), egui::Color32::from_rgb(0, 150, 255)) // より明るい青
+                            // より洗練された三角形マーカーを描画
+                            let (fill_color, stroke_color, stroke_width) = if is_hovered {
+                                (egui::Color32::from_rgb(50, 200, 255), egui::Color32::from_rgb(0, 150, 255), 2.0) // より明るい青・太い線
                             } else {
-                                (egui::Color32::from_rgb(0, 150, 255), egui::Color32::from_rgb(0, 100, 200)) // 通常の青
+                                (egui::Color32::from_rgb(0, 150, 255), egui::Color32::from_rgb(0, 100, 200), 1.5) // 通常の青・中程度の線
                             };
                             
+                            // メイン三角形を描画
                             let triangle_points = vec![triangle_top, triangle_left, triangle_right];
                             ui.painter().add(egui::Shape::convex_polygon(
                                 triangle_points,
                                 fill_color,
-                                egui::Stroke::new(1.0, stroke_color)
+                                egui::Stroke::new(stroke_width, stroke_color)
                             ));
+                            
+                            // ホバー時の追加エフェクト：小さな光る円を追加
+                            if is_hovered {
+                                let glow_center = egui::pos2(marker_x, rect.top() + 4.0);
+                                ui.painter().circle_filled(
+                                    glow_center,
+                                    3.0,
+                                    egui::Color32::from_rgba_unmultiplied(255, 255, 255, 100)
+                                );
+                            }
+                            
+                            // シークバー上に縦線を描画（より視認性を向上）
+                            let marker_line_start = egui::pos2(marker_x, rect.top());
+                            let marker_line_end = egui::pos2(marker_x, rect.bottom());
+                            ui.painter().line_segment(
+                                [marker_line_start, marker_line_end], 
+                                egui::Stroke::new(1.0, egui::Color32::from_rgba_unmultiplied(0, 150, 255, 150))
+                            );
                         }
                     }
                 }
