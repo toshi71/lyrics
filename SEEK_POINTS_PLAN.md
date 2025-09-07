@@ -205,22 +205,33 @@ impl SeekPointManager {
 - **ワークフロー改善**: 編集作業と再生操作の明確な分離
 
 ### Phase 3B: UI設計変更実装 - 最終レイアウト決定 (予定)
+- [ ] **Step 3B.0**: 不要機能の削除・クリーンアップ
+  - **シークポイントタブからジャンプ機能削除**: ボタン→ラベル表示への変更
+  - **シーク処理コードの削除**: `seek_to_position`変数と実行処理
+  - **再生楽曲ベース表示の準備**: `get_current_track_seek_points()`使用箇所の特定
+  - **未使用変数の整理**: `seek_to_position: Option<Duration>`等の削除
+  - 🔄 **実装手順**: 削除 → `cargo build` → `cargo test` → `git commit`（成功時）
 - [ ] **Step 3B.1**: シークポイントタブの選択楽曲ベース化
-  - `get_current_track_seek_points()` → `get_selected_track_seek_points()`
-  - ジャンプ機能削除（ボタン→ラベル表示に変更）
-  - 編集・削除機能はそのまま維持
+  - `get_current_track_seek_points()` → `get_selected_track_seek_points()`実装・切り替え
+  - `MyApp`に`get_selected_track_seek_points()`メソッド追加
+  - 編集・削除機能はそのまま維持（選択楽曲ベースに）
+  - 🔄 **実装手順**: 実装 → `cargo build` → `cargo test` → `git commit`（成功時）
 - [ ] **Step 3B.2**: 再生コントロール領域の左右分割レイアウト実装
-  - **左側（操作系）**: 再生ボタン + シークポイント追加 + リピート・シャッフル
-  - **右側（情報系）**: 楽曲情報 + シークポイント一覧（ジャンプ機能付き）
+  - **左側（操作系 40%）**: 再生ボタン + シークポイント追加 + リピート・シャッフル
+  - **右側（情報系 60%）**: 楽曲情報 + シークポイント一覧表示領域
+  - `PlaybackControlsUI::show_controls_with_seek_bar`の構造変更
   - レスポンシブ対応（幅比率調整可能）
-- [ ] **Step 3B.3**: シークポイント一覧のジャンプ機能実装
-  - 右側エリアのシークポイント一覧にクリックジャンプ機能
+  - 🔄 **実装手順**: 実装 → `cargo build` → `cargo test` → `git commit`（成功時）
+- [ ] **Step 3B.3**: 右側シークポイント一覧のジャンプ機能実装
+  - 右側エリアにシークポイント一覧表示（再生楽曲ベース）
+  - クリックジャンプ機能実装（再生楽曲のシークポイントのみ）
   - 簡潔な表示形式（● ポイント名 MM:SS.sss）
-  - 再生楽曲のシークポイントのみ表示・操作
+  - 🔄 **実装手順**: 実装 → `cargo build` → `cargo test` → `git commit`（成功時）
 - [ ] **Step 3B.4**: 統合テスト・動作確認
-  - 管理機能（シークポイントタブ）のテスト
-  - 操作機能（再生コントロール）のテスト
-  - 選択楽曲≠再生楽曲での動作確認
+  - 管理機能（シークポイントタブ・選択楽曲ベース）のテスト
+  - 操作機能（再生コントロール・再生楽曲ベース）のテスト
+  - 選択楽曲≠再生楽曲での両機能の独立動作確認
+  - 🔄 **実装手順**: テスト → 問題修正 → `git commit`（成功時）
 
 **🎯 Phase 3B完了条件**: 論理的分離と視覚的バランスを両立した直感的UI
 
@@ -343,10 +354,38 @@ show_controls_with_seek_bar() {
 ```
 
 #### **実装優先度:**
-1. **高優先度**: Step 3B.2（左右分割レイアウト） - UI全体の土台
-2. **中優先度**: Step 3B.3（ジャンプ機能） - ユーザビリティ向上
+1. **最高優先度**: Step 3B.0（不要機能削除） - **コンフリクト回避・コード品質確保**
+2. **高優先度**: Step 3B.2（左右分割レイアウト） - UI全体の土台構築
 3. **中優先度**: Step 3B.1（タブの選択楽曲ベース化） - 一貫性改善
-4. **低優先度**: Step 3B.4（統合テスト） - 品質保証
+4. **中優先度**: Step 3B.3（ジャンプ機能） - ユーザビリティ向上
+5. **低優先度**: Step 3B.4（統合テスト） - 品質保証
+
+#### **削除対象の詳細リスト:**
+```rust
+// src/app/ui_playlist.rs の show_seek_points_tab() 内
+// 1. ジャンプ機能のボタン表示
+if ui.button(&seek_point.name).clicked() {
+    seek_to_position = Some(std::time::Duration::from_millis(seek_point.position_ms));
+}
+if ui.button(&time_text).clicked() {
+    seek_to_position = Some(duration);
+}
+
+// 2. シーク処理実行部分
+if let Some(position) = seek_to_position {
+    if let Err(error) = self.player_state.audio_player.seek_to_position(position) {
+        eprintln!("Error seeking to position: {}", error);
+    }
+}
+
+// 3. 関連変数
+let mut seek_to_position: Option<std::time::Duration> = None;
+```
+
+**🚨 削除の重要性:**
+- **新機能実装前の基盤整理**: 古いコードが残ると新旧機能が混在して混乱
+- **段階的品質管理**: 削除→実装→テストの順で確実な検証
+- **保守性向上**: 不要コードを残したまま拡張すると将来の負債となる
 
 ### Phase 4: ナビゲーション機能 (1-2時間)
 - [ ] **Step 4.1**: 「前/次のシークポイント」ボタン追加
