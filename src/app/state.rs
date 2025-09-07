@@ -18,6 +18,7 @@ pub enum RightTab {
     #[allow(dead_code)]
     Playback,
     Info,
+    SeekPoints,
     Lrc,
 }
 

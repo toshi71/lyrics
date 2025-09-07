@@ -140,8 +140,9 @@ impl MyApp {
             // Add 5px left padding for tab header
             ui.horizontal(|ui| {
                 ui.add_space(5.0); // Left padding
-                // 情報・LRCタブ切り替え
+                // 情報・シークポイント・LRCタブ切り替え
                 ui.selectable_value(&mut self.ui_state.right_pane_tab, crate::app::state::RightTab::Info, "情報");
+                ui.selectable_value(&mut self.ui_state.right_pane_tab, crate::app::state::RightTab::SeekPoints, "シークポイント");
                 ui.selectable_value(&mut self.ui_state.right_pane_tab, crate::app::state::RightTab::Lrc, "LRC");
             });
             
@@ -162,6 +163,9 @@ impl MyApp {
                                 },
                                 crate::app::state::RightTab::Info => {
                                     self.show_track_info(ui);
+                                },
+                                crate::app::state::RightTab::SeekPoints => {
+                                    self.show_seek_points_tab(ui);
                                 },
                                 crate::app::state::RightTab::Lrc => {
                                     ui.label("LRC歌詞表示機能は未実装です");
@@ -299,6 +303,43 @@ impl MyApp {
                         });
                         ui.end_row();
                     });
+    }
+
+    pub fn show_seek_points_tab(&mut self, ui: &mut egui::Ui) {
+        if let Some(current_track) = self.playlist_manager.get_current_track() {
+            // 現在の楽曲情報を表示
+            ui.horizontal(|ui| {
+                ui.strong("♪");
+                ui.label(format!("{} - {}", current_track.artist, current_track.title));
+            });
+            ui.add_space(10.0);
+            
+            // 現在の楽曲のシークポイントを取得
+            let seek_points = self.get_current_track_seek_points();
+            
+            if let Some(points) = seek_points {
+                if points.is_empty() {
+                    ui.label("シークポイントがありません");
+                    ui.label("再生中に「シークポイント追加」ボタンで追加できます");
+                } else {
+                    ui.label(format!("シークポイント数: {}", points.len()));
+                    ui.add_space(5.0);
+                    
+                    // シークポイント一覧を表示（Step 3.3で詳細実装予定）
+                    for seek_point in points {
+                        ui.horizontal(|ui| {
+                            ui.label(&seek_point.name);
+                            ui.label(format!("{}ms", seek_point.position_ms));
+                        });
+                    }
+                }
+            } else {
+                ui.label("シークポイントがありません");
+                ui.label("再生中に「シークポイント追加」ボタンで追加できます");
+            }
+        } else {
+            ui.label("楽曲が選択されていません");
+        }
     }
 
     fn show_multiple_tracks_details_static(ui: &mut egui::Ui, tracks: &[crate::music::TrackInfo]) {
