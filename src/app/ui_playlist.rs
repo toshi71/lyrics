@@ -398,11 +398,12 @@ impl MyApp {
                                     }
                                 }
                                 
-                                // 位置表示（MM:SS形式）- クリック可能
+                                // 位置表示（MM:SS.sss形式）- クリック可能
                                 let duration = std::time::Duration::from_millis(seek_point.position_ms);
-                                let minutes = duration.as_secs() / 60;
-                                let seconds = duration.as_secs() % 60;
-                                let time_text = format!("{:02}:{:02}", minutes, seconds);
+                                let total_seconds = duration.as_secs_f64();
+                                let minutes = (total_seconds / 60.0) as u32;
+                                let seconds = total_seconds % 60.0;
+                                let time_text = format!("{:02}:{:06.3}", minutes, seconds);
                                 
                                 if self.seek_point_edit_state.is_editing {
                                     ui.label(&time_text);
@@ -451,22 +452,6 @@ impl MyApp {
             }
         } else {
             ui.label("楽曲が選択されていません");
-        }
-    }
-    
-    fn save_seek_point_edits(&mut self) {
-        if let Some(current_track) = self.playlist_manager.get_current_track() {
-            let track_path = current_track.path.clone();
-            
-            // 編集された名前を一時的にクローン
-            let editing_names = self.seek_point_edit_state.editing_names.clone();
-            
-            // 編集された名前を保存
-            for (seek_point_id, new_name) in editing_names {
-                if let Err(error) = self.update_seek_point_name(&track_path, &seek_point_id, new_name) {
-                    eprintln!("Error updating seek point name: {}", error);
-                }
-            }
         }
     }
 

@@ -15,10 +15,11 @@ impl MyApp {
             ctx.send_viewport_cmd(eframe::egui::ViewportCommand::Close);
         }
         
-        // Escape key: Exit edit mode if active
+        // Escape key: Exit edit mode if active (save changes)
         if ctx.input(|i| i.key_pressed(eframe::egui::Key::Escape)) {
             if self.seek_point_edit_state.is_editing {
-                // Cancel editing without saving
+                // Save editing changes
+                self.save_seek_point_edits();
                 self.seek_point_edit_state.stop_editing();
             }
         }
