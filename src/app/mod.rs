@@ -15,7 +15,7 @@ use crate::seek_points::SeekPoint;
 use crate::settings::Settings;
 
 #[allow(unused_imports)]
-pub use state::{UIState, SelectionState, PlayerState, PlaylistEditState, CoverArtCache, Tab, RightTab};
+pub use state::{UIState, SelectionState, PlayerState, PlaylistEditState, CoverArtCache, SeekPointEditState, Tab, RightTab};
 mod state;
 
 
@@ -25,6 +25,7 @@ pub struct MyApp {
     pub player_state: PlayerState,
     pub playlist_edit_state: PlaylistEditState,
     pub cover_art_cache: CoverArtCache,
+    pub seek_point_edit_state: SeekPointEditState,
     pub settings: Settings,
     pub music_library: MusicLibrary,
     pub playlist_manager: PlaylistManager,
@@ -39,6 +40,7 @@ impl MyApp {
             player_state: PlayerState::new(),
             playlist_edit_state: PlaylistEditState::new(),
             cover_art_cache: CoverArtCache::new(),
+            seek_point_edit_state: SeekPointEditState::new(),
             music_library: MusicLibrary::new(settings.classical_composer_hierarchy),
             playlist_manager: {
                 let mut manager = PlaylistManager::auto_load().unwrap_or_else(|_| {

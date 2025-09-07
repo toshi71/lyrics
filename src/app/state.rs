@@ -141,3 +141,33 @@ impl CoverArtCache {
         self.cache.contains_key(path)
     }
 }
+
+/// シークポイント編集状態管理
+pub struct SeekPointEditState {
+    pub is_editing: bool,
+    pub editing_names: HashMap<String, String>, // seek_point_id -> editing_text
+}
+
+impl SeekPointEditState {
+    pub fn new() -> Self {
+        Self {
+            is_editing: false,
+            editing_names: HashMap::new(),
+        }
+    }
+    
+    pub fn start_editing(&mut self, seek_points: &[crate::seek_points::SeekPoint]) {
+        self.is_editing = true;
+        self.editing_names.clear();
+        
+        // 現在のシークポイント名を編集用にコピー
+        for seek_point in seek_points {
+            self.editing_names.insert(seek_point.id.clone(), seek_point.name.clone());
+        }
+    }
+    
+    pub fn stop_editing(&mut self) {
+        self.is_editing = false;
+        self.editing_names.clear();
+    }
+}

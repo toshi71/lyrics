@@ -307,11 +307,49 @@ impl MyApp {
 
     pub fn show_seek_points_tab(&mut self, ui: &mut egui::Ui) {
         if let Some(current_track) = self.playlist_manager.get_current_track() {
-            // 現在の楽曲情報を表示
+            let track_info = format!("{} - {}", current_track.artist, current_track.title);
+            
+            // モード切り替え処理のための変数
+            let mut mode_changed = false;
+            let mut should_start_editing = false;
+            let mut should_stop_editing = false;
+            
+            // 現在の楽曲情報とモード切り替えボタンを表示
             ui.horizontal(|ui| {
                 ui.strong("♪");
-                ui.label(format!("{} - {}", current_track.artist, current_track.title));
+                ui.label(&track_info);
+                
+                ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
+                    // 編集/表示モード切り替えボタン
+                    let button_text = if self.seek_point_edit_state.is_editing {
+                        "表示"
+                    } else {
+                        "編集"
+                    };
+                    
+                    if ui.button(button_text).clicked() {
+                        mode_changed = true;
+                        if self.seek_point_edit_state.is_editing {
+                            should_stop_editing = true;
+                        } else {
+                            should_start_editing = true;
+                        }
+                    }
+                });
             });
+            
+            // モード変更処理
+            if mode_changed {
+                if should_stop_editing {
+                    self.save_seek_point_edits();
+                    self.seek_point_edit_state.stop_editing();
+                } else if should_start_editing {
+                    if let Some(points) = self.get_current_track_seek_points() {
+                        let points_clone: Vec<_> = points.iter().cloned().collect();
+                        self.seek_point_edit_state.start_editing(&points_clone);
+                    }
+                }
+            }
             ui.add_space(10.0);
             
             // 現在の楽曲のシークポイントを取得
@@ -325,13 +363,44 @@ impl MyApp {
                     ui.label(format!("シークポイント数: {}", points.len()));
                     ui.add_space(5.0);
                     
-                    // シークポイント一覧を表示（Step 3.3で詳細実装予定）
-                    for seek_point in points {
-                        ui.horizontal(|ui| {
-                            ui.label(&seek_point.name);
-                            ui.label(format!("{}ms", seek_point.position_ms));
+                    // シークポイント一覧を表示
+                    egui::Grid::new("seek_points_grid")
+                        .num_columns(3)
+                        .striped(true)
+                        .show(ui, |ui| {
+                            // ヘッダー
+                            ui.strong("名前");
+                            ui.strong("位置");
+                            ui.strong("操作");
+                            ui.end_row();
+                            
+                            // 各シークポイントを表示
+                            for seek_point in points {
+                                // 名前の表示/編集
+                                if self.seek_point_edit_state.is_editing {
+                                    // 編集モード：テキストボックス（Step 3.3cで実装）
+                                    ui.label(&seek_point.name);
+                                } else {
+                                    // 表示モード：読み取り専用ラベル
+                                    ui.label(&seek_point.name);
+                                }
+                                
+                                // 位置表示（MM:SS形式）
+                                let duration = std::time::Duration::from_millis(seek_point.position_ms);
+                                let minutes = duration.as_secs() / 60;
+                                let seconds = duration.as_secs() % 60;
+                                ui.label(format!("{:02}:{:02}", minutes, seconds));
+                                
+                                // 削除ボタン
+                                ui.horizontal(|ui| {
+                                    if ui.small_button("✕").clicked() {
+                                        // 削除処理は後で実装
+                                    }
+                                });
+                                
+                                ui.end_row();
+                            }
                         });
-                    }
                 }
             } else {
                 ui.label("シークポイントがありません");
@@ -339,6 +408,18 @@ impl MyApp {
             }
         } else {
             ui.label("楽曲が選択されていません");
+        }
+    }
+    
+    fn save_seek_point_edits(&mut self) {
+        if let Some(current_track) = self.playlist_manager.get_current_track() {
+            let _track_path = current_track.path.clone();
+            
+            // 編集された名前を保存（Step 3.3cで実装予定）
+            for (_seek_point_id, _new_name) in &self.seek_point_edit_state.editing_names {
+                // TODO: シークポイントの名前更新処理を実装
+                // self.player_state.seek_point_manager.update_seek_point_name(&_track_path, _seek_point_id, _new_name);
+            }
         }
     }
 
