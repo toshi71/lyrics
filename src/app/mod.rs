@@ -138,8 +138,8 @@ impl MyApp {
     }
 
     pub fn save_seek_point_edits(&mut self) {
-        if let Some(current_track) = self.playlist_manager.get_current_track() {
-            let track_path = current_track.path.clone();
+        if let Some(selected_track) = &self.selection_state.selected_track {
+            let track_path = selected_track.path.clone();
             
             // 編集された名前を一時的にクローン
             let editing_names = self.seek_point_edit_state.editing_names.clone();
@@ -156,6 +156,14 @@ impl MyApp {
     pub fn get_current_track_seek_points(&self) -> Option<&Vec<SeekPoint>> {
         if let Some(current_track) = self.playlist_manager.get_current_track() {
             self.player_state.seek_point_manager.get_seek_points(&current_track.path)
+        } else {
+            None
+        }
+    }
+
+    pub fn get_selected_track_seek_points(&self) -> Option<&Vec<SeekPoint>> {
+        if let Some(selected_track) = &self.selection_state.selected_track {
+            self.player_state.seek_point_manager.get_seek_points(&selected_track.path)
         } else {
             None
         }

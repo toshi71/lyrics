@@ -306,8 +306,8 @@ impl MyApp {
     }
 
     pub fn show_seek_points_tab(&mut self, ui: &mut egui::Ui) {
-        if let Some(current_track) = self.playlist_manager.get_current_track() {
-            let track_info = format!("{} - {}", current_track.artist, current_track.title);
+        if let Some(selected_track) = &self.selection_state.selected_track {
+            let track_info = format!("{} - {}", selected_track.artist, selected_track.title);
             
             // モード切り替え処理のための変数
             let mut mode_changed = false;
@@ -344,7 +344,7 @@ impl MyApp {
                     self.save_seek_point_edits();
                     self.seek_point_edit_state.stop_editing();
                 } else if should_start_editing {
-                    if let Some(points) = self.get_current_track_seek_points() {
+                    if let Some(points) = self.get_selected_track_seek_points() {
                         let points_clone: Vec<_> = points.iter().cloned().collect();
                         self.seek_point_edit_state.start_editing(&points_clone);
                     }
@@ -362,11 +362,11 @@ impl MyApp {
                 std::collections::HashMap::new()
             };
             
-            // 現在の楽曲のシークポイントを取得
-            if let Some(points) = self.get_current_track_seek_points() {
+            // 選択楽曲のシークポイントを取得
+            if let Some(points) = self.get_selected_track_seek_points() {
                 if points.is_empty() {
                     ui.label("シークポイントがありません");
-                    ui.label("再生中に「シークポイント追加」ボタンで追加できます");
+                    ui.label("選択楽曲で再生中に「シークポイント追加」ボタンで追加できます");
                 } else {
                     ui.label(format!("シークポイント数: {}", points.len()));
                     ui.add_space(5.0);
@@ -418,7 +418,7 @@ impl MyApp {
                 }
             } else {
                 ui.label("シークポイントがありません");
-                ui.label("再生中に「シークポイント追加」ボタンで追加できます");
+                ui.label("選択楽曲で再生中に「シークポイント追加」ボタンで追加できます");
             }
             
             // 編集中の場合、変更されたテキストを戻す
@@ -428,8 +428,8 @@ impl MyApp {
             
             // 削除処理の実行（借用チェッカー対応）
             if let Some(seek_point_id) = seek_point_to_delete {
-                if let Some(current_track) = self.playlist_manager.get_current_track() {
-                    let track_path = current_track.path.clone();
+                if let Some(selected_track) = &self.selection_state.selected_track {
+                    let track_path = selected_track.path.clone();
                     if let Err(error) = self.remove_seek_point(&track_path, &seek_point_id) {
                         eprintln!("Error removing seek point: {}", error);
                     }
@@ -1028,6 +1028,7 @@ impl MyApp {
         let mut shuffle_changed = false;
         let mut new_shuffle_enabled = self.player_state.shuffle_enabled;
         let mut add_seek_point_clicked = false;
+        let mut seek_point_jump_position: Option<u64> = None;
         
         let seek_points = self.get_current_track_seek_points();
         
@@ -1059,6 +1060,7 @@ impl MyApp {
                 shuffle_changed = true;
             },
             &mut || add_seek_point_clicked = true,
+            &mut |position_ms| seek_point_jump_position = Some(position_ms),
         );
         
         // Handle actions after UI (removed clear_queue handling)
@@ -1102,6 +1104,14 @@ impl MyApp {
         if shuffle_changed {
             self.player_state.shuffle_enabled = new_shuffle_enabled;
             self.playlist_manager.update_shuffle_when_settings_changed(new_shuffle_enabled);
+        }
+        
+        // シークポイントジャンプ処理
+        if let Some(position_ms) = seek_point_jump_position {
+            let jump_duration = std::time::Duration::from_millis(position_ms);
+            if let Err(error) = self.player_state.audio_player.seek_to_position(jump_duration) {
+                eprintln!("Error seeking to position: {}", error);
+            }
         }
         
         // Focus flag reset removed - auto focus disabled

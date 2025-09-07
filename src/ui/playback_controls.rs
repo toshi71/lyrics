@@ -308,159 +308,254 @@ impl PlaybackControlsUI {
         on_repeat_mode_change: &mut dyn FnMut(RepeatMode),
         on_shuffle_change: &mut dyn FnMut(bool),
         on_add_seek_point: &mut dyn FnMut(),
+        on_seek_to_point: &mut dyn FnMut(u64), // シークポイントジャンプ用コールバック
     ) {
         // シークバーを最初に表示（横幅全体を使用）
         Self::show_seek_bar(ui, current_position, total_duration, seek_points, on_seek, on_seek_start, on_seek_end);
         
         ui.add_space(10.0);
 
-        // Playback control buttons
+        // 左右分割レイアウト
         ui.horizontal(|ui| {
-            ui.add_space(5.0);
-            
-            let button_size = [48.0, 48.0];
-            
-            // Previous button
-            if ui.add_sized(button_size, 
-                egui::Button::new(
-                    egui::RichText::new("⏮").size(24.0)
-                )
-            ).clicked() {
-                on_previous();
-            }
-            
-            ui.add_space(5.0);
-            
-            // Seek backward button (n秒前へ)
-            if ui.add_sized(button_size, 
-                egui::Button::new(
-                    egui::RichText::new("↩").size(24.0)
-                )
-            ).clicked() {
-                on_seek_backward();
-            }
-            
-            ui.add_space(10.0);
-            
-            // Play/pause button
-            let play_pause_text = match playback_state {
-                PlaybackState::Playing => "⏸",
-                _ => "▶",
-            };
-            if ui.add_sized(button_size, 
-                egui::Button::new(
-                    egui::RichText::new(play_pause_text).size(24.0)
-                )
-            ).clicked() {
-                on_play_pause();
-            }
-            
-            ui.add_space(10.0);
-            
-            // Stop button
-            if ui.add_sized(button_size, 
-                egui::Button::new(
-                    egui::RichText::new("⏹").size(24.0)
-                )
-            ).clicked() {
-                on_stop();
-            }
-            
-            ui.add_space(5.0);
-            
-            // Seek forward button (n秒後ろへ)
-            if ui.add_sized(button_size, 
-                egui::Button::new(
-                    egui::RichText::new("↪").size(24.0)
-                )
-            ).clicked() {
-                on_seek_forward();
-            }
-            
-            ui.add_space(10.0);
-            
-            // Next button
-            if ui.add_sized(button_size, 
-                egui::Button::new(
-                    egui::RichText::new("⏭").size(24.0)
-                )
-            ).clicked() {
-                on_next();
-            }
-            
-            // 6つのボタンの右側のスペースに再生中楽曲情報を表示
-            if let Some(track) = current_track {
-                ui.add_space(20.0);
-                ui.separator();
+            // 左側: 再生コントロール、シークポイント追加、リピート・シャッフル
+            ui.vertical(|ui| {
+                ui.set_min_width(380.0); // 左側の最小幅を確保
+                
+                // 再生コントロールボタン
+                ui.horizontal(|ui| {
+                    ui.add_space(5.0);
+                    
+                    let button_size = [48.0, 48.0];
+                    
+                    // Previous button
+                    if ui.add_sized(button_size, 
+                        egui::Button::new(
+                            egui::RichText::new("⏮").size(24.0)
+                        )
+                    ).clicked() {
+                        on_previous();
+                    }
+                    
+                    ui.add_space(5.0);
+                    
+                    // Seek backward button (n秒前へ)
+                    if ui.add_sized(button_size, 
+                        egui::Button::new(
+                            egui::RichText::new("↩").size(24.0)
+                        )
+                    ).clicked() {
+                        on_seek_backward();
+                    }
+                    
+                    ui.add_space(10.0);
+                    
+                    // Play/pause button
+                    let play_pause_text = match playback_state {
+                        PlaybackState::Playing => "⏸",
+                        _ => "▶",
+                    };
+                    if ui.add_sized(button_size, 
+                        egui::Button::new(
+                            egui::RichText::new(play_pause_text).size(24.0)
+                        )
+                    ).clicked() {
+                        on_play_pause();
+                    }
+                    
+                    ui.add_space(10.0);
+                    
+                    // Stop button
+                    if ui.add_sized(button_size, 
+                        egui::Button::new(
+                            egui::RichText::new("⏹").size(24.0)
+                        )
+                    ).clicked() {
+                        on_stop();
+                    }
+                    
+                    ui.add_space(5.0);
+                    
+                    // Seek forward button (n秒後ろへ)
+                    if ui.add_sized(button_size, 
+                        egui::Button::new(
+                            egui::RichText::new("↪").size(24.0)
+                        )
+                    ).clicked() {
+                        on_seek_forward();
+                    }
+                    
+                    ui.add_space(10.0);
+                    
+                    // Next button
+                    if ui.add_sized(button_size, 
+                        egui::Button::new(
+                            egui::RichText::new("⏭").size(24.0)
+                        )
+                    ).clicked() {
+                        on_next();
+                    }
+                });
+                
                 ui.add_space(10.0);
                 
-                ui.vertical(|ui| {
-                    ui.label(egui::RichText::new(&track.title).strong());
-                    ui.label(format!("{} - {}", track.artist, track.album));
-                });
-            }
-        });
-        
-        // シークポイント追加ボタン
-        ui.add_space(10.0);
-        ui.horizontal(|ui| {
-            ui.add_space(5.0);
-            
-            if ui.button("シークポイント追加").clicked() {
-                on_add_seek_point();
-            }
-        });
-        
-        // リピート・シャッフル選択UI
-        ui.add_space(10.0);
-        ui.horizontal(|ui| {
-            ui.add_space(5.0);
-            
-            // リピートモード選択
-            ui.label("リピート:");
-            ui.add_space(5.0);
-            
-            let repeat_text = match repeat_mode {
-                RepeatMode::Normal => "オフ",
-                RepeatMode::RepeatOne => "1曲",
-                RepeatMode::RepeatAll => "全曲",
-            };
-            
-            let mut new_repeat_mode = repeat_mode.clone();
-            egui::ComboBox::from_id_source("repeat_mode_selector")
-                .selected_text(repeat_text)
-                .show_ui(ui, |ui| {
-                    if ui.selectable_value(&mut new_repeat_mode, RepeatMode::Normal, "オフ").changed() {
-                        on_repeat_mode_change(RepeatMode::Normal);
-                    }
-                    if ui.selectable_value(&mut new_repeat_mode, RepeatMode::RepeatOne, "1曲").changed() {
-                        on_repeat_mode_change(RepeatMode::RepeatOne);
-                    }
-                    if ui.selectable_value(&mut new_repeat_mode, RepeatMode::RepeatAll, "全曲").changed() {
-                        on_repeat_mode_change(RepeatMode::RepeatAll);
+                // シークポイント追加ボタン
+                ui.horizontal(|ui| {
+                    ui.add_space(5.0);
+                    
+                    if ui.button("シークポイント追加").clicked() {
+                        on_add_seek_point();
                     }
                 });
+                
+                ui.add_space(10.0);
+                
+                // リピート・シャッフル選択UI
+                ui.horizontal(|ui| {
+                    ui.add_space(5.0);
+                    
+                    // リピートモード選択
+                    ui.label("リピート:");
+                    ui.add_space(5.0);
+                    
+                    let repeat_text = match repeat_mode {
+                        RepeatMode::Normal => "オフ",
+                        RepeatMode::RepeatOne => "1曲",
+                        RepeatMode::RepeatAll => "全曲",
+                    };
+                    
+                    let mut new_repeat_mode = repeat_mode.clone();
+                    egui::ComboBox::from_id_source("repeat_mode_selector")
+                        .selected_text(repeat_text)
+                        .show_ui(ui, |ui| {
+                            if ui.selectable_value(&mut new_repeat_mode, RepeatMode::Normal, "オフ").changed() {
+                                on_repeat_mode_change(RepeatMode::Normal);
+                            }
+                            if ui.selectable_value(&mut new_repeat_mode, RepeatMode::RepeatOne, "1曲").changed() {
+                                on_repeat_mode_change(RepeatMode::RepeatOne);
+                            }
+                            if ui.selectable_value(&mut new_repeat_mode, RepeatMode::RepeatAll, "全曲").changed() {
+                                on_repeat_mode_change(RepeatMode::RepeatAll);
+                            }
+                        });
+                    
+                    ui.add_space(20.0);
+                    
+                    // シャッフル選択
+                    ui.label("シャッフル:");
+                    ui.add_space(5.0);
+                    
+                    let shuffle_text = if shuffle_enabled { "オン" } else { "オフ" };
+                    let mut new_shuffle_enabled = shuffle_enabled;
+                    
+                    egui::ComboBox::from_id_source("shuffle_selector")
+                        .selected_text(shuffle_text)
+                        .show_ui(ui, |ui| {
+                            if ui.selectable_value(&mut new_shuffle_enabled, false, "オフ").changed() {
+                                on_shuffle_change(false);
+                            }
+                            if ui.selectable_value(&mut new_shuffle_enabled, true, "オン").changed() {
+                                on_shuffle_change(true);
+                            }
+                        });
+                });
+            });
             
             ui.add_space(20.0);
+            ui.separator();
+            ui.add_space(10.0);
             
-            // シャッフル選択
-            ui.label("シャッフル:");
-            ui.add_space(5.0);
-            
-            let shuffle_text = if shuffle_enabled { "オン" } else { "オフ" };
-            let mut new_shuffle_enabled = shuffle_enabled;
-            
-            egui::ComboBox::from_id_source("shuffle_selector")
-                .selected_text(shuffle_text)
-                .show_ui(ui, |ui| {
-                    if ui.selectable_value(&mut new_shuffle_enabled, false, "オフ").changed() {
-                        on_shuffle_change(false);
+            // 右側: 楽曲情報とシークポイント一覧
+            ui.allocate_ui_with_layout(
+                [ui.available_width(), ui.available_height()].into(),
+                egui::Layout::top_down(egui::Align::LEFT),
+                |ui| {
+                    if let Some(track) = current_track {
+                        // 楽曲情報表示（固定サイズ）
+                        ui.label(egui::RichText::new(&track.title).strong());
+                        ui.label(format!("{} - {}", track.artist, track.album));
+                        
+                        ui.add_space(15.0);
+                        
+                        // シークポイント一覧（残りの高さをすべて使用）
+                        Self::show_current_track_seek_points(ui, seek_points, on_seek_to_point);
+                    } else {
+                        ui.label("楽曲が選択されていません");
                     }
-                    if ui.selectable_value(&mut new_shuffle_enabled, true, "オン").changed() {
-                        on_shuffle_change(true);
-                    }
-                });
+                }
+            );
         });
+    }
+    
+    // 現在再生中楽曲のシークポイント一覧を表示（ジャンプ機能付き）
+    fn show_current_track_seek_points(
+        ui: &mut egui::Ui,
+        seek_points: Option<&Vec<SeekPoint>>,
+        on_seek_to_point: &mut dyn FnMut(u64),
+    ) {
+        if let Some(points) = seek_points {
+            if !points.is_empty() {
+                ui.label(egui::RichText::new(format!("シークポイント ({}個)", points.len())).size(14.0).strong());
+                ui.add_space(8.0);
+                
+                // 固定ヘッダー行（スクロールしない）
+                egui::Grid::new("seek_points_header_grid")
+                    .num_columns(2)
+                    .spacing([10.0, 6.0])
+                    .min_col_width(ui.available_width() * 0.4)
+                    .max_col_width(ui.available_width() * 0.6)
+                    .show(ui, |ui| {
+                        ui.label(egui::RichText::new("名前").size(13.0).strong().color(egui::Color32::from_gray(180)));
+                        ui.label(egui::RichText::new("再生位置").size(13.0).strong().color(egui::Color32::from_gray(180)));
+                        ui.end_row();
+                    });
+                
+                ui.add_space(3.0);
+                
+                // 動的高さのスクロールエリア（残りスペースをすべて使用）
+                // available_height()を取得し、最小値も設定
+                let remaining_height = ui.available_height().max(100.0);
+                egui::ScrollArea::vertical()
+                    .max_height(remaining_height)
+                    .auto_shrink([false, false])
+                    .show(ui, |ui| {
+                        // シークポイントデータのグリッド
+                        egui::Grid::new("current_track_seek_points_data_grid")
+                            .num_columns(2)
+                            .spacing([10.0, 6.0])
+                            .striped(true)
+                            .min_col_width(ui.available_width() * 0.4)
+                            .max_col_width(ui.available_width() * 0.6)
+                            .show(ui, |ui| {
+                                // 各シークポイントの行
+                                for seek_point in points {
+                                    // 名前（クリック可能ボタン）
+                                    let button_response = ui.add_sized(
+                                        [ui.available_width(), 25.0],
+                                        egui::Button::new(egui::RichText::new(&seek_point.name).size(12.0))
+                                            .fill(egui::Color32::from_rgba_premultiplied(70, 130, 180, 40))
+                                    );
+                                    if button_response.clicked() {
+                                        on_seek_to_point(seek_point.position_ms);
+                                    }
+                                    
+                                    // 位置表示（MM:SS.sss形式）
+                                    let duration = std::time::Duration::from_millis(seek_point.position_ms);
+                                    let total_seconds = duration.as_secs_f64();
+                                    let minutes = (total_seconds / 60.0) as u32;
+                                    let seconds = total_seconds % 60.0;
+                                    let time_text = format!("{:02}:{:06.3}", minutes, seconds);
+                                    ui.label(egui::RichText::new(&time_text).size(12.0).color(egui::Color32::from_gray(200)));
+                                    
+                                    ui.end_row();
+                                }
+                            });
+                    });
+            } else {
+                ui.label(egui::RichText::new("シークポイントなし").size(12.0).color(egui::Color32::from_gray(150)));
+            }
+        } else {
+            ui.label(egui::RichText::new("シークポイントなし").size(12.0).color(egui::Color32::from_gray(150)));
+        }
     }
 
     #[allow(dead_code)]
