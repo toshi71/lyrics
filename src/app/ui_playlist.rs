@@ -889,12 +889,15 @@ impl MyApp {
         let mut shuffle_changed = false;
         let mut new_shuffle_enabled = self.player_state.shuffle_enabled;
         
+        let seek_points = self.get_current_track_seek_points();
+        
         PlaybackControlsUI::show_controls_with_seek_bar(
             ui,
             &playback_state,
             current_position,
             total_duration,
             current_track,
+            seek_points,
             &mut || previous_clicked = true,
             &mut || seek_backward_clicked = true,
             &mut || play_pause_clicked = true,

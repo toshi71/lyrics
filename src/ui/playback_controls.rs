@@ -1,6 +1,7 @@
 use crate::player::PlaybackState;
 use crate::music::TrackInfo;
 use crate::settings::RepeatMode;
+use crate::seek_points::SeekPoint;
 use eframe::egui;
 
 pub struct PlaybackControlsUI;
@@ -291,6 +292,7 @@ impl PlaybackControlsUI {
         current_position: std::time::Duration,
         total_duration: Option<std::time::Duration>,
         current_track: Option<&TrackInfo>,
+        seek_points: Option<&Vec<SeekPoint>>,
         on_previous: &mut dyn FnMut(),
         on_seek_backward: &mut dyn FnMut(),
         on_play_pause: &mut dyn FnMut(),
@@ -307,7 +309,7 @@ impl PlaybackControlsUI {
         on_shuffle_change: &mut dyn FnMut(bool),
     ) {
         // シークバーを最初に表示（横幅全体を使用）
-        Self::show_seek_bar(ui, current_position, total_duration, on_seek, on_seek_start, on_seek_end);
+        Self::show_seek_bar(ui, current_position, total_duration, seek_points, on_seek, on_seek_start, on_seek_end);
         
         ui.add_space(10.0);
 
@@ -779,6 +781,7 @@ impl PlaybackControlsUI {
         ui: &mut egui::Ui,
         current_position: std::time::Duration,
         total_duration: Option<std::time::Duration>,
+        seek_points: Option<&Vec<SeekPoint>>,
         on_seek: &mut dyn FnMut(std::time::Duration),
         on_seek_start: &mut dyn FnMut(),
         on_seek_end: &mut dyn FnMut(),
@@ -826,6 +829,36 @@ impl PlaybackControlsUI {
                     let line_start = egui::pos2(position_x, rect.top());
                     let line_end = egui::pos2(position_x, rect.bottom());
                     ui.painter().line_segment([line_start, line_end], egui::Stroke::new(2.0, egui::Color32::RED));
+                }
+                
+                // シークポイントのマーカーを表示
+                if let Some(points) = seek_points {
+                    for seek_point in points {
+                        let point_position_secs = seek_point.position_ms as f64 / 1000.0;
+                        let point_progress = if total.as_secs_f64() > 0.0 {
+                            point_position_secs / total.as_secs_f64()
+                        } else {
+                            0.0
+                        };
+                        
+                        if point_progress >= 0.0 && point_progress <= 1.0 {
+                            let marker_x = rect.left() + rect.width() * point_progress as f32;
+                            
+                            // マーカーの三角形を描画（上向き三角）
+                            let marker_size = 8.0;
+                            let triangle_top = egui::pos2(marker_x, rect.top() - 2.0);
+                            let triangle_left = egui::pos2(marker_x - marker_size/2.0, rect.top() + marker_size);
+                            let triangle_right = egui::pos2(marker_x + marker_size/2.0, rect.top() + marker_size);
+                            
+                            // 三角形を塗りつぶし
+                            let triangle_points = vec![triangle_top, triangle_left, triangle_right];
+                            ui.painter().add(egui::Shape::convex_polygon(
+                                triangle_points,
+                                egui::Color32::from_rgb(0, 150, 255), // 青色
+                                egui::Stroke::new(1.0, egui::Color32::from_rgb(0, 100, 200))
+                            ));
+                        }
+                    }
                 }
                 
                 // 枠線を描画

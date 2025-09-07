@@ -137,7 +137,7 @@ mod seek_points_tests {
     #[test]
     fn test_add_and_get_seek_points() {
         let mut app = MyApp::new();
-        let test_track = PathBuf::from("test_track.flac");
+        let test_track = PathBuf::from("unique_test_track_add_get.flac");
         
         // シークポイントを追加
         let result1 = app.add_seek_point(&test_track, "イントロ終了".to_string(), 30000);
@@ -163,7 +163,7 @@ mod seek_points_tests {
     #[test]
     fn test_remove_seek_point() {
         let mut app = MyApp::new();
-        let test_track = PathBuf::from("test_track.flac");
+        let test_track = PathBuf::from("unique_test_track_remove.flac");
         
         // シークポイントを追加
         let id = app.add_seek_point(&test_track, "テストポイント".to_string(), 45000).unwrap();
@@ -185,7 +185,7 @@ mod seek_points_tests {
     #[test]
     fn test_find_next_and_previous_seek_points() {
         let mut app = MyApp::new();
-        let test_track = PathBuf::from("test_track.flac");
+        let test_track = PathBuf::from("unique_test_track_navigate.flac");
         
         // 複数のシークポイントを追加
         app.add_seek_point(&test_track, "ポイント1".to_string(), 20000).unwrap();
@@ -224,7 +224,7 @@ mod seek_points_tests {
         
         {
             let mut manager = flac_music_player::seek_points::SeekPointManager::new();
-            let test_track = PathBuf::from("test_track.flac");
+            let test_track = PathBuf::from("unique_test_track_persist.flac");
             
             // シークポイントを追加
             manager.add_seek_point(&test_track, "テスト保存".to_string(), 123000).unwrap();
@@ -240,7 +240,7 @@ mod seek_points_tests {
             let result = manager.load_from_file();
             assert!(result.is_ok());
             
-            let test_track = PathBuf::from("test_track.flac");
+            let test_track = PathBuf::from("unique_test_track_persist.flac");
             let seek_points = manager.get_seek_points(&test_track);
             assert!(seek_points.is_some());
             
