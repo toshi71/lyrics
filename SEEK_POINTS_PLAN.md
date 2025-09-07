@@ -57,10 +57,28 @@ pub struct SeekPointManager {
 
 ### アーキテクチャ統合
 ```rust
-// MyApp構造体への追加
-pub struct MyApp {
-    // 既存フィールド...
-    pub seek_point_manager: SeekPointManager,  // 新規追加
+// PlayerState構造体への統合（責任分離パターン維持）
+pub struct PlayerState {
+    pub audio_player: AudioPlayer,
+    pub seek_drag_state: Option<PlaybackState>,
+    pub repeat_mode: RepeatMode,
+    pub shuffle_enabled: bool,
+    pub seek_point_manager: SeekPointManager,  // 新規追加（再生制御関連）
+}
+
+// MyAppからのアクセス例
+impl MyApp {
+    pub fn add_seek_point(&mut self, track_path: &Path, name: String, position_ms: u64) -> Result<String, String> {
+        self.player_state.seek_point_manager.add_seek_point(track_path, name, position_ms)
+    }
+    
+    pub fn get_current_track_seek_points(&self) -> Option<&Vec<SeekPoint>> {
+        if let Some(current_track) = self.playlist_manager.get_current_track() {
+            self.player_state.seek_point_manager.get_seek_points(&current_track.path)
+        } else {
+            None
+        }
+    }
 }
 
 // 責任分離パターンに従った設計
@@ -89,7 +107,7 @@ impl SeekPointManager {
 - [ ] **Step 1.1**: `SeekPoint`, `TrackSeekPoints`, `SeekPointManager` 構造体実装
 - [ ] **Step 1.2**: 基本的なCRUD操作実装（追加・削除・取得）
 - [ ] **Step 1.3**: 単一JSONファイル永続化機能実装（メモリ常駐方式）
-- [ ] **Step 1.4**: `MyApp`構造体への統合
+- [ ] **Step 1.4**: `PlayerState`構造体への統合（責任分離パターン維持）
 - [ ] **Step 1.5**: 基本テストケース作成
 
 **完了条件**: シークポイントの保存・読み込みが正常動作
