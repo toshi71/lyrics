@@ -1211,85 +1211,124 @@ impl MyApp {
         let current_track = self.playlist_manager.get_current_track();
         let seek_points = self.get_current_track_seek_points();
         
+        // PlaybackControls全体の利用可能領域を取得
+        let total_available_rect = ui.available_rect_before_wrap();
+        
         // シークバーを最初に表示（横幅全体を使用）
-        let seek_bar_rect_before = ui.min_rect();
-        crate::ui::PlaybackControlsUI::show_seek_bar(ui, current_position, total_duration, seek_points, on_seek, on_seek_start, on_seek_end);
-        let seek_bar_rect_after = ui.min_rect();
+        let seek_bar_height = 40.0; // 固定の高さ
+        let seek_bar_rect = egui::Rect::from_min_size(
+            total_available_rect.min,
+            egui::Vec2::new(total_available_rect.width(), seek_bar_height)
+        );
         
         // シークバー領域のデバッグ描画
-        let seek_bar_rect = egui::Rect::from_min_max(seek_bar_rect_before.min, egui::Pos2::new(seek_bar_rect_after.max.x, seek_bar_rect_before.min.y + 40.0));
         self.debug_ui.draw_debug_rect_fixed(ui, seek_bar_rect, crate::debug_ui::ID_SEEK_BAR, "SeekBar");
         
-        ui.add_space(10.0);
+        // シークバーの実際の描画
+        crate::ui::PlaybackControlsUI::show_seek_bar(ui, current_position, total_duration, seek_points, on_seek, on_seek_start, on_seek_end);
+        
+        let space_height = 10.0;
+        ui.add_space(space_height);
 
+        // 左右分割エリアの高さを計算
+        let controls_area_height = total_available_rect.height() - seek_bar_height - space_height;
+        let controls_area_rect = egui::Rect::from_min_size(
+            total_available_rect.min + egui::Vec2::new(0.0, seek_bar_height + space_height),
+            egui::Vec2::new(total_available_rect.width(), controls_area_height)
+        );
+        
         // 左右分割レイアウト
-        let _layout_rect_before = ui.min_rect();
         ui.horizontal(|ui| {
-            // 左側: 再生コントロール、シークポイント追加、リピート・シャッフル
-            let left_rect_before = ui.min_rect();
-            ui.vertical(|ui| {
-                ui.set_min_width(380.0); // 左側の最小幅を確保
-                
-                self.show_playback_buttons(ui, playback_state, on_previous, on_seek_backward, on_play_pause, on_stop, on_seek_forward, on_next);
-                
-                ui.add_space(15.0);
-                
-                // シークポイント追加ボタン
-                if ui.button("📍 現在位置にシークポイントを追加").clicked() {
-                    on_add_seek_point();
-                }
-                
-                ui.add_space(15.0);
-                
-                self.show_repeat_shuffle_controls(ui, repeat_mode, shuffle_enabled, on_repeat_mode_change, on_shuffle_change);
-            });
-            let left_rect_after = ui.min_rect();
+            let left_width = 380.0; // 左側の固定幅
+            let separator_width = 40.0; // セパレーター部分の幅（スペース + セパレーター + スペース）
+            let right_width = controls_area_rect.width() - left_width - separator_width;
+            
+            // 左側領域の正確なサイズ計算
+            let left_rect = egui::Rect::from_min_size(
+                controls_area_rect.min,
+                egui::Vec2::new(left_width, controls_area_height)
+            );
             
             // 左側領域のデバッグ描画
-            let left_rect = egui::Rect::from_min_max(left_rect_before.min, left_rect_after.max);
             self.debug_ui.draw_debug_rect_fixed(ui, left_rect, crate::debug_ui::ID_LEFT_CONTROLS, "LeftControls");
+            
+            // 左側: 再生コントロール、シークポイント追加、リピート・シャッフル
+            ui.allocate_ui_with_layout(
+                egui::Vec2::new(left_width, controls_area_height),
+                egui::Layout::top_down(egui::Align::LEFT),
+                |ui| {
+                    self.show_playback_buttons(ui, playback_state, on_previous, on_seek_backward, on_play_pause, on_stop, on_seek_forward, on_next);
+                    
+                    ui.add_space(15.0);
+                    
+                    // シークポイント追加ボタン
+                    if ui.button("📍 現在位置にシークポイントを追加").clicked() {
+                        on_add_seek_point();
+                    }
+                    
+                    ui.add_space(15.0);
+                    
+                    self.show_repeat_shuffle_controls(ui, repeat_mode, shuffle_enabled, on_repeat_mode_change, on_shuffle_change);
+                }
+            );
             
             ui.add_space(20.0);
             ui.separator();
             ui.add_space(10.0);
             
+            // 右側領域の正確なサイズ計算
+            let right_rect = egui::Rect::from_min_size(
+                controls_area_rect.min + egui::Vec2::new(left_width + separator_width, 0.0),
+                egui::Vec2::new(right_width, controls_area_height)
+            );
+            
+            // 右側領域のデバッグ描画
+            self.debug_ui.draw_debug_rect_fixed(ui, right_rect, crate::debug_ui::ID_RIGHT_INFO, "RightInfo");
+            
             // 右側: 楽曲情報とシークポイント一覧
-            let right_rect_before = ui.min_rect();
             ui.allocate_ui_with_layout(
-                [ui.available_width(), ui.available_height()].into(),
+                egui::Vec2::new(right_width, controls_area_height),
                 egui::Layout::top_down(egui::Align::LEFT),
                 |ui| {
                     if let Some(track) = current_track {
                         // 楽曲情報表示領域
-                        let track_info_rect_before = ui.min_rect();
-                        ui.label(egui::RichText::new(&track.title).strong());
-                        ui.label(format!("{} - {}", track.artist, track.album));
-                        let track_info_rect_after = ui.min_rect();
+                        let track_info_height = 60.0; // 楽曲情報の固定高さ
+                        let track_info_rect = egui::Rect::from_min_size(
+                            ui.next_widget_position(),
+                            egui::Vec2::new(right_width, track_info_height)
+                        );
                         
                         // 楽曲情報領域のデバッグ描画
-                        let track_info_rect = egui::Rect::from_min_max(track_info_rect_before.min, egui::Pos2::new(track_info_rect_after.max.x, track_info_rect_before.min.y + 60.0));
                         self.debug_ui.draw_debug_rect_fixed(ui, track_info_rect, crate::debug_ui::ID_TRACK_INFO, "TrackInfo");
+                        
+                        ui.label(egui::RichText::new(&track.title).strong());
+                        ui.label(format!("{} - {}", track.artist, track.album));
                         
                         ui.add_space(15.0);
                         
                         // シークポイント一覧領域
-                        let seek_points_rect_before = ui.min_rect();
-                        crate::ui::PlaybackControlsUI::show_current_track_seek_points(ui, seek_points, on_seek_to_point);
-                        let seek_points_rect_after = ui.min_rect();
+                        let seek_points_list_height = controls_area_height - track_info_height - 15.0;
+                        let seek_points_rect = egui::Rect::from_min_size(
+                            ui.next_widget_position(),
+                            egui::Vec2::new(right_width, seek_points_list_height)
+                        );
                         
                         // シークポイント一覧領域のデバッグ描画
-                        let seek_points_rect = egui::Rect::from_min_max(seek_points_rect_before.min, seek_points_rect_after.max);
                         self.debug_ui.draw_debug_rect_fixed(ui, seek_points_rect, crate::debug_ui::ID_SEEK_POINTS_LIST, "SeekPointsList");
+                        
+                        // 残りのスペースでシークポイント一覧を表示
+                        ui.allocate_ui_with_layout(
+                            egui::Vec2::new(right_width, seek_points_list_height),
+                            egui::Layout::top_down(egui::Align::LEFT),
+                            |ui| {
+                                crate::ui::PlaybackControlsUI::show_current_track_seek_points(ui, seek_points, on_seek_to_point);
+                            }
+                        );
                     } else {
                         ui.label("楽曲が選択されていません");
                     }
                 }
             );
-            let right_rect_after = ui.min_rect();
-            
-            // 右側領域のデバッグ描画
-            let right_rect = egui::Rect::from_min_max(right_rect_before.min, right_rect_after.max);
-            self.debug_ui.draw_debug_rect_fixed(ui, right_rect, crate::debug_ui::ID_RIGHT_INFO, "RightInfo");
         });
     }
 
