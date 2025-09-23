@@ -33,6 +33,9 @@ pub struct Settings {
     // テーマ設定
     pub dark_mode: bool,                    // ダークモード（デフォルト: false）
     
+    // デバッグ設定
+    pub debug_ui_regions: bool,             // デバッグUI領域表示（デフォルト: false）
+    
 }
 
 #[derive(Serialize, Deserialize, Clone)]
@@ -54,6 +57,7 @@ impl Default for Settings {
             right_bottom_left_right_position: 0.3,
             seek_seconds: 10,
             dark_mode: false,
+            debug_ui_regions: false,
         }
     }
 }

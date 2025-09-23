@@ -1,4 +1,5 @@
 mod app;
+mod debug_ui;
 mod music;
 mod player;
 mod playlist;

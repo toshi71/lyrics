@@ -1,4 +1,5 @@
 pub mod app;
+pub mod debug_ui;
 pub mod music;
 pub mod player;
 pub mod playlist;

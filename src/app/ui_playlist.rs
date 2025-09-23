@@ -7,6 +7,9 @@ impl MyApp {
         let available_rect = ui.available_rect_before_wrap();
         let available_height = available_rect.height();
         
+        // 右ペイン全体のデバッグ描画
+        self.debug_ui.draw_debug_rect_fixed(ui, available_rect, crate::debug_ui::ID_RIGHT_PANE_INNER, "RightPaneInner");
+        
         // 1. 再生コントロール（上部）の高さを計算
         let controls_height = available_height * self.ui_state.right_top_bottom_position;
         
@@ -41,6 +44,9 @@ impl MyApp {
         let mut top_ui = ui.child_ui(top_rect, egui::Layout::top_down(egui::Align::LEFT), None);
         top_ui.set_clip_rect(top_rect);
         
+        // 上部コントロール領域のデバッグ描画
+        self.debug_ui.draw_debug_rect_fixed(ui, top_rect, crate::debug_ui::ID_PLAYBACK_CONTROLS, "PlaybackControls");
+        
         top_ui.vertical(|ui| {
             self.show_playback_controls_only(ui);
         });
@@ -62,6 +68,9 @@ impl MyApp {
         );
         let mut bottom_ui = ui.child_ui(bottom_rect, egui::Layout::top_down(egui::Align::LEFT), None);
         bottom_ui.set_clip_rect(bottom_rect);
+        
+        // 下部領域のデバッグ描画
+        self.debug_ui.draw_debug_rect_fixed(ui, bottom_rect, crate::debug_ui::ID_BOTTOM_AREA, "BottomArea");
         
         // 下部の左右分割
         let bottom_left_width = bottom_rect.width() * self.ui_state.right_bottom_left_right_position;
@@ -96,6 +105,9 @@ impl MyApp {
         );
         let mut bottom_left_ui = bottom_ui.child_ui(bottom_left_rect, egui::Layout::top_down(egui::Align::LEFT), None);
         bottom_left_ui.set_clip_rect(bottom_left_rect);
+        
+        // 下部左側のデバッグ描画
+        self.debug_ui.draw_debug_rect_fixed(&mut bottom_ui, bottom_left_rect, crate::debug_ui::ID_PLAYLIST_AREA, "PlaylistArea");
         
         bottom_left_ui.vertical(|ui| {
             // Add 3px top padding for playlist tab area
@@ -132,6 +144,9 @@ impl MyApp {
         );
         let mut bottom_right_ui = bottom_ui.child_ui(bottom_right_rect, egui::Layout::top_down(egui::Align::LEFT), None);
         bottom_right_ui.set_clip_rect(bottom_right_rect);
+        
+        // 下部右側のデバッグ描画
+        self.debug_ui.draw_debug_rect_fixed(&mut bottom_ui, bottom_right_rect, crate::debug_ui::ID_INFO_TAB_AREA, "InfoTabArea");
         
         bottom_right_ui.vertical(|ui| {
             // Add 5px top padding for info/LRC tab area
@@ -1020,8 +1035,6 @@ impl MyApp {
             ui.ctx().request_repaint();
         }
         
-        let current_track = self.playlist_manager.get_current_track();
-        
         // リピート・シャッフルモードの変更処理用変数
         let mut repeat_mode_changed = false;
         let mut new_repeat_mode = self.player_state.repeat_mode.clone();
@@ -1030,15 +1043,16 @@ impl MyApp {
         let mut add_seek_point_clicked = false;
         let mut seek_point_jump_position: Option<u64> = None;
         
-        let seek_points = self.get_current_track_seek_points();
+        // 必要なデータをコピー
+        let repeat_mode = self.player_state.repeat_mode.clone();
+        let shuffle_enabled = self.player_state.shuffle_enabled;
         
-        PlaybackControlsUI::show_controls_with_seek_bar(
+        // PlaybackControlsの内部領域をデバッグ描画対応バージョンで表示
+        self.show_controls_with_seek_bar_debug(
             ui,
             &playback_state,
             current_position,
             total_duration,
-            current_track,
-            seek_points,
             &mut || previous_clicked = true,
             &mut || seek_backward_clicked = true,
             &mut || play_pause_clicked = true,
@@ -1049,8 +1063,8 @@ impl MyApp {
             &mut || seek_started = true,
             &mut || seek_ended = true,
             _auto_focus,
-            &self.player_state.repeat_mode,
-            self.player_state.shuffle_enabled,
+            &repeat_mode,
+            shuffle_enabled,
             &mut |mode| {
                 new_repeat_mode = mode;
                 repeat_mode_changed = true;
@@ -1166,5 +1180,257 @@ impl MyApp {
             .set_description(message)
             .set_level(rfd::MessageLevel::Error)
             .show();
+    }
+
+    /// デバッグ描画対応版のPlaybackControls表示
+    #[allow(clippy::too_many_arguments)]
+    fn show_controls_with_seek_bar_debug(
+        &mut self,
+        ui: &mut egui::Ui,
+        playback_state: &crate::player::PlaybackState,
+        current_position: std::time::Duration,
+        total_duration: Option<std::time::Duration>,
+        on_previous: &mut dyn FnMut(),
+        on_seek_backward: &mut dyn FnMut(),
+        on_play_pause: &mut dyn FnMut(),
+        on_stop: &mut dyn FnMut(),
+        on_seek_forward: &mut dyn FnMut(),
+        on_next: &mut dyn FnMut(),
+        on_seek: &mut dyn FnMut(std::time::Duration),
+        on_seek_start: &mut dyn FnMut(),
+        on_seek_end: &mut dyn FnMut(),
+        _auto_focus: bool,
+        repeat_mode: &crate::settings::RepeatMode,
+        shuffle_enabled: bool,
+        on_repeat_mode_change: &mut dyn FnMut(crate::settings::RepeatMode),
+        on_shuffle_change: &mut dyn FnMut(bool),
+        on_add_seek_point: &mut dyn FnMut(),
+        on_seek_to_point: &mut dyn FnMut(u64),
+    ) {
+        // 必要なデータを取得
+        let current_track = self.playlist_manager.get_current_track();
+        let seek_points = self.get_current_track_seek_points();
+        
+        // シークバーを最初に表示（横幅全体を使用）
+        let seek_bar_rect_before = ui.min_rect();
+        crate::ui::PlaybackControlsUI::show_seek_bar(ui, current_position, total_duration, seek_points, on_seek, on_seek_start, on_seek_end);
+        let seek_bar_rect_after = ui.min_rect();
+        
+        // シークバー領域のデバッグ描画
+        let seek_bar_rect = egui::Rect::from_min_max(seek_bar_rect_before.min, egui::Pos2::new(seek_bar_rect_after.max.x, seek_bar_rect_before.min.y + 40.0));
+        self.debug_ui.draw_debug_rect_fixed(ui, seek_bar_rect, crate::debug_ui::ID_SEEK_BAR, "SeekBar");
+        
+        ui.add_space(10.0);
+
+        // 左右分割レイアウト
+        let _layout_rect_before = ui.min_rect();
+        ui.horizontal(|ui| {
+            // 左側: 再生コントロール、シークポイント追加、リピート・シャッフル
+            let left_rect_before = ui.min_rect();
+            ui.vertical(|ui| {
+                ui.set_min_width(380.0); // 左側の最小幅を確保
+                
+                self.show_playback_buttons(ui, playback_state, on_previous, on_seek_backward, on_play_pause, on_stop, on_seek_forward, on_next);
+                
+                ui.add_space(15.0);
+                
+                // シークポイント追加ボタン
+                if ui.button("📍 現在位置にシークポイントを追加").clicked() {
+                    on_add_seek_point();
+                }
+                
+                ui.add_space(15.0);
+                
+                self.show_repeat_shuffle_controls(ui, repeat_mode, shuffle_enabled, on_repeat_mode_change, on_shuffle_change);
+            });
+            let left_rect_after = ui.min_rect();
+            
+            // 左側領域のデバッグ描画
+            let left_rect = egui::Rect::from_min_max(left_rect_before.min, left_rect_after.max);
+            self.debug_ui.draw_debug_rect_fixed(ui, left_rect, crate::debug_ui::ID_LEFT_CONTROLS, "LeftControls");
+            
+            ui.add_space(20.0);
+            ui.separator();
+            ui.add_space(10.0);
+            
+            // 右側: 楽曲情報とシークポイント一覧
+            let right_rect_before = ui.min_rect();
+            ui.allocate_ui_with_layout(
+                [ui.available_width(), ui.available_height()].into(),
+                egui::Layout::top_down(egui::Align::LEFT),
+                |ui| {
+                    if let Some(track) = current_track {
+                        // 楽曲情報表示領域
+                        let track_info_rect_before = ui.min_rect();
+                        ui.label(egui::RichText::new(&track.title).strong());
+                        ui.label(format!("{} - {}", track.artist, track.album));
+                        let track_info_rect_after = ui.min_rect();
+                        
+                        // 楽曲情報領域のデバッグ描画
+                        let track_info_rect = egui::Rect::from_min_max(track_info_rect_before.min, egui::Pos2::new(track_info_rect_after.max.x, track_info_rect_before.min.y + 60.0));
+                        self.debug_ui.draw_debug_rect_fixed(ui, track_info_rect, crate::debug_ui::ID_TRACK_INFO, "TrackInfo");
+                        
+                        ui.add_space(15.0);
+                        
+                        // シークポイント一覧領域
+                        let seek_points_rect_before = ui.min_rect();
+                        crate::ui::PlaybackControlsUI::show_current_track_seek_points(ui, seek_points, on_seek_to_point);
+                        let seek_points_rect_after = ui.min_rect();
+                        
+                        // シークポイント一覧領域のデバッグ描画
+                        let seek_points_rect = egui::Rect::from_min_max(seek_points_rect_before.min, seek_points_rect_after.max);
+                        self.debug_ui.draw_debug_rect_fixed(ui, seek_points_rect, crate::debug_ui::ID_SEEK_POINTS_LIST, "SeekPointsList");
+                    } else {
+                        ui.label("楽曲が選択されていません");
+                    }
+                }
+            );
+            let right_rect_after = ui.min_rect();
+            
+            // 右側領域のデバッグ描画
+            let right_rect = egui::Rect::from_min_max(right_rect_before.min, right_rect_after.max);
+            self.debug_ui.draw_debug_rect_fixed(ui, right_rect, crate::debug_ui::ID_RIGHT_INFO, "RightInfo");
+        });
+    }
+
+    fn show_playback_buttons(
+        &self,
+        ui: &mut egui::Ui,
+        playback_state: &crate::player::PlaybackState,
+        on_previous: &mut dyn FnMut(),
+        on_seek_backward: &mut dyn FnMut(),
+        on_play_pause: &mut dyn FnMut(),
+        on_stop: &mut dyn FnMut(),
+        on_seek_forward: &mut dyn FnMut(),
+        on_next: &mut dyn FnMut(),
+    ) {
+        // 再生コントロールボタン
+        ui.horizontal(|ui| {
+            ui.add_space(5.0);
+            
+            let button_size = [48.0, 48.0];
+            
+            // Previous button
+            if ui.add_sized(button_size, 
+                egui::Button::new(
+                    egui::RichText::new("⏮").size(24.0)
+                )
+            ).clicked() {
+                on_previous();
+            }
+            
+            ui.add_space(5.0);
+            
+            // Seek backward button
+            if ui.add_sized(button_size, 
+                egui::Button::new(
+                    egui::RichText::new("↩").size(24.0)
+                )
+            ).clicked() {
+                on_seek_backward();
+            }
+            
+            ui.add_space(10.0);
+            
+            // Play/pause button
+            let play_pause_text = match playback_state {
+                crate::player::PlaybackState::Playing => "⏸",
+                _ => "▶",
+            };
+            if ui.add_sized(button_size, 
+                egui::Button::new(
+                    egui::RichText::new(play_pause_text).size(24.0)
+                )
+            ).clicked() {
+                on_play_pause();
+            }
+            
+            ui.add_space(10.0);
+            
+            // Stop button
+            if ui.add_sized(button_size, 
+                egui::Button::new(
+                    egui::RichText::new("⏹").size(24.0)
+                )
+            ).clicked() {
+                on_stop();
+            }
+            
+            ui.add_space(5.0);
+            
+            // Seek forward button
+            if ui.add_sized(button_size, 
+                egui::Button::new(
+                    egui::RichText::new("↪").size(24.0)
+                )
+            ).clicked() {
+                on_seek_forward();
+            }
+            
+            ui.add_space(10.0);
+            
+            // Next button
+            if ui.add_sized(button_size, 
+                egui::Button::new(
+                    egui::RichText::new("⏭").size(24.0)
+                )
+            ).clicked() {
+                on_next();
+            }
+        });
+    }
+
+    fn show_repeat_shuffle_controls(
+        &self,
+        ui: &mut egui::Ui,
+        repeat_mode: &crate::settings::RepeatMode,
+        shuffle_enabled: bool,
+        on_repeat_mode_change: &mut dyn FnMut(crate::settings::RepeatMode),
+        on_shuffle_change: &mut dyn FnMut(bool),
+    ) {
+        // リピート・シャッフル設定
+        ui.horizontal(|ui| {
+            ui.label("リピート:");
+            ui.add_space(10.0);
+            
+            let repeat_text = match repeat_mode {
+                crate::settings::RepeatMode::Normal => "オフ",
+                crate::settings::RepeatMode::RepeatOne => "1曲",
+                crate::settings::RepeatMode::RepeatAll => "全曲",
+            };
+            
+            let mut new_repeat_mode = repeat_mode.clone();
+            egui::ComboBox::from_id_source("repeat_selector")
+                .selected_text(repeat_text)
+                .show_ui(ui, |ui| {
+                    if ui.selectable_value(&mut new_repeat_mode, crate::settings::RepeatMode::Normal, "オフ").changed() {
+                        on_repeat_mode_change(crate::settings::RepeatMode::Normal);
+                    }
+                    if ui.selectable_value(&mut new_repeat_mode, crate::settings::RepeatMode::RepeatOne, "1曲").changed() {
+                        on_repeat_mode_change(crate::settings::RepeatMode::RepeatOne);
+                    }
+                    if ui.selectable_value(&mut new_repeat_mode, crate::settings::RepeatMode::RepeatAll, "全曲").changed() {
+                        on_repeat_mode_change(crate::settings::RepeatMode::RepeatAll);
+                    }
+                });
+        });
+        
+        ui.horizontal(|ui| {
+            ui.label("シャッフル:");
+            ui.add_space(10.0);
+            
+            let shuffle_text = if shuffle_enabled { "オン" } else { "オフ" };
+            let mut new_shuffle_enabled = shuffle_enabled;
+            egui::ComboBox::from_id_source("shuffle_selector")
+                .selected_text(shuffle_text)
+                .show_ui(ui, |ui| {
+                    if ui.selectable_value(&mut new_shuffle_enabled, false, "オフ").changed() {
+                        on_shuffle_change(false);
+                    }
+                    if ui.selectable_value(&mut new_shuffle_enabled, true, "オン").changed() {
+                        on_shuffle_change(true);
+                    }
+                });
+        });
     }
 }

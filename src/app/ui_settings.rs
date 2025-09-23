@@ -119,6 +119,20 @@ impl MyApp {
             ui.label("(↩/↪ ボタンで前後にジャンプする秒数)");
         });
         
+        // デバッグ設定
+        ui.add_space(20.0);
+        ui.separator();
+        ui.heading("デバッグ設定");
+        ui.add_space(10.0);
+        
+        ui.horizontal(|ui| {
+            let response = ui.checkbox(&mut self.settings.debug_ui_regions, 
+                "UI領域のデバッグ表示（赤い枠線と番号を表示）");
+            if response.changed() {
+                self.debug_ui.set_enabled(self.settings.debug_ui_regions);
+                self.save_settings();
+            }
+        });
 
         // システム統計の表示
         ui.add_space(20.0);

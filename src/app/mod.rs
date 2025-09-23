@@ -8,6 +8,7 @@ use font_kit::family_name::FamilyName;
 use font_kit::properties::Properties;
 use font_kit::source::SystemSource;
 
+use crate::debug_ui::DebugUIRegions;
 use crate::music::MusicLibrary;
 use crate::player::PlaybackState;
 use crate::playlist::PlaylistManager;
@@ -29,6 +30,7 @@ pub struct MyApp {
     pub settings: Settings,
     pub music_library: MusicLibrary,
     pub playlist_manager: PlaylistManager,
+    pub debug_ui: DebugUIRegions,
 }
 
 impl MyApp {
@@ -59,6 +61,7 @@ impl MyApp {
                 
                 manager
             },
+            debug_ui: DebugUIRegions::new(settings.debug_ui_regions),
             settings,
         };
         app.refresh_music_library();

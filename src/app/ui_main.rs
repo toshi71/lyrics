@@ -88,9 +88,13 @@ impl MyApp {
     }
 
     pub fn show_main_tab(&mut self, ui: &mut egui::Ui) {
+        
         let available_rect = ui.available_rect_before_wrap();
         let available_width = available_rect.width();
         let available_height = available_rect.height();
+        
+        // メインタブ全体のデバッグ描画
+        self.debug_ui.draw_debug_rect_fixed(ui, available_rect, crate::debug_ui::ID_MAIN_TAB, "MainTab");
         
         // リサイズ可能な水平分割線
         let separator_id = ui.id().with("main_horizontal_separator");
@@ -130,6 +134,9 @@ impl MyApp {
         let mut left_ui = ui.child_ui(left_rect, egui::Layout::top_down(egui::Align::LEFT), None);
         left_ui.set_clip_rect(left_rect);
         
+        // 左ペインのデバッグ描画
+        self.debug_ui.draw_debug_rect_fixed(ui, left_rect, crate::debug_ui::ID_LEFT_PANE, "LeftPane");
+        
         self.show_left_pane(&mut left_ui);
         
         // Separator visualization
@@ -148,6 +155,9 @@ impl MyApp {
         );
         let mut right_ui = ui.child_ui(right_rect, egui::Layout::top_down(egui::Align::LEFT), None);
         right_ui.set_clip_rect(right_rect);
+        
+        // 右ペインのデバッグ描画
+        self.debug_ui.draw_debug_rect_fixed(ui, right_rect, crate::debug_ui::ID_RIGHT_PANE, "RightPane");
         
         self.show_right_pane(&mut right_ui);
     }

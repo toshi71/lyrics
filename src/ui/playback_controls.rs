@@ -487,7 +487,7 @@ impl PlaybackControlsUI {
     }
     
     // 現在再生中楽曲のシークポイント一覧を表示（ジャンプ機能付き）
-    fn show_current_track_seek_points(
+    pub fn show_current_track_seek_points(
         ui: &mut egui::Ui,
         seek_points: Option<&Vec<SeekPoint>>,
         on_seek_to_point: &mut dyn FnMut(u64),
@@ -883,7 +883,7 @@ impl PlaybackControlsUI {
         });
     }
 
-    fn show_seek_bar(
+    pub fn show_seek_bar(
         ui: &mut egui::Ui,
         current_position: std::time::Duration,
         total_duration: Option<std::time::Duration>,
