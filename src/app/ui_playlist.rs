@@ -1291,29 +1291,40 @@ impl MyApp {
                 egui::Layout::top_down(egui::Align::LEFT),
                 |ui| {
                     if let Some(track) = current_track {
-                        // 楽曲情報表示領域
-                        let track_info_height = 60.0; // 楽曲情報の固定高さ
-                        let track_info_rect = egui::Rect::from_min_size(
-                            ui.next_widget_position(),
-                            egui::Vec2::new(right_width, track_info_height)
-                        );
+                        // 楽曲情報表示領域の開始位置を記録
+                        let track_info_start_pos = ui.next_widget_position();
                         
-                        // 楽曲情報領域のデバッグ描画
-                        self.debug_ui.draw_debug_rect_fixed(ui, track_info_rect, crate::debug_ui::ID_TRACK_INFO, "TrackInfo");
-                        
+                        // 楽曲情報を実際に描画
                         ui.label(egui::RichText::new(&track.title).strong());
                         ui.label(format!("{} - {}", track.artist, track.album));
                         
-                        ui.add_space(15.0);
+                        // 楽曲情報表示領域の終了位置を取得
+                        let track_info_end_pos = ui.next_widget_position();
+                        let actual_track_info_height = track_info_end_pos.y - track_info_start_pos.y;
                         
-                        // シークポイント一覧領域
-                        let seek_points_list_height = controls_area_height - track_info_height - 15.0;
+                        // 楽曲情報領域のデバッグ描画（実際のサイズで）
+                        let track_info_rect = egui::Rect::from_min_size(
+                            track_info_start_pos,
+                            egui::Vec2::new(right_width, actual_track_info_height)
+                        );
+                        self.debug_ui.draw_debug_rect_fixed(ui, track_info_rect, crate::debug_ui::ID_TRACK_INFO, "TrackInfo");
+                        
+                        // スペースを追加
+                        let space_height = 15.0;
+                        ui.add_space(space_height);
+                        
+                        // シークポイント一覧領域の開始位置
+                        let seek_points_start_pos = ui.next_widget_position();
+                        
+                        // 残りの高さを正確に計算
+                        let used_height = actual_track_info_height + space_height;
+                        let seek_points_list_height = controls_area_height - used_height;
+                        
+                        // シークポイント一覧領域のデバッグ描画（正確なサイズで）
                         let seek_points_rect = egui::Rect::from_min_size(
-                            ui.next_widget_position(),
+                            seek_points_start_pos,
                             egui::Vec2::new(right_width, seek_points_list_height)
                         );
-                        
-                        // シークポイント一覧領域のデバッグ描画
                         self.debug_ui.draw_debug_rect_fixed(ui, seek_points_rect, crate::debug_ui::ID_SEEK_POINTS_LIST, "SeekPointsList");
                         
                         // 残りのスペースでシークポイント一覧を表示
