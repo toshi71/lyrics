@@ -119,7 +119,7 @@ impl RightPaneLayout {
             ui.add_space(3.0);
 
             // プレイリストタブ
-            app.show_playlist_tabs(ui);
+            crate::app::ui::playlist::PlaylistTabs::show(app, ui);
             ui.separator();
 
             // プレイリスト楽曲表示（残りのスペースを使用）
@@ -129,7 +129,7 @@ impl RightPaneLayout {
                 .hscroll(true)
                 .vscroll(true)
                 .show(ui, |ui| {
-                    app.show_playlist_list(ui);
+                    crate::app::ui::playlist::PlaylistList::show(app, ui);
                 });
         });
 
