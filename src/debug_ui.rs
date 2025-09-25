@@ -29,6 +29,7 @@ impl DebugUIRegions {
         }
     }
 
+    #[allow(dead_code)]
     pub fn is_enabled(&self) -> bool {
         self.enabled
     }
@@ -44,6 +45,7 @@ impl DebugUIRegions {
         *self.counter.borrow_mut() = 0;
     }
 
+    #[allow(dead_code)]
     pub fn next_id(&self) -> u32 {
         if self.enabled {
             let mut counter = self.counter.borrow_mut();
@@ -103,6 +105,7 @@ impl DebugUIRegions {
         self.draw_debug_rect(ui, rect, fixed_id, label);
     }
 
+    #[allow(dead_code)]
     pub fn debug_ui_region<R>(
         &self,
         ui: &mut egui::Ui,

@@ -253,3 +253,57 @@ mod seek_points_tests {
         _cleanup();
     }
 }
+
+#[cfg(test)]
+mod debug_ui_tests {
+    use super::*;
+
+    #[test]
+    fn test_debug_ui_regions() {
+        let mut app = MyApp::new();
+
+        // DebugUIRegions構造体の初期状態テスト
+        assert!(!app.debug_ui.is_enabled());
+
+        // デバッグUI領域の有効化
+        app.debug_ui.set_enabled(true);
+        assert!(app.debug_ui.is_enabled());
+
+        // IDカウンターのテスト
+        let id1 = app.debug_ui.next_id();
+        let id2 = app.debug_ui.next_id();
+        assert_eq!(id1, 1);
+        assert_eq!(id2, 2);
+
+        // カウンターリセットのテスト
+        app.debug_ui.reset_counter();
+        let id3 = app.debug_ui.next_id();
+        assert_eq!(id3, 1);
+
+        // 無効化後のIDテスト
+        app.debug_ui.set_enabled(false);
+        let id4 = app.debug_ui.next_id();
+        assert_eq!(id4, 0);
+    }
+}
+
+#[cfg(test)]
+mod playback_controls_layout_tests {
+    use super::*;
+
+    #[test]
+    fn test_playback_controls_layout() {
+        let app = MyApp::new();
+
+        // 基本的なレイアウト状態のテスト
+        assert_eq!(app.ui_state.show_dialog, false);
+
+        // スプリッター位置の初期値テスト
+        assert!(app.ui_state.splitter_position > 0.0);
+        assert!(app.ui_state.right_top_bottom_position > 0.0);
+        assert!(app.ui_state.right_bottom_left_right_position > 0.0);
+
+        // レイアウト計算の一貫性テスト（値が妥当な範囲内であることを確認）
+        assert!(app.ui_state.splitter_position >= 0.1 && app.ui_state.splitter_position <= 0.9);
+    }
+}
