@@ -2,6 +2,7 @@ pub mod handlers;
 pub mod ui_main;
 pub mod ui_playlist;
 pub mod ui_settings;
+pub mod ui;
 
 use eframe::egui;
 use font_kit::family_name::FamilyName;
