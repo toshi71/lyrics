@@ -6,3 +6,4 @@ pub mod playlist;
 pub mod seek_points;
 pub mod settings;
 pub mod ui;
+pub mod utils;

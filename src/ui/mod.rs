@@ -1,5 +1,6 @@
 pub mod components;
 pub mod music_tree_simple;
+pub mod playback;
 pub mod playback_controls;
 pub mod search;
 

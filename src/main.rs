@@ -6,6 +6,7 @@ mod playlist;
 mod seek_points;
 mod settings;
 mod ui;
+mod utils;
 
 use app::{MyApp, setup_custom_fonts};
 
