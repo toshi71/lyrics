@@ -43,7 +43,7 @@ impl DebugPlaybackControls {
         );
 
         // シークバー領域のデバッグ描画
-        app.debug_ui.draw_debug_rect_fixed(ui, seek_bar_rect, crate::debug_ui::ID_SEEK_BAR, "SeekBar");
+        app.ui_state.debug_ui.draw_debug_rect_fixed(ui, seek_bar_rect, crate::debug_ui::ID_SEEK_BAR, "SeekBar");
 
         // シークバーの実際の描画
         crate::ui::PlaybackControlsUI::show_seek_bar(ui, current_position, total_duration, seek_points, on_seek, on_seek_start, on_seek_end);
@@ -71,7 +71,7 @@ impl DebugPlaybackControls {
             );
 
             // 左側領域のデバッグ描画
-            app.debug_ui.draw_debug_rect_fixed(ui, left_rect, crate::debug_ui::ID_LEFT_CONTROLS, "LeftControls");
+            app.ui_state.debug_ui.draw_debug_rect_fixed(ui, left_rect, crate::debug_ui::ID_LEFT_CONTROLS, "LeftControls");
 
             // 左側: 再生コントロール、シークポイント追加、リピート・シャッフル
             ui.allocate_ui_with_layout(
@@ -104,7 +104,7 @@ impl DebugPlaybackControls {
             );
 
             // 右側領域のデバッグ描画
-            app.debug_ui.draw_debug_rect_fixed(ui, right_rect, crate::debug_ui::ID_RIGHT_INFO, "RightInfo");
+            app.ui_state.debug_ui.draw_debug_rect_fixed(ui, right_rect, crate::debug_ui::ID_RIGHT_INFO, "RightInfo");
 
             // 右側: 楽曲情報とシークポイント一覧
             ui.allocate_ui_with_layout(
@@ -128,7 +128,7 @@ impl DebugPlaybackControls {
                             track_info_start_pos,
                             egui::Vec2::new(right_width, actual_track_info_height)
                         );
-                        app.debug_ui.draw_debug_rect_fixed(ui, track_info_rect, crate::debug_ui::ID_TRACK_INFO, "TrackInfo");
+                        app.ui_state.debug_ui.draw_debug_rect_fixed(ui, track_info_rect, crate::debug_ui::ID_TRACK_INFO, "TrackInfo");
 
                         // スペースを追加
                         let space_height = 15.0;
@@ -146,7 +146,7 @@ impl DebugPlaybackControls {
                             seek_points_start_pos,
                             egui::Vec2::new(right_width, seek_points_list_height)
                         );
-                        app.debug_ui.draw_debug_rect_fixed(ui, seek_points_rect, crate::debug_ui::ID_SEEK_POINTS_LIST, "SeekPointsList");
+                        app.ui_state.debug_ui.draw_debug_rect_fixed(ui, seek_points_rect, crate::debug_ui::ID_SEEK_POINTS_LIST, "SeekPointsList");
 
                         // 残りのスペースでシークポイント一覧を表示
                         ui.allocate_ui_with_layout(

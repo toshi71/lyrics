@@ -9,7 +9,7 @@ impl RightPaneLayout {
         let available_height = available_rect.height();
 
         // 右ペイン全体のデバッグ描画
-        app.debug_ui.draw_debug_rect_fixed(ui, available_rect, crate::debug_ui::ID_RIGHT_PANE_INNER, "RightPaneInner");
+        app.ui_state.debug_ui.draw_debug_rect_fixed(ui, available_rect, crate::debug_ui::ID_RIGHT_PANE_INNER, "RightPaneInner");
 
         // 1. 再生コントロール（上部）の高さを計算
         let controls_height = available_height * app.ui_state.right_top_bottom_position;
@@ -46,7 +46,7 @@ impl RightPaneLayout {
         top_ui.set_clip_rect(top_rect);
 
         // 上部コントロール領域のデバッグ描画
-        app.debug_ui.draw_debug_rect_fixed(ui, top_rect, crate::debug_ui::ID_PLAYBACK_CONTROLS, "PlaybackControls");
+        app.ui_state.debug_ui.draw_debug_rect_fixed(ui, top_rect, crate::debug_ui::ID_PLAYBACK_CONTROLS, "PlaybackControls");
 
         top_ui.vertical(|ui| {
             crate::app::ui::right_pane::PlaybackControlsOnly::show(app, ui);
@@ -71,7 +71,7 @@ impl RightPaneLayout {
         bottom_ui.set_clip_rect(bottom_rect);
 
         // 下部領域のデバッグ描画
-        app.debug_ui.draw_debug_rect_fixed(ui, bottom_rect, crate::debug_ui::ID_BOTTOM_AREA, "BottomArea");
+        app.ui_state.debug_ui.draw_debug_rect_fixed(ui, bottom_rect, crate::debug_ui::ID_BOTTOM_AREA, "BottomArea");
 
         Self::show_bottom_split_area(app, &mut bottom_ui, bottom_rect);
     }
@@ -112,7 +112,7 @@ impl RightPaneLayout {
         bottom_left_ui.set_clip_rect(bottom_left_rect);
 
         // 下部左側のデバッグ描画
-        app.debug_ui.draw_debug_rect_fixed(bottom_ui, bottom_left_rect, crate::debug_ui::ID_PLAYLIST_AREA, "PlaylistArea");
+        app.ui_state.debug_ui.draw_debug_rect_fixed(bottom_ui, bottom_left_rect, crate::debug_ui::ID_PLAYLIST_AREA, "PlaylistArea");
 
         bottom_left_ui.vertical(|ui| {
             // Add 3px top padding for playlist tab area
@@ -151,7 +151,7 @@ impl RightPaneLayout {
         bottom_right_ui.set_clip_rect(bottom_right_rect);
 
         // 下部右側のデバッグ描画
-        app.debug_ui.draw_debug_rect_fixed(bottom_ui, bottom_right_rect, crate::debug_ui::ID_INFO_TAB_AREA, "InfoTabArea");
+        app.ui_state.debug_ui.draw_debug_rect_fixed(bottom_ui, bottom_right_rect, crate::debug_ui::ID_INFO_TAB_AREA, "InfoTabArea");
 
         bottom_right_ui.vertical(|ui| {
             // Add 5px top padding for info/LRC tab area

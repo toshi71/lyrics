@@ -2,6 +2,7 @@ use eframe::egui;
 use std::collections::{HashMap, HashSet};
 use std::path::PathBuf;
 
+use crate::debug_ui::DebugUIRegions;
 use crate::music::TrackInfo;
 use crate::player::{AudioPlayer, PlaybackState};
 use crate::seek_points::SeekPointManager;
@@ -30,6 +31,7 @@ pub struct UIState {
     pub splitter_position: f32,
     pub right_top_bottom_position: f32,
     pub right_bottom_left_right_position: f32,
+    pub debug_ui: DebugUIRegions,
 }
 
 impl UIState {
@@ -41,6 +43,7 @@ impl UIState {
             splitter_position: settings.main_splitter_position,
             right_top_bottom_position: settings.right_top_bottom_position,
             right_bottom_left_right_position: settings.right_bottom_left_right_position,
+            debug_ui: DebugUIRegions::new(settings.debug_ui_regions),
         }
     }
 

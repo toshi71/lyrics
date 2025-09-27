@@ -263,26 +263,26 @@ mod debug_ui_tests {
         let mut app = MyApp::new();
 
         // DebugUIRegions構造体の初期状態テスト
-        assert!(!app.debug_ui.is_enabled());
+        assert!(!app.ui_state.debug_ui.is_enabled());
 
         // デバッグUI領域の有効化
-        app.debug_ui.set_enabled(true);
-        assert!(app.debug_ui.is_enabled());
+        app.ui_state.debug_ui.set_enabled(true);
+        assert!(app.ui_state.debug_ui.is_enabled());
 
         // IDカウンターのテスト
-        let id1 = app.debug_ui.next_id();
-        let id2 = app.debug_ui.next_id();
+        let id1 = app.ui_state.debug_ui.next_id();
+        let id2 = app.ui_state.debug_ui.next_id();
         assert_eq!(id1, 1);
         assert_eq!(id2, 2);
 
         // カウンターリセットのテスト
-        app.debug_ui.reset_counter();
-        let id3 = app.debug_ui.next_id();
+        app.ui_state.debug_ui.reset_counter();
+        let id3 = app.ui_state.debug_ui.next_id();
         assert_eq!(id3, 1);
 
         // 無効化後のIDテスト
-        app.debug_ui.set_enabled(false);
-        let id4 = app.debug_ui.next_id();
+        app.ui_state.debug_ui.set_enabled(false);
+        let id4 = app.ui_state.debug_ui.next_id();
         assert_eq!(id4, 0);
     }
 }
