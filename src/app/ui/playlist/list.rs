@@ -2,10 +2,10 @@ use eframe::egui;
 use crate::app::MyApp;
 use crate::ui::PlaybackControlsUI;
 
-pub struct PlaylistList;
+pub struct PlaylistListUI;
 
-impl PlaylistList {
-    pub fn show(app: &mut MyApp, ui: &mut egui::Ui) {
+impl PlaylistListUI {
+    pub fn render(app: &mut MyApp, ui: &mut egui::Ui) {
         // Store data needed for UI
         let queue_tracks = app.playlist_manager.get_tracks().cloned().unwrap_or_default();
         let current_index = app.playlist_manager.get_current_index();

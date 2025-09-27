@@ -1,10 +1,10 @@
 use eframe::egui;
 use crate::app::MyApp;
 
-pub struct PlaylistTabs;
+pub struct PlaylistTabsUI;
 
-impl PlaylistTabs {
-    pub fn show(app: &mut MyApp, ui: &mut egui::Ui) {
+impl PlaylistTabsUI {
+    pub fn render(app: &mut MyApp, ui: &mut egui::Ui) {
         ui.allocate_ui_with_layout(
             egui::Vec2::new(ui.available_width(), ui.spacing().button_padding.y * 2.0 + ui.text_style_height(&egui::TextStyle::Button)),
             egui::Layout::top_down(egui::Align::LEFT),

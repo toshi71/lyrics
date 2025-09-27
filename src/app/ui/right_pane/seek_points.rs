@@ -1,10 +1,10 @@
 use eframe::egui;
 use crate::app::MyApp;
 
-pub struct SeekPoints;
+pub struct SeekPointsUI;
 
-impl SeekPoints {
-    pub fn show(app: &mut MyApp, ui: &mut egui::Ui) {
+impl SeekPointsUI {
+    pub fn render(app: &mut MyApp, ui: &mut egui::Ui) {
         if let Some(selected_track) = &app.selection_state.selected_track {
             let track_info = format!("{} - {}", selected_track.artist, selected_track.title);
 

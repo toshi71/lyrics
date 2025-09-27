@@ -4,7 +4,7 @@ use crate::ui::{MusicTreeUI, SearchUI};
 use eframe::egui;
 
 impl MyApp {
-    pub fn show_menu_bar(&mut self, ctx: &egui::Context) {
+    pub fn render_menu_bar(&mut self, ctx: &egui::Context) {
         egui::TopBottomPanel::top("menu_bar").show(ctx, |ui| {
             egui::menu::bar(ui, |ui| {
                 ui.menu_button("ファイル", |ui| {
@@ -49,7 +49,7 @@ impl MyApp {
         });
     }
 
-    pub fn show_tab_bar(&mut self, ctx: &egui::Context) {
+    pub fn render_tab_bar(&mut self, ctx: &egui::Context) {
         egui::TopBottomPanel::top("tabs").show(ctx, |ui| {
             ui.horizontal(|ui| {
                 ui.selectable_value(&mut self.ui_state.current_tab, crate::app::state::Tab::Main, "メイン");
@@ -58,20 +58,20 @@ impl MyApp {
         });
     }
 
-    pub fn show_central_panel(&mut self, ctx: &egui::Context) {
+    pub fn render_central_panel(&mut self, ctx: &egui::Context) {
         egui::CentralPanel::default().show(ctx, |ui| {
             match self.ui_state.current_tab {
                 crate::app::state::Tab::Main => {
-                    self.show_main_tab(ui);
+                    self.render_main_tab(ui);
                 },
                 crate::app::state::Tab::Settings => {
-                    self.show_settings_tab(ui);
+                    self.render_settings_tab(ui);
                 },
             }
         });
     }
 
-    pub fn show_dialog_if_needed(&mut self, ctx: &egui::Context) {
+    pub fn render_dialog_if_needed(&mut self, ctx: &egui::Context) {
         if self.ui_state.show_dialog {
             egui::Window::new("ダイアログ")
                 .collapsible(false)
@@ -87,7 +87,7 @@ impl MyApp {
         }
     }
 
-    pub fn show_main_tab(&mut self, ui: &mut egui::Ui) {
+    pub fn render_main_tab(&mut self, ui: &mut egui::Ui) {
         
         let available_rect = ui.available_rect_before_wrap();
         let available_width = available_rect.width();
@@ -137,7 +137,7 @@ impl MyApp {
         // 左ペインのデバッグ描画
         self.ui_state.debug_ui.draw_debug_rect_fixed(ui, left_rect, crate::debug_ui::ID_LEFT_PANE, "LeftPane");
         
-        self.show_left_pane(&mut left_ui);
+        self.render_left_pane(&mut left_ui);
         
         // Separator visualization
         let separator_rect = egui::Rect::from_min_size(
@@ -162,7 +162,7 @@ impl MyApp {
         self.show_right_pane(&mut right_ui);
     }
 
-    pub fn show_left_pane(&mut self, ui: &mut egui::Ui) {
+    pub fn render_left_pane(&mut self, ui: &mut egui::Ui) {
         if self.settings.target_directory.is_empty() {
             ui.vertical_centered(|ui| {
                 ui.add_space(50.0);
@@ -195,12 +195,12 @@ impl MyApp {
                     }
                     
                     ui.add_space(10.0);
-                    self.show_music_tree(ui);
+                    self.render_music_tree(ui);
                 });
         }
     }
 
-    pub fn show_music_tree(&mut self, ui: &mut egui::Ui) {
+    pub fn render_music_tree(&mut self, ui: &mut egui::Ui) {
         let mut track_selection = None;
         let mut double_clicked_track = None;
         let mut add_to_playlist_track: Option<(TrackInfo, String)> = None;

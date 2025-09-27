@@ -1,10 +1,10 @@
 use eframe::egui;
 use crate::app::MyApp;
 
-pub struct TrackInfo;
+pub struct TrackInfoUI;
 
-impl TrackInfo {
-    pub fn show(app: &mut MyApp, ui: &mut egui::Ui) {
+impl TrackInfoUI {
+    pub fn render(app: &mut MyApp, ui: &mut egui::Ui) {
         let selected_indices = app.playlist_manager.get_selected_indices();
         let selected_count = selected_indices.len();
 

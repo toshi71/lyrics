@@ -224,10 +224,10 @@ impl eframe::App for MyApp {
         
         self.handle_keyboard_shortcuts(ctx);
         self.check_playback_finished(); // 楽曲終了チェック
-        self.show_menu_bar(ctx);
-        self.show_tab_bar(ctx);
-        self.show_central_panel(ctx);
-        self.show_dialog_if_needed(ctx);
+        self.render_menu_bar(ctx);
+        self.render_tab_bar(ctx);
+        self.render_central_panel(ctx);
+        self.render_dialog_if_needed(ctx);
     }
 }
 

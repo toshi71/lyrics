@@ -49,7 +49,7 @@ impl RightPaneLayout {
         app.ui_state.debug_ui.draw_debug_rect_fixed(ui, top_rect, crate::debug_ui::ID_PLAYBACK_CONTROLS, "PlaybackControls");
 
         top_ui.vertical(|ui| {
-            crate::app::ui::right_pane::PlaybackControlsOnly::show(app, ui);
+            crate::app::ui::right_pane::PlaybackControlsOnlyUI::render(app, ui);
         });
 
         // 上下分割線の描画
@@ -119,7 +119,7 @@ impl RightPaneLayout {
             ui.add_space(3.0);
 
             // プレイリストタブ
-            crate::app::ui::playlist::PlaylistTabs::show(app, ui);
+            crate::app::ui::playlist::PlaylistTabsUI::render(app, ui);
             ui.separator();
 
             // プレイリスト楽曲表示（残りのスペースを使用）
@@ -129,7 +129,7 @@ impl RightPaneLayout {
                 .hscroll(true)
                 .vscroll(true)
                 .show(ui, |ui| {
-                    crate::app::ui::playlist::PlaylistList::show(app, ui);
+                    crate::app::ui::playlist::PlaylistListUI::render(app, ui);
                 });
         });
 
@@ -182,10 +182,10 @@ impl RightPaneLayout {
                                     ui.label("プレイリスト表示（左側で表示）");
                                 },
                                 crate::app::state::RightTab::Info => {
-                                    crate::app::ui::right_pane::TrackInfo::show(app, ui);
+                                    crate::app::ui::right_pane::TrackInfoUI::render(app, ui);
                                 },
                                 crate::app::state::RightTab::SeekPoints => {
-                                    crate::app::ui::right_pane::SeekPoints::show(app, ui);
+                                    crate::app::ui::right_pane::SeekPointsUI::render(app, ui);
                                 },
                                 crate::app::state::RightTab::Lrc => {
                                     ui.label("LRC歌詞表示機能は未実装です");

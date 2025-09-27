@@ -2,7 +2,7 @@ use super::MyApp;
 use eframe::egui;
 
 impl MyApp {
-    pub fn show_settings_tab(&mut self, ui: &mut egui::Ui) {
+    pub fn render_settings_tab(&mut self, ui: &mut egui::Ui) {
         ui.add_space(20.0);
         
         ui.horizontal(|ui| {

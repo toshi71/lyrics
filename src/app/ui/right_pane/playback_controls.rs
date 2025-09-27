@@ -1,10 +1,10 @@
 use eframe::egui;
 use crate::app::MyApp;
 
-pub struct PlaybackControlsOnly;
+pub struct PlaybackControlsOnlyUI;
 
-impl PlaybackControlsOnly {
-    pub fn show(app: &mut MyApp, ui: &mut egui::Ui) {
+impl PlaybackControlsOnlyUI {
+    pub fn render(app: &mut MyApp, ui: &mut egui::Ui) {
         let playback_state = app.player_state.audio_player.get_state().clone();
 
         // Collect actions (removed clear_queue)
